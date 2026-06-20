@@ -32,8 +32,20 @@ export default function App() {
     const [authScreen, setAuthScreen] = useState('login'); // login, register, forgot
 
     const pathname = window.location.pathname;
-    const isDashboard = pathname.startsWith('/dashboard');
-    const [noteId, setNoteId] = useState(getNoteIdFromPath);
+    const isDashboardPath = pathname.startsWith('/dashboard');
+    const noteIdFromPath = getNoteIdFromPath();
+    const [noteId, setNoteId] = useState(noteIdFromPath);
+    
+    // The current tab name (default to 'overview' if on /dashboard, or 'notes' if on note paths)
+    const getInitialTab = () => {
+        if (isDashboardPath) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('tab') || 'overview';
+        }
+        return 'notes';
+    };
+    
+    const [activeTab, setActiveTab] = useState(getInitialTab);
 
     const checkAuth = async () => {
         try {
@@ -58,17 +70,27 @@ export default function App() {
 
     // Redirect or set note ID on root path
     useEffect(() => {
-        if (!isDashboard) {
-            const currentId = getNoteIdFromPath();
-            if (currentId) {
-                setNoteId(currentId);
-            } else if (pathname === '/' || pathname === '') {
-                const generatedId = generateRandomNoteId();
-                window.history.replaceState(null, '', `/${generatedId}/`);
-                setNoteId(generatedId);
+        const currentId = getNoteIdFromPath();
+        if (currentId) {
+            setNoteId(currentId);
+            if (!isDashboardPath) {
+                setActiveTab('notes');
+            }
+        } else if (pathname === '/' || pathname === '') {
+            const generatedId = generateRandomNoteId();
+            window.history.replaceState(null, '', `/${generatedId}/`);
+            setNoteId(generatedId);
+            setActiveTab('notes');
+        } else if (isDashboardPath) {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab') || 'overview';
+            setActiveTab(tabParam);
+            const noteIdParam = params.get('note_id');
+            if (noteIdParam) {
+                setNoteId(noteIdParam);
             }
         }
-    }, [pathname, isDashboard]);
+    }, [pathname, isDashboardPath]);
 
     const handleLoginSuccess = () => {
         checkAuth();
@@ -91,7 +113,7 @@ export default function App() {
                 height: '100vh',
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: '#070913',
+                backgroundColor: '#03050c',
                 color: '#f8fafc',
                 fontFamily: 'Outfit, sans-serif'
             }}>
@@ -103,45 +125,26 @@ export default function App() {
         );
     }
 
-    if (!isDashboard) {
-        if (!noteId) {
-            return (
-                <div style={{
-                    display: 'flex',
-                    height: '100vh',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: '#0b0f19',
-                    color: '#e2e8f0',
-                    fontFamily: 'Outfit, sans-serif'
-                }}>
-                    <div>Đang tạo ghi chú...</div>
-                </div>
-            );
-        }
-        return (
-            <QuickNotes
-                noteId={noteId}
-                currentUser={currentUser}
-                onLogout={handleLogout}
-            />
-        );
-    }
+    // Protected tabs list
+    const isTabProtected = (tabName) => {
+        return tabName !== 'notes';
+    };
 
-    if (!currentUser) {
+    // If user is visiting a protected tab but is not logged in, show Auth screens
+    if (isTabProtected(activeTab) && !currentUser) {
         return (
             <div style={{
                 display: 'flex',
                 minHeight: '100vh',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#080b11',
+                backgroundColor: '#03050c',
                 position: 'relative',
                 overflow: 'hidden'
             }}>
                 {/* Background orbs */}
-                <div className="glowing-orb orb-primary"></div>
-                <div className="glowing-orb orb-accent"></div>
+                <div className="glowing-orb orb-1" style={{ width: '400px', height: '400px', background: '#d946ef', top: '-100px', left: '-100px', opacity: 0.3 }}></div>
+                <div className="glowing-orb orb-2" style={{ width: '350px', height: '350px', background: '#00f2fe', bottom: '-80px', right: '-80px', opacity: 0.3 }}></div>
 
                 {authScreen === 'login' && (
                     <Login onLoginSuccess={handleLoginSuccess} onSwitchForm={setAuthScreen} />
@@ -156,7 +159,13 @@ export default function App() {
         );
     }
 
+    // Render unified DashboardLayout for both guests (tab === 'notes') and logged in users
     return (
-        <DashboardLayout currentUser={currentUser} onLogout={handleLogout} />
+        <DashboardLayout 
+            currentUser={currentUser} 
+            onLogout={handleLogout} 
+            initialTab={activeTab}
+            initialNoteId={noteId}
+        />
     );
 }

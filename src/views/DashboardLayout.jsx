@@ -82,11 +82,13 @@ async function calculateTotp(secret) {
     }
 }
 
-export default function DashboardLayout({ currentUser, onLogout }) {
+import QuickNotes from './QuickNotes';
+
+export default function DashboardLayout({ currentUser, onLogout, initialTab, initialNoteId }) {
     // Helper to get initial URL parameters synchronously
     const getInitialUrlState = () => {
         const params = new URLSearchParams(window.location.search);
-        const tab = params.get('tab') || 'overview';
+        const tab = initialTab || params.get('tab') || 'overview';
         const page = parseInt(params.get('page')) || 1;
         return { tab, page };
     };
@@ -94,6 +96,7 @@ export default function DashboardLayout({ currentUser, onLogout }) {
     const urlState = getInitialUrlState();
     const [currentTab, setCurrentTab] = useState(urlState.tab);
     const [currentPage, setCurrentPage] = useState(urlState.page);
+    const [noteId, setNoteId] = useState(initialNoteId || '7wrqsn');
     const [visitedTabs, setVisitedTabs] = useState(new Set([urlState.tab]));
 
     const [unreadNotifCount, setUnreadNotifCount] = useState(0);
@@ -113,16 +116,21 @@ export default function DashboardLayout({ currentUser, onLogout }) {
     // Load initial routing state from URL query parameters
     useEffect(() => {
         const handlePopState = () => {
-            const params = new URLSearchParams(window.location.search);
-            const tab = params.get('tab') || 'overview';
-            const page = parseInt(params.get('page')) || 1;
-            setCurrentTab(tab);
-            setCurrentPage(page);
-            setVisitedTabs(prev => {
-                const next = new Set(prev);
-                next.add(tab);
-                return next;
-            });
+            const pathname = window.location.pathname;
+            const isDashboardPath = pathname.startsWith('/dashboard');
+            if (isDashboardPath) {
+                const params = new URLSearchParams(window.location.search);
+                const tab = params.get('tab') || 'overview';
+                const page = parseInt(params.get('page')) || 1;
+                setCurrentTab(tab);
+                setCurrentPage(page);
+            } else {
+                const parts = pathname.split('/').filter(Boolean);
+                if (parts.length === 1 && /^[a-zA-Z0-9]+$/.test(parts[0])) {
+                    setCurrentTab('notes');
+                    setNoteId(parts[0]);
+                }
+            }
         };
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
@@ -139,10 +147,17 @@ export default function DashboardLayout({ currentUser, onLogout }) {
             return next;
         });
         
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', tabName);
-        url.searchParams.set('page', pageNum);
-        window.history.replaceState({}, '', url.toString());
+        if (tabName === 'notes') {
+            window.history.replaceState({}, '', `/${noteId}/`);
+        } else {
+            const url = new URL(window.location.href);
+            url.pathname = '/dashboard/';
+            url.searchParams.set('tab', tabName);
+            url.searchParams.set('page', pageNum);
+            // Clean up any note_id parameter if we switch away from notes
+            url.searchParams.delete('note_id');
+            window.history.replaceState({}, '', url.toString());
+        }
 
         // Close sidebar on mobile
         setSidebarVisible(false);
@@ -305,7 +320,8 @@ export default function DashboardLayout({ currentUser, onLogout }) {
         'emails': 'Email Database Management',
         'accounts': 'Tài khoản MunLogin đã tạo',
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
-        'notifications': 'Thông báo của tôi'
+        'notifications': 'Thông báo của tôi',
+        'notes': `Ghi chú nhanh: ${noteId}`
     };
 
     return (
@@ -321,58 +337,73 @@ export default function DashboardLayout({ currentUser, onLogout }) {
                         <h1 className="menu-text">fitviet</h1>
                     </a>
                     <div className="sidebar-menu">
-                        <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
-                            <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
-                        </a>
-                        <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
-                            <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
-                        </a>
-                        {currentUser.is_staff && (
-                            <a className={`menu-item ${currentTab === 'users' ? 'active' : ''}`} onClick={() => handleSwitchTab('users')}>
-                                <span className="menu-icon">👥</span><span className="menu-text">Quản lý User</span>
-                            </a>
-                        )}
-                        <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
-                            <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
-                        </a>
-                        <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
-                            <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
-                        </a>
-                        <a className={`menu-item ${currentTab === 'emails' ? 'active' : ''}`} onClick={() => handleSwitchTab('emails')}>
-                            <span className="menu-icon">✉️</span><span className="menu-text">Quản lý Email</span>
-                        </a>
-                        <a className={`menu-item ${currentTab === 'accounts' ? 'active' : ''}`} onClick={() => handleSwitchTab('accounts')}>
-                            <span className="menu-icon">🔑</span><span className="menu-text">Tài khoản đã tạo</span>
-                        </a>
-                        {currentUser.is_staff && (
-                            <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
-                                <span className="menu-icon">🖱️</span><span className="menu-text">HWID Manager</span>
-                            </a>
-                        )}
-                        <a className={`menu-item ${currentTab === 'notifications' ? 'active' : ''}`} onClick={() => handleSwitchTab('notifications')}>
-                            <span className="menu-icon">🔔</span>
-                            <span className="menu-text">
-                                Thông báo 
-                                {unreadNotifCount > 0 && (
-                                    <span className="badge-unread-count" style={{ display: 'inline-block', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', marginLeft: '10px', fontWeight: 700 }}>
-                                        {unreadNotifCount}
-                                    </span>
+                        {currentUser ? (
+                            <>
+                                <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
+                                    <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
+                                    <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
+                                </a>
+                                {currentUser.is_staff && (
+                                    <a className={`menu-item ${currentTab === 'users' ? 'active' : ''}`} onClick={() => handleSwitchTab('users')}>
+                                        <span className="menu-icon">👥</span><span className="menu-text">Quản lý User</span>
+                                    </a>
                                 )}
-                            </span>
+                                <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
+                                    <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
+                                    <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'emails' ? 'active' : ''}`} onClick={() => handleSwitchTab('emails')}>
+                                    <span className="menu-icon">✉️</span><span className="menu-text">Quản lý Email</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'accounts' ? 'active' : ''}`} onClick={() => handleSwitchTab('accounts')}>
+                                    <span className="menu-icon">🔑</span><span className="menu-text">Tài khoản đã tạo</span>
+                                </a>
+                                {currentUser.is_staff && (
+                                    <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
+                                        <span className="menu-icon">🖱️</span><span className="menu-text">HWID Manager</span>
+                                    </a>
+                                )}
+                                <a className={`menu-item ${currentTab === 'notifications' ? 'active' : ''}`} onClick={() => handleSwitchTab('notifications')}>
+                                    <span className="menu-icon">🔔</span>
+                                    <span className="menu-text">
+                                        Thông báo 
+                                        {unreadNotifCount > 0 && (
+                                            <span className="badge-unread-count" style={{ display: 'inline-block', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', marginLeft: '10px', fontWeight: 700 }}>
+                                                {unreadNotifCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </a>
+                            </>
+                        ) : null}
+                        <a className={`menu-item ${currentTab === 'notes' ? 'active' : ''}`} onClick={() => handleSwitchTab('notes')}>
+                            <span className="menu-icon">📝</span><span className="menu-text">Ghi chú nhanh</span>
                         </a>
                         <a className="menu-item" onClick={openTwoFaModal}>
                             <span className="menu-icon">🔑</span><span className="menu-text">Trình tạo 2FA</span>
                         </a>
                     </div>
                 </div>
-                <div className="sidebar-footer">
-                    <div className="user-info menu-text">
-                        <span className="user-name">{currentUser.username}</span>
-                        <span className="user-role">{currentUser.is_staff ? 'Quản trị viên' : 'Khách hàng'}</span>
-                    </div>
-                    <button className="logout-btn" onClick={onLogout} title="Đăng xuất" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="menu-icon">🚪</span><span className="menu-text">Thoát</span>
-                    </button>
+                <div className="sidebar-footer" style={{ padding: '15px' }}>
+                    {currentUser ? (
+                        <>
+                            <div className="user-info menu-text">
+                                <span className="user-name">{currentUser.username}</span>
+                                <span className="user-role">{currentUser.is_staff ? 'Quản trị viên' : 'Khách hàng'}</span>
+                            </div>
+                            <button className="logout-btn" onClick={onLogout} title="Đăng xuất" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="menu-icon">🚪</span><span className="menu-text">Thoát</span>
+                            </button>
+                        </>
+                    ) : (
+                        <a href="/dashboard/" className="menu-item" style={{ width: '100%', justifyContent: 'center', border: '1px dashed var(--border-color)', gap: '8px', padding: '10px' }}>
+                            <span>🔑</span><span className="menu-text">Đăng nhập</span>
+                        </a>
+                    )}
                 </div>
             </div>
 
@@ -440,37 +471,54 @@ export default function DashboardLayout({ currentUser, onLogout }) {
                 </div>
 
                 {/* View Content Porting - Keep-alive pattern with visited-tabs check */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '24px', width: '100%' }}>
+                <div style={{ 
+                    flex: 1, 
+                    overflow: currentTab === 'notes' ? 'hidden' : 'auto', 
+                    padding: currentTab === 'notes' ? '0' : '24px', 
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
                     <div style={{ display: currentTab === 'overview' ? 'block' : 'none' }}>
-                        {visitedTabs.has('overview') && <Overview currentUser={currentUser} onSwitchTab={handleSwitchTab} />}
+                        {currentUser && visitedTabs.has('overview') && <Overview currentUser={currentUser} onSwitchTab={handleSwitchTab} />}
                     </div>
                     <div style={{ display: currentTab === 'cards' ? 'block' : 'none' }}>
-                        {visitedTabs.has('cards') && <Cards currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('cards', p)} />}
+                        {currentUser && visitedTabs.has('cards') && <Cards currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('cards', p)} />}
                     </div>
-                    {currentUser.is_staff && (
+                    {currentUser?.is_staff && (
                         <div style={{ display: currentTab === 'users' ? 'block' : 'none' }}>
                             {visitedTabs.has('users') && <Users currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('users', p)} />}
-                        </div>
+                         </div>
                     )}
                     <div style={{ display: currentTab === 'profiles' ? 'block' : 'none' }}>
-                        {visitedTabs.has('profiles') && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
+                        {currentUser && visitedTabs.has('profiles') && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
                     </div>
                     <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
-                        {visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
+                        {currentUser && visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
                     </div>
                     <div style={{ display: currentTab === 'emails' ? 'block' : 'none' }}>
-                        {visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
+                        {currentUser && visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
                     </div>
                     <div style={{ display: currentTab === 'accounts' ? 'block' : 'none' }}>
-                        {visitedTabs.has('accounts') && <Accounts currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('accounts', p)} />}
+                        {currentUser && visitedTabs.has('accounts') && <Accounts currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('accounts', p)} />}
                     </div>
-                    {currentUser.is_staff && (
+                    {currentUser?.is_staff && (
                         <div style={{ display: currentTab === 'hwids' ? 'block' : 'none' }}>
                             {visitedTabs.has('hwids') && <HWIDs currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('hwids', p)} />}
                         </div>
                     )}
                     <div style={{ display: currentTab === 'notifications' ? 'block' : 'none' }}>
-                        {visitedTabs.has('notifications') && <Notifications fetchNotificationCount={fetchNotificationCount} />}
+                        {currentUser && visitedTabs.has('notifications') && <Notifications fetchNotificationCount={fetchNotificationCount} />}
+                    </div>
+                    <div style={{ display: currentTab === 'notes' ? 'block' : 'none', flex: 1, height: '100%' }}>
+                        {visitedTabs.has('notes') && (
+                            <QuickNotes 
+                                noteId={noteId} 
+                                currentUser={currentUser} 
+                                onLogout={onLogout} 
+                                isEmbedded={true} 
+                            />
+                        )}
                     </div>
                 </div>
             </div>

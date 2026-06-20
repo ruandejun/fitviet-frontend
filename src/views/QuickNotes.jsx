@@ -200,7 +200,7 @@ async function calculateTotp(secret) {
     }
 }
 
-export default function QuickNotes({ noteId, currentUser, onLogout }) {
+export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded = false }) {
     const [content, setContent] = useState('');
     const [hasPasswordState, setHasPasswordState] = useState(false);
     const [passwordRequired, setPasswordRequired] = useState(false);
@@ -1345,10 +1345,10 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
 
     return (
         <div data-theme={theme} style={{
-            height: '100dvh',
+            height: isEmbedded ? '100%' : '100dvh',
             width: '100%',
             overflow: 'hidden',
-            backgroundColor: 'var(--bg-color)',
+            backgroundColor: isEmbedded ? 'transparent' : 'var(--bg-color)',
             color: 'var(--text-color)',
             display: 'flex',
             flexDirection: 'column',
@@ -1453,6 +1453,9 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     flex-direction: column;
                     padding: 24px;
                     z-index: 5;
+                }
+                .editor-container.embedded {
+                    padding: 16px;
                 }
                 .editor-card {
                     flex: 1;
@@ -1855,39 +1858,49 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                 }
             `}</style>
 
-            <div className="glowing-orb orb-1"></div>
-            <div className="glowing-orb orb-2"></div>
+            {!isEmbedded && (
+                <>
+                    <div className="glowing-orb orb-1"></div>
+                    <div className="glowing-orb orb-2"></div>
+                </>
+            )}
 
             {/* Header Toolbar */}
-            <header className="toolbar">
-                <div className="logo-section">
-                    <a href="/" className="logo-title" style={{
-                        fontWeight: '700',
-                        fontSize: '20px',
-                        letterSpacing: '0.5px',
-                        background: 'linear-gradient(135deg, var(--accent-glow), var(--primary-glow))',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        textTransform: 'uppercase',
-                        textDecoration: 'none'
-                    }}>Ghi chú</a>
-                    <span className="note-badge" style={{
-                        background: 'rgba(99, 102, 241, 0.15)',
-                        color: 'var(--primary-glow)',
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        border: '1px solid rgba(99, 102, 241, 0.2)'
-                    }}>{noteId}</span>
-                </div>
+            <header className="toolbar" style={isEmbedded ? {
+                background: 'transparent',
+                borderBottom: 'none',
+                padding: '10px 16px 0 16px'
+            } : {}}>
+                {!isEmbedded && (
+                    <div className="logo-section">
+                        <a href="/" className="logo-title" style={{
+                            fontWeight: '700',
+                            fontSize: '20px',
+                            letterSpacing: '0.5px',
+                            background: 'linear-gradient(135deg, var(--accent-glow), var(--primary-glow))',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            textTransform: 'uppercase',
+                            textDecoration: 'none'
+                        }}>Ghi chú</a>
+                        <span className="note-badge" style={{
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            color: 'var(--primary-glow)',
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            border: '1px solid rgba(99, 102, 241, 0.2)'
+                        }}>{noteId}</span>
+                    </div>
+                )}
 
-                <div className="status-section">
+                <div className="status-section" style={isEmbedded ? { marginLeft: 0 } : {}}>
                     <span className={`status-dot ${statusState}`}></span>
                     <span className="status-text">{statusMessage}</span>
                 </div>
 
-                <div className="right-section">
+                <div className="right-section" style={isEmbedded ? { flex: 1, justifyContent: 'flex-end' } : {}}>
                     <div className="actions-section">
                         <button className="btn-tool" onClick={() => handleSave(content)} style={{ background: 'var(--primary-glow)', color: 'white', borderColor: 'var(--primary-glow)' }}>
                             💾 Lưu
@@ -1918,20 +1931,22 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                         </button>
                     </div>
 
-                    {currentUser ? (
-                        <button className="btn-tool btn-login" onClick={() => setShowUserInfoModal(true)}>
-                            👤 {currentUser.username}
-                        </button>
-                    ) : (
-                        <button className="btn-tool btn-login" onClick={() => setShowQuickLoginModal(true)}>
-                            🔑 Đăng nhập
-                        </button>
+                    {!isEmbedded && (
+                        currentUser ? (
+                            <button className="btn-tool btn-login" onClick={() => setShowUserInfoModal(true)}>
+                                👤 {currentUser.username}
+                            </button>
+                        ) : (
+                            <button className="btn-tool btn-login" onClick={() => setShowQuickLoginModal(true)}>
+                                🔑 Đăng nhập
+                            </button>
+                        )
                     )}
                 </div>
             </header>
 
             {/* Text Editor */}
-            <main className="editor-container">
+            <main className={`editor-container ${isEmbedded ? 'embedded' : ''}`}>
                 <div className="editor-card">
                     <textarea
                         ref={textareaRef}
