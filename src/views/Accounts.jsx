@@ -86,6 +86,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
 
     const [bulkSubOwnerOpen, setBulkSubOwnerOpen] = useState(false);
     const [bulkSubOwnerVal, setBulkSubOwnerVal] = useState('');
+    const [subOwnerSearchQuery, setSubOwnerSearchQuery] = useState('');
 
     const [viewOpen, setViewOpen] = useState(false);
     const [viewData, setViewData] = useState(null);
@@ -474,7 +475,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                 <div className="action-buttons">
                     <button className="btn btn-secondary" onClick={fetchAccounts}>Làm mới</button>
                     <button className="btn btn-primary" onClick={handleOpenAddModal}>Thêm mới</button>
-                    <button className="btn btn-info" onClick={() => setBulkSubOwnerOpen(true)} disabled={selectedIds.length === 0}>Gán sở hữu Sub</button>
+                    <button className="btn btn-info" onClick={() => { setBulkSubOwnerOpen(true); setSubOwnerSearchQuery(''); }} disabled={selectedIds.length === 0}>Gán sở hữu Sub</button>
                     <button className="btn btn-warning" onClick={() => setBulkStatusOpen(true)} disabled={selectedIds.length === 0}>Đổi trạng thái</button>
                     <button className="btn btn-danger" onClick={deleteSelectedAccounts} disabled={selectedIds.length === 0}>Xóa</button>
                 </div>
@@ -785,12 +786,57 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                         <div className="modal-body">
                             <div className="form-group">
                                 <label className="form-label">Chọn người sở hữu Sub</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={bulkSubOwnerVal} onChange={(e) => setBulkSubOwnerVal(e.target.value)}>
-                                    <option value="">-- Không có (Bỏ gán) --</option>
-                                    {systemUsers.map(u => (
-                                        <option key={u.username} value={u.username}>{u.username}</option>
-                                    ))}
-                                </select>
+                                <input 
+                                    type="text" 
+                                    className="form-input" 
+                                    placeholder="Tìm tên chủ sở hữu..." 
+                                    value={subOwnerSearchQuery} 
+                                    onChange={(e) => setSubOwnerSearchQuery(e.target.value)} 
+                                    style={{ marginBottom: '10px' }}
+                                />
+                                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}>
+                                    <div
+                                        onClick={() => setBulkSubOwnerVal('')}
+                                        style={{
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            background: bulkSubOwnerVal === '' ? 'var(--active-bg)' : 'transparent',
+                                            color: bulkSubOwnerVal === '' ? 'var(--primary)' : 'var(--text-color)',
+                                            fontWeight: bulkSubOwnerVal === '' ? 'bold' : 'normal',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            fontSize: '13px'
+                                        }}
+                                    >
+                                        -- Không có (Bỏ gán) --
+                                    </div>
+                                    {systemUsers
+                                        .filter(u => u.username.toLowerCase().includes(subOwnerSearchQuery.toLowerCase()))
+                                        .map(u => {
+                                            const isSelected = u.username === bulkSubOwnerVal;
+                                            return (
+                                                <div
+                                                    key={u.username}
+                                                    onClick={() => setBulkSubOwnerVal(u.username)}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        background: isSelected ? 'var(--active-bg)' : 'transparent',
+                                                        color: isSelected ? 'var(--primary)' : 'var(--text-color)',
+                                                        fontWeight: isSelected ? 'bold' : 'normal',
+                                                        borderBottom: '1px solid var(--border-color)',
+                                                        fontSize: '13px',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <span>{u.username}</span>
+                                                    {isSelected && <span>✓</span>}
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">

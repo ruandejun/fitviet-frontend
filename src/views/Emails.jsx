@@ -77,6 +77,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
 
     const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
     const [bulkAssignOwner, setBulkAssignOwner] = useState('');
+    const [ownerSearchQuery, setOwnerSearchQuery] = useState('');
     const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
 
     // Graph API Configuration Modal
@@ -892,7 +893,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
                     <button className="btn btn-primary" onClick={handleOpenAddModal}>Thêm Email</button>
                     <button className="btn btn-primary" onClick={handleOpenEditModal} disabled={selectedIds.length !== 1}>Sửa</button>
                     {currentUser.is_staff && (
-                        <button className="btn btn-primary" onClick={() => setBulkAssignOpen(true)} disabled={selectedIds.length === 0}>Sở hữu</button>
+                        <button className="btn btn-primary" onClick={() => { setBulkAssignOpen(true); setOwnerSearchQuery(''); }} disabled={selectedIds.length === 0}>Sở hữu</button>
                     )}
                     <button className="btn btn-danger" onClick={deleteSelectedEmails} disabled={selectedIds.length === 0}>Xóa</button>
                     <button className="btn btn-warning" onClick={() => setBulkStatusOpen(true)} disabled={selectedIds.length === 0}>Đổi trạng thái</button>
@@ -1198,12 +1199,57 @@ export default function Emails({ currentUser, page, onPageChange }) {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Chỉ định sở hữu bởi</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={bulkAssignOwner} onChange={(e) => setBulkAssignOwner(e.target.value)}>
-                                    <option value="">-- Không chỉ định --</option>
-                                    {clients.map(u => (
-                                        <option key={u.id} value={u.id}>{u.username}</option>
-                                    ))}
-                                </select>
+                                <input 
+                                    type="text" 
+                                    className="form-input" 
+                                    placeholder="Tìm tên chủ sở hữu..." 
+                                    value={ownerSearchQuery} 
+                                    onChange={(e) => setOwnerSearchQuery(e.target.value)} 
+                                    style={{ marginBottom: '10px' }}
+                                />
+                                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}>
+                                    <div
+                                        onClick={() => setBulkAssignOwner('')}
+                                        style={{
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            background: bulkAssignOwner === '' ? 'var(--active-bg)' : 'transparent',
+                                            color: bulkAssignOwner === '' ? 'var(--primary)' : 'var(--text-color)',
+                                            fontWeight: bulkAssignOwner === '' ? 'bold' : 'normal',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            fontSize: '13px'
+                                        }}
+                                    >
+                                        -- Không chỉ định --
+                                    </div>
+                                    {clients
+                                        .filter(u => u.username.toLowerCase().includes(ownerSearchQuery.toLowerCase()))
+                                        .map(u => {
+                                            const isSelected = String(u.id) === String(bulkAssignOwner);
+                                            return (
+                                                <div
+                                                    key={u.id}
+                                                    onClick={() => setBulkAssignOwner(String(u.id))}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        background: isSelected ? 'var(--active-bg)' : 'transparent',
+                                                        color: isSelected ? 'var(--primary)' : 'var(--text-color)',
+                                                        fontWeight: isSelected ? 'bold' : 'normal',
+                                                        borderBottom: '1px solid var(--border-color)',
+                                                        fontSize: '13px',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <span>{u.username}</span>
+                                                    {isSelected && <span>✓</span>}
+                                                </div>
+                                            );
+                                        })
+                                    }
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">

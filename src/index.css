@@ -26,6 +26,7 @@
             --otp-text: #34d399;
             --otp-bg: rgba(16, 185, 129, 0.15);
             --otp-border: rgba(16, 185, 129, 0.3);
+            --toast-bg: rgba(217, 70, 239, 0.95);
         }
 
         [data-theme="light"] {
@@ -55,6 +56,7 @@
             --otp-text: #047857;
             --otp-bg: rgba(16, 185, 129, 0.08);
             --otp-border: rgba(16, 185, 129, 0.2);
+            --toast-bg: rgba(99, 102, 241, 0.95);
         }
 
 
@@ -1374,6 +1376,23 @@
 
         @keyframes toastFadeOut {
             to { transform: translateY(-10px); opacity: 0; }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg, rgba(99, 102, 241, 0.95));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 99999;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            pointer-events: none;
+            text-align: center;
         }
 
         /* Hover-collapsible sidebar on desktop screens */
