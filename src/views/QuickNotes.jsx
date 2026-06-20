@@ -907,12 +907,21 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                         margin: 0 !important;
                     }
                     .editor-container {
-                        padding: 6px !important;
+                        padding: 0 !important;
+                    }
+                    .editor-card {
+                        border-radius: 0 !important;
+                        border-left: none !important;
+                        border-right: none !important;
+                        border-bottom: none !important;
+                        border-top: 1px solid var(--border-color) !important;
+                        box-shadow: none !important;
                     }
                     .editor-textarea {
-                        padding: 12px !important;
+                        padding: 16px 12px !important;
                         font-size: 16px !important;
                     }
+
                     .toast {
                         bottom: 20px !important;
                         font-size: 13px !important;
