@@ -30,6 +30,13 @@ export default function App() {
     const [authChecked, setAuthChecked] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [authScreen, setAuthScreen] = useState('login'); // login, register, forgot
+    const [theme, setTheme] = useState(() => localStorage.getItem('ghi_theme') || 'dark');
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('ghi_theme', newTheme);
+    };
 
     const pathname = window.location.pathname;
     const isDashboardPath = pathname.startsWith('/dashboard');
@@ -133,14 +140,15 @@ export default function App() {
     // If user is visiting a protected tab but is not logged in, show Auth screens
     if (isTabProtected(activeTab) && !currentUser) {
         return (
-            <div style={{
+            <div data-theme={theme} style={{
                 display: 'flex',
                 minHeight: '100vh',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#03050c',
+                backgroundColor: 'var(--bg-color)',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                width: '100%'
             }}>
                 {/* Background orbs */}
                 <div className="glowing-orb orb-1" style={{ width: '400px', height: '400px', background: '#d946ef', top: '-100px', left: '-100px', opacity: 0.3 }}></div>
@@ -161,11 +169,15 @@ export default function App() {
 
     // Render unified DashboardLayout for both guests (tab === 'notes') and logged in users
     return (
-        <DashboardLayout 
-            currentUser={currentUser} 
-            onLogout={handleLogout} 
-            initialTab={activeTab}
-            initialNoteId={noteId}
-        />
+        <div data-theme={theme} style={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <DashboardLayout 
+                currentUser={currentUser} 
+                onLogout={handleLogout} 
+                initialTab={activeTab}
+                initialNoteId={noteId}
+                theme={theme}
+                toggleTheme={toggleTheme}
+            />
+        </div>
     );
 }
