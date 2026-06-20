@@ -63,6 +63,9 @@ export default function Cards({ currentUser, page, onPageChange }) {
     const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
     const [bulkStatusVal, setBulkStatusVal] = useState('Chưa sử dụng');
 
+    const [viewOpen, setViewOpen] = useState(false);
+    const [viewCardData, setViewCardData] = useState(null);
+
     const fetchCards = async () => {
         setLoading(true);
         let url = `/dashboard/api/cards/?page=${page}&page_size=${pageSize}`;
@@ -146,6 +149,55 @@ export default function Cards({ currentUser, page, onPageChange }) {
             }
         } catch (err) {
             alert('Không thể kết nối máy chủ để cập nhật trạng thái.');
+        }
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Đã copy thành công!');
+        }).catch(err => {
+            alert('Lỗi copy: ' + err);
+        });
+    };
+
+    const copyOriginalRow = (card) => {
+        if (!card) return;
+        const parts = card.expiry_date ? card.expiry_date.split('/') : ['', ''];
+        const m = parts[0] || '';
+        const y = parts[1] || '';
+        
+        let line = `${card.card_number}|${m}|${y}|${card.cvv || ''}`;
+        if (card.extra_info) {
+            line += `|${card.extra_info.split(' | ').join('|')}`;
+        }
+        copyToClipboard(line);
+    };
+
+    const openViewCardModal = async (id) => {
+        try {
+            const resp = await apiRequest(`/dashboard/api/cards/${id}/`);
+            if (resp.ok) {
+                const card = await resp.json();
+                setViewCardData(card);
+                setViewOpen(true);
+                
+                if (card.status !== 'Đang sử dụng') {
+                    // Update status in backend
+                    await apiRequest(`/dashboard/api/cards/${id}/`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ status: 'Đang sử dụng' })
+                    });
+                    // Refresh parent list
+                    fetchCards();
+                    // Update locally shown status to 'Đang sử dụng'
+                    card.status = 'Đang sử dụng';
+                    setViewCardData({ ...card });
+                }
+            } else {
+                alert('Không thể tải chi tiết thẻ.');
+            }
+        } catch (err) {
+            alert('Lỗi kết nối khi tải chi tiết thẻ.');
         }
     };
 
@@ -432,8 +484,14 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                 const stt = (page - 1) * pageSize + index + 1;
 
                                 return (
-                                    <tr key={c.id}>
-                                        <td style={{ textAlign: 'center' }}>
+                                    <tr 
+                                        key={c.id} 
+                                        className={selectedIds.includes(c.id) ? 'row-selected' : ''} 
+                                        onDoubleClick={() => openViewCardModal(c.id)} 
+                                        onClick={() => handleSelectRow(c.id)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                                             <input 
                                                 type="checkbox" 
                                                 className="table-chk" 
@@ -445,7 +503,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                         <td style={{ fontWeight: 600 }}>{formattedNum}</td>
                                         <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.expiry_date || '**/**'}</td>
                                         <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.cvv || '***'}</td>
-                                        <td style={{ textAlign: 'center' }}>
+                                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                                             <select 
                                                 className={`inline-select ${getCardStatusBadgeClass(c.status)}`}
                                                 value={c.status}
@@ -657,6 +715,137 @@ export default function Cards({ currentUser, page, onPageChange }) {
                         <div className="modal-footer">
                             <button className="btn btn-secondary" onClick={() => setBulkStatusOpen(false)}>Hủy</button>
                             <button className="btn btn-primary" onClick={saveBulkStatus}>Cập nhật</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Card Detail Modal */}
+            {viewOpen && viewCardData && (
+                <div className="modal-overlay" style={{ display: 'flex' }} onClick={(e) => { if (e.target.className === 'modal-overlay') setViewOpen(false); }}>
+                    <div className="modal-box">
+                        <div className="modal-header">
+                            <h3>Chi tiết thẻ</h3>
+                            <button className="modal-close" onClick={() => setViewOpen(false)}>&times;</button>
+                        </div>
+                        <div className="modal-body">
+                            {/* ATM CARD WIDGET */}
+                            <div className="atm-card">
+                                <div className="atm-header">
+                                    <div className="atm-chip"></div>
+                                    <span className="atm-brand">PREMIUM CARD</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', margin: '15px 0' }}>
+                                    <div className="atm-number" style={{ margin: 0 }}>
+                                        {(() => {
+                                            const cleanNum = viewCardData.card_number.replace(/\D/g, '');
+                                            return cleanNum.length > 0 ? (cleanNum.match(/.{1,4}/g)?.join('  ') || cleanNum) : 'xxxx xxxx xxxx xxxx';
+                                        })()}
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        className="card-copy-btn" 
+                                        onClick={() => copyToClipboard(viewCardData.card_number)}
+                                        style={{ 
+                                            padding: '4px 8px', 
+                                            fontSize: '11px', 
+                                            background: 'rgba(255,255,255,0.1)', 
+                                            border: '1px solid rgba(255,255,255,0.2)', 
+                                            borderRadius: '4px', 
+                                            color: 'white', 
+                                            cursor: 'pointer', 
+                                            transition: 'all 0.2s' 
+                                        }}
+                                        title="Sao chép số thẻ"
+                                    >
+                                        📋 Copy
+                                    </button>
+                                </div>
+                                <div className="atm-footer" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%' }}>
+                                    <div style={{ display: 'flex', gap: '40px' }}>
+                                        <div className="atm-expiry-section">
+                                            <div className="atm-lbl">EXP</div>
+                                            <div className="atm-val atm-val-large">{viewCardData.expiry_date || 'MM/YY'}</div>
+                                        </div>
+                                        <div className="atm-cvv-section">
+                                            <div className="atm-lbl">CVV</div>
+                                            <div className="atm-val">{viewCardData.cvv || 'xxx'}</div>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        type="button" 
+                                        className="card-copy-btn" 
+                                        onClick={() => copyToClipboard(`${viewCardData.expiry_date || 'MM/YY'} / ${viewCardData.cvv || 'xxx'}`)}
+                                        style={{ 
+                                            padding: '4px 8px', 
+                                            fontSize: '11px', 
+                                            background: 'rgba(255,255,255,0.1)', 
+                                            border: '1px solid rgba(255,255,255,0.2)', 
+                                            borderRadius: '4px', 
+                                            color: 'white', 
+                                            cursor: 'pointer', 
+                                            transition: 'all 0.2s' 
+                                        }}
+                                        title="Sao chép Hạn dùng & CVV"
+                                    >
+                                        📋 Copy Exp/CVV
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="card-row-value" style={{ display: 'none' }}>
+                                <span className="card-row-label">Số thẻ</span>
+                                <span className="card-val-text">{viewCardData.card_number}</span>
+                            </div>
+                            <div className="card-row-value" style={{ display: 'none' }}>
+                                <span className="card-row-label">Hạn dùng & CVV</span>
+                                <span className="card-val-text">{`${viewCardData.expiry_date || 'MM/YY'} / ${viewCardData.cvv || 'xxx'}`}</span>
+                            </div>
+                            <div className="card-row-value">
+                                <span className="card-row-label">Sở hữu bởi</span>
+                                <span className="card-val-text">{viewCardData.owner_username || 'Chưa chỉ định'}</span>
+                                <span style={{ width: '78px' }}></span>
+                            </div>
+                            <div className="card-row-value">
+                                <span className="card-row-label">Sử dụng gần nhất</span>
+                                <span className="card-val-text">{viewCardData.used_by_username || '-'}</span>
+                                <span style={{ width: '78px' }}></span>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Billing/Thông tin thêm</label>
+                                <textarea 
+                                    className="form-textarea" 
+                                    value={viewCardData.extra_info || 'Không có thông tin thêm.'}
+                                    readOnly 
+                                    style={{ background: 'rgba(255,255,255,0.01)', borderColor: 'rgba(255,255,255,0.02)', color: '#cbd5e1' }}
+                                ></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Thay đổi trạng thái thẻ</label>
+                                <select 
+                                    className="filter-select" 
+                                    value={viewCardData.status} 
+                                    style={{ width: '100%' }} 
+                                    onChange={async (e) => {
+                                        const newStatus = e.target.value;
+                                        await updateCardStatusInline(viewCardData.id, newStatus);
+                                        setViewCardData({ ...viewCardData, status: newStatus });
+                                    }}
+                                >
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ sống">Thẻ sống</option>
+                                    <option value="Thẻ tốt">Thẻ tốt</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub OK">Sub OK</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => copyOriginalRow(viewCardData)}>Sao chép dòng gốc</button>
+                            <button className="btn btn-primary" onClick={() => setViewOpen(false)}>Đóng</button>
                         </div>
                     </div>
                 </div>
