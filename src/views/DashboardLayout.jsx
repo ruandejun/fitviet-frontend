@@ -85,6 +85,49 @@ async function calculateTotp(secret) {
 import QuickNotes from './QuickNotes';
 import { US_ADDRESSES, US_FIRST_NAMES, US_LAST_NAMES, US_AREA_CODES, US_STATE_NAMES, randItem, generateUSPhone } from './usAddressData';
 
+// Polyfill clipboard for non-secure HTTP contexts
+try {
+    if (!navigator.clipboard) {
+        const fallbackClipboard = {
+            writeText: (text) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = text;
+                        textArea.style.top = "0";
+                        textArea.style.left = "0";
+                        textArea.style.position = "fixed";
+                        textArea.style.opacity = "0";
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        const successful = document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        if (successful) {
+                            resolve();
+                        } else {
+                            reject(new Error("Fallback copy failed"));
+                        }
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+            }
+        };
+        try {
+            Object.defineProperty(navigator, 'clipboard', {
+                value: fallbackClipboard,
+                configurable: true,
+                writable: true
+            });
+        } catch (err) {
+            navigator.clipboard = fallbackClipboard;
+        }
+    }
+} catch (e) {
+    console.warn("Failed to polyfill navigator.clipboard:", e);
+}
+
 export default function DashboardLayout({ currentUser, onLogout, initialTab, initialNoteId, theme, toggleTheme }) {
     // Helper to get initial URL parameters synchronously
     const getInitialUrlState = () => {
