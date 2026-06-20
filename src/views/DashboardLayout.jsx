@@ -969,8 +969,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
             {/* Sidebar */}
             <div className={`sidebar ${sidebarVisible ? 'active' : ''}`} style={{ display: 'flex' }}>
-                <div>
-                    <a href="#" onClick={(e) => { e.preventDefault(); handleSwitchTab('overview'); }} className="sidebar-brand" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); handleSwitchTab('overview'); }} className="sidebar-brand" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                         <span className="menu-icon" style={{ fontSize: '20px' }}>🚀</span>
                         <h1 className="menu-text">fitviet</h1>
                     </a>
@@ -1031,7 +1030,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             <span className="menu-icon">🔑</span><span className="menu-text">Trình tạo 2FA</span>
                         </a>
                     </div>
-                </div>
                 <div className="sidebar-footer" style={{ padding: '15px' }}>
                     {currentUser ? (
                         <>
@@ -1197,7 +1195,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                 </div>
 
                 {/* View Content Porting - Keep-alive pattern with visited-tabs check */}
-                <div className="view-content-wrapper" style={{ 
+                <div className={`view-content-wrapper ${currentTab === 'notes' ? 'notes-tab-content' : ''}`} style={{ 
                     flex: 1, 
                     overflow: currentTab === 'notes' ? 'hidden' : 'auto', 
                     padding: currentTab === 'notes' ? '0' : '24px', 
