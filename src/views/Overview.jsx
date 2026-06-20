@@ -8,7 +8,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 const getCardStatusBadgeClass = (status) => {
     const map = {
         'Chưa sử dụng': 'badge-unused',
-        'Đang sử dụng': 'badge-in-use',
+        'Đang sử dụng': 'badge-active',
         'Thẻ chết': 'badge-dead',
         'Thẻ sống': 'badge-live',
         'Thẻ tốt': 'badge-good',

@@ -554,6 +554,28 @@
             font-weight: 600;
         }
 
+        /* Inline & filter select status colors */
+        .inline-select.badge-unused, .filter-select.badge-unused { background: #1e293b !important; color: #94a3b8 !important; border: 1px solid #334155 !important; }
+        .inline-select.badge-active, .filter-select.badge-active { background: #7c2d12 !important; color: #fdba74 !important; border: 1px solid #ea580c !important; }
+        .inline-select.badge-used, .filter-select.badge-used { background: #4c1d95 !important; color: #c084fc !important; border: 1px solid #7c3aed !important; }
+        .inline-select.badge-dead, .filter-select.badge-dead { background: #7f1d1d !important; color: #fca5a5 !important; border: 1px solid #dc2626 !important; }
+        .inline-select.badge-live, .filter-select.badge-live { background: #064e3b !important; color: #6ee7b7 !important; border: 1px solid #059669 !important; }
+        .inline-select.badge-good, .filter-select.badge-good { background: #115e59 !important; color: #2dd4bf !important; border: 1px solid #0f766e !important; }
+        .inline-select.badge-error, .filter-select.badge-error { background: #991b1b !important; color: #fca5a5 !important; border: 1px solid #ef4444 !important; }
+        .inline-select.badge-sub-ok, .filter-select.badge-sub-ok { background: #065f46 !important; color: #a7f3d0 !important; border: 1px solid #10b981 !important; }
+        .inline-select.badge-sub-error, .filter-select.badge-sub-error { background: #9f1239 !important; color: #fecdd3 !important; border: 1px solid #f43f5e !important; }
+
+        /* Option specific styling for status dropdowns */
+        select option.badge-unused { background-color: #1e293b; color: #94a3b8; }
+        select option.badge-active { background-color: #7c2d12; color: #fdba74; }
+        select option.badge-used { background-color: #4c1d95; color: #c084fc; }
+        select option.badge-dead { background-color: #7f1d1d; color: #fca5a5; }
+        select option.badge-live { background-color: #064e3b; color: #6ee7b7; }
+        select option.badge-good { background-color: #115e59; color: #2dd4bf; }
+        select option.badge-error { background-color: #991b1b; color: #fca5a5; }
+        select option.badge-sub-ok { background-color: #065f46; color: #a7f3d0; }
+        select option.badge-sub-error { background-color: #9f1239; color: #fecdd3; }
+
         /* PAGINATION */
         .pagination {
             display: flex;

@@ -5,7 +5,7 @@ import Pagination from '../components/Pagination';
 const getCardStatusBadgeClass = (status) => {
     const map = {
         'Chưa sử dụng': 'badge-unused',
-        'Đang sử dụng': 'badge-in-use',
+        'Đang sử dụng': 'badge-active',
         'Thẻ chết': 'badge-dead',
         'Thẻ sống': 'badge-live',
         'Thẻ tốt': 'badge-good',
@@ -397,15 +397,15 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <select className="filter-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option value="Chưa sử dụng">Chưa sử dụng</option>
-                        <option value="Đang sử dụng">Đang sử dụng</option>
-                        <option value="Thẻ chết">Thẻ chết</option>
-                        <option value="Thẻ sống">Thẻ sống</option>
-                        <option value="Thẻ tốt">Thẻ tốt</option>
-                        <option value="Thẻ lỗi">Thẻ lỗi</option>
-                        <option value="Sub OK">Sub OK</option>
-                        <option value="Sub lỗi">Sub lỗi</option>
+                    <select className={`filter-select ${getCardStatusBadgeClass(status)}`} value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                        <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                        <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                        <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                        <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                        <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                        <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                        <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                         <option value="Tất cả">Tất cả</option>
                     </select>
                     {currentUser.is_staff && (
@@ -509,14 +509,14 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                                 value={c.status}
                                                 onChange={(e) => updateCardStatusInline(c.id, e.target.value)}
                                             >
-                                                <option value="Chưa sử dụng">Chưa sử dụng</option>
-                                                <option value="Đang sử dụng">Đang sử dụng</option>
-                                                <option value="Thẻ chết">Thẻ chết</option>
-                                                <option value="Thẻ sống">Thẻ sống</option>
-                                                <option value="Thẻ tốt">Thẻ tốt</option>
-                                                <option value="Thẻ lỗi">Thẻ lỗi</option>
-                                                <option value="Sub OK">Sub OK</option>
-                                                <option value="Sub lỗi">Sub lỗi</option>
+                                                <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                                                <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                                                <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                                                <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                                                <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                                                <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                                                <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                                                <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                                             </select>
                                         </td>
                                         <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--accent)' }}>{c.owner_username || 'Chưa chỉ định'}</td>
@@ -560,15 +560,15 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Trạng thái thẻ ban đầu</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={importStatus} onChange={(e) => setImportStatus(e.target.value)}>
-                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
-                                    <option value="Đang sử dụng">Đang sử dụng</option>
-                                    <option value="Thẻ chết">Thẻ chết</option>
-                                    <option value="Thẻ sống">Thẻ sống</option>
-                                    <option value="Thẻ tốt">Thẻ tốt</option>
-                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
-                                    <option value="Sub OK">Sub OK</option>
-                                    <option value="Sub lỗi">Sub lỗi</option>
+                                <select className={`filter-select ${getCardStatusBadgeClass(importStatus)}`} style={{ width: '100%' }} value={importStatus} onChange={(e) => setImportStatus(e.target.value)}>
+                                    <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                                    <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                                    <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                                    <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                                    <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                                    <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                                 </select>
                             </div>
                             <div className="form-group">
@@ -646,15 +646,15 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Trạng thái</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={editCardStatus} onChange={(e) => setEditCardStatus(e.target.value)}>
-                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
-                                    <option value="Đang sử dụng">Đang sử dụng</option>
-                                    <option value="Thẻ chết">Thẻ chết</option>
-                                    <option value="Thẻ sống">Thẻ sống</option>
-                                    <option value="Thẻ tốt">Thẻ tốt</option>
-                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
-                                    <option value="Sub OK">Sub OK</option>
-                                    <option value="Sub lỗi">Sub lỗi</option>
+                                <select className={`filter-select ${getCardStatusBadgeClass(editCardStatus)}`} style={{ width: '100%' }} value={editCardStatus} onChange={(e) => setEditCardStatus(e.target.value)}>
+                                    <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                                    <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                                    <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                                    <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                                    <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                                    <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                                 </select>
                             </div>
                             <div className="form-row">
@@ -700,15 +700,15 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Trạng thái mới</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={bulkStatusVal} onChange={(e) => setBulkStatusVal(e.target.value)}>
-                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
-                                    <option value="Đang sử dụng">Đang sử dụng</option>
-                                    <option value="Thẻ chết">Thẻ chết</option>
-                                    <option value="Thẻ sống">Thẻ sống</option>
-                                    <option value="Thẻ tốt">Thẻ tốt</option>
-                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
-                                    <option value="Sub OK">Sub OK</option>
-                                    <option value="Sub lỗi">Sub lỗi</option>
+                                <select className={`filter-select ${getCardStatusBadgeClass(bulkStatusVal)}`} style={{ width: '100%' }} value={bulkStatusVal} onChange={(e) => setBulkStatusVal(e.target.value)}>
+                                    <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                                    <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                                    <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                                    <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                                    <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                                    <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                                 </select>
                             </div>
                         </div>
@@ -823,7 +823,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             <div className="form-group">
                                 <label className="form-label">Thay đổi trạng thái thẻ</label>
                                 <select 
-                                    className="filter-select" 
+                                    className={`filter-select ${getCardStatusBadgeClass(viewCardData.status)}`} 
                                     value={viewCardData.status} 
                                     style={{ width: '100%' }} 
                                     onChange={async (e) => {
@@ -832,14 +832,14 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                         setViewCardData({ ...viewCardData, status: newStatus });
                                     }}
                                 >
-                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
-                                    <option value="Đang sử dụng">Đang sử dụng</option>
-                                    <option value="Thẻ chết">Thẻ chết</option>
-                                    <option value="Thẻ sống">Thẻ sống</option>
-                                    <option value="Thẻ tốt">Thẻ tốt</option>
-                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
-                                    <option value="Sub OK">Sub OK</option>
-                                    <option value="Sub lỗi">Sub lỗi</option>
+                                    <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
+                                    <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
+                                    <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
+                                    <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
+                                    <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
+                                    <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
                                 </select>
                             </div>
                         </div>
