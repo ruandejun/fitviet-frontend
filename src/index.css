@@ -1853,4 +1853,15 @@
             }
         }
 
-
+        /* Responsive 2-column grid for Email retrieval / info modal */
+        .email-get-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 576px) {
+            .email-get-grid-2col {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }

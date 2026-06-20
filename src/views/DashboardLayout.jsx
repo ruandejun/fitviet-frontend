@@ -158,6 +158,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
     // Email Getter -> Tab Address states
     const [tabAddressData, setTabAddressData] = useState({ name: '—', address: '—', city: '—', state: '—', zip: '—', phone: '—' });
+    const [copiedTabField, setCopiedTabField] = useState(null);
 
     // Status On Close Selection
     const [modalStatusSelect, setModalStatusSelect] = useState('');
@@ -634,12 +635,15 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
             zip: addr.zip,
             phone: phone
         });
+        setCopiedTabField(null);
     };
 
-    const handleCopyTabAddressField = (text) => {
+    const handleCopyTabAddressField = (field, text) => {
         if (text === '—') return;
         navigator.clipboard.writeText(text).then(() => {
             triggerToast(`Đã copy: ${text}`);
+            setCopiedTabField(field);
+            setTimeout(() => setCopiedTabField(null), 2000);
         });
     };
 
@@ -1466,18 +1470,23 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                 <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
                                     <div>
                                         {Object.entries(tabAddressData).map(([key, val]) => (
-                                            <div className="addr-field" style={{ padding: '8px 0', borderBottom: '1px solid var(--border-color)', background: 'transparent' }} key={key}>
-                                                <div>
-                                                    <div className="addr-field-label" style={{ fontSize: '11px' }}>
+                                            <div className="addr-field" key={key}>
+                                                <div className="addr-field-info">
+                                                    <div className="addr-field-label">
                                                         {key === 'name' ? 'Họ và tên (Full Name)' :
                                                          key === 'address' ? 'Địa chỉ (Address)' :
                                                          key === 'city' ? 'Thành phố (City)' :
                                                          key === 'state' ? 'Bang (State)' :
                                                          key === 'zip' ? 'Mã bưu chính (Zip Code)' : 'Số điện thoại (Phone)'}
                                                     </div>
-                                                    <div className="addr-field-value" style={{ fontSize: '14px', color: 'var(--text-color)' }}>{val}</div>
+                                                    <div className="addr-field-value">{val}</div>
                                                 </div>
-                                                <button className="btn btn-secondary" onClick={() => handleCopyTabAddressField(val)} style={{ padding: '4px 8px', fontSize: '11px', height: '26px' }}>📋 Copy</button>
+                                                <button
+                                                    className={`addr-copy-btn ${copiedTabField === key ? 'copied' : ''}`}
+                                                    onClick={() => handleCopyTabAddressField(key, val)}
+                                                >
+                                                    {copiedTabField === key ? '✅ Đã copy' : '📋 Copy'}
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
