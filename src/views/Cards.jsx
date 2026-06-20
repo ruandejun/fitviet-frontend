@@ -1,0 +1,666 @@
+import React, { useState, useEffect } from 'react';
+import { apiRequest } from '../api';
+import Pagination from '../components/Pagination';
+
+const getCardStatusBadgeClass = (status) => {
+    const map = {
+        'Chưa sử dụng': 'badge-unused',
+        'Đang sử dụng': 'badge-in-use',
+        'Thẻ chết': 'badge-dead',
+        'Thẻ sống': 'badge-live',
+        'Thẻ tốt': 'badge-good',
+        'Thẻ lỗi': 'badge-error',
+        'Sub OK': 'badge-sub-ok',
+        'Sub lỗi': 'badge-sub-error'
+    };
+    return map[status] || 'badge-unused';
+};
+
+const formatDateString = (str) => {
+    if (!str) return '-';
+    try {
+        const d = new Date(str);
+        return d.toLocaleString('vi-VN');
+    } catch {
+        return str;
+    }
+};
+
+export default function Cards({ currentUser, page, onPageChange }) {
+    const [cards, setCards] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [count, setCount] = useState(0);
+    const [pageSize, setPageSize] = useState(20);
+    
+    // Filters
+    const [search, setSearch] = useState('');
+    const [status, setStatus] = useState('Tất cả');
+    const [owner, setOwner] = useState('all');
+    const [clients, setClients] = useState([]);
+
+    // Selection
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    // Modals
+    const [importOpen, setImportOpen] = useState(false);
+    const [importText, setImportText] = useState('');
+    const [importStatus, setImportStatus] = useState('Chưa sử dụng');
+    const [importOwner, setImportOwner] = useState('');
+    const [importLoading, setImportLoading] = useState(false);
+
+    const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+    const [bulkAssignOwner, setBulkAssignOwner] = useState('');
+
+    const [editOpen, setEditOpen] = useState(false);
+    const [editCardId, setEditCardId] = useState(null);
+    const [editCardNumber, setEditCardNumber] = useState('');
+    const [editCardExpiry, setEditCardExpiry] = useState('');
+    const [editCardCVV, setEditCardCVV] = useState('');
+    const [editCardStatus, setEditCardStatus] = useState('Chưa sử dụng');
+    const [editCardOwner, setEditCardOwner] = useState('');
+    const [editCardUsedBy, setEditCardUsedBy] = useState('');
+
+    const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+    const [bulkStatusVal, setBulkStatusVal] = useState('Chưa sử dụng');
+
+    const fetchCards = async () => {
+        setLoading(true);
+        let url = `/dashboard/api/cards/?page=${page}&page_size=${pageSize}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (status && status !== 'Tất cả') url += `&status=${encodeURIComponent(status)}`;
+        if (owner && owner !== 'all') url += `&owner=${owner}`;
+
+        try {
+            const resp = await apiRequest(url);
+            if (resp.ok) {
+                const data = await resp.json();
+                setCards(data.results || data);
+                setCount(data.count || (data.results || data).length);
+            }
+        } catch (err) {
+            console.error("Error loading cards:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchClients = async () => {
+        if (!currentUser.is_staff) return;
+        try {
+            const resp = await apiRequest('/dashboard/api/users/?role=user');
+            if (resp.ok) {
+                const data = await resp.json();
+                setClients(data.results || data);
+            }
+        } catch (err) {
+            console.error("Error fetching clients:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchCards();
+    }, [page, pageSize, status, owner]);
+
+    // Handle search input with a slight debounce or direct trigger
+    useEffect(() => {
+        const t = setTimeout(() => {
+            if (page !== 1) {
+                onPageChange(1);
+            } else {
+                fetchCards();
+            }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    useEffect(() => {
+        fetchClients();
+    }, []);
+
+    const toggleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedIds(cards.map(c => c.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectRow = (id) => {
+        if (selectedIds.includes(id)) {
+            setSelectedIds(selectedIds.filter(x => x !== id));
+        } else {
+            setSelectedIds([...selectedIds, id]);
+        }
+    };
+
+    const updateCardStatusInline = async (id, newStatus) => {
+        try {
+            const response = await apiRequest(`/dashboard/api/cards/${id}/`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: newStatus })
+            });
+            if (response.ok) {
+                setCards(cards.map(c => c.id === id ? { ...c, status: newStatus } : c));
+            } else {
+                alert('Lỗi cập nhật trạng thái thẻ.');
+            }
+        } catch (err) {
+            alert('Không thể kết nối máy chủ để cập nhật trạng thái.');
+        }
+    };
+
+    // Bulk delete
+    const deleteSelectedCards = async () => {
+        if (selectedIds.length === 0) return;
+        const confirmDel = confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} thẻ đã chọn khỏi hệ thống không?`);
+        if (!confirmDel) return;
+
+        try {
+            const deletePromises = selectedIds.map(id => {
+                return apiRequest(`/dashboard/api/cards/${id}/`, {
+                    method: 'DELETE'
+                });
+            });
+            await Promise.all(deletePromises);
+            alert('Đã xóa thành công các thẻ đã chọn!');
+            setSelectedIds([]);
+            fetchCards();
+        } catch (err) {
+            alert('Lỗi khi xóa thẻ.');
+        }
+    };
+
+    // Import Cards
+    const saveImportedCards = async () => {
+        if (!importText.trim()) {
+            alert('Vui lòng nhập dữ liệu thẻ.');
+            return;
+        }
+
+        const lines = importText.split('\n');
+        const savePromises = [];
+
+        for (let line of lines) {
+            line = line.trim();
+            if (!line) continue;
+
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 1) {
+                const card_number = parts[0].replace(/\D/g, '');
+                const isValid = (card_number.length === 15 || card_number.length === 16) && ['3','4','5','6'].includes(card_number[0]);
+                
+                if (isValid) {
+                    let expiry_date = '';
+                    if (parts.length >= 3) expiry_date = `${parts[1]}/${parts[2]}`;
+                    
+                    let cvv = '';
+                    if (parts.length >= 4) cvv = parts[3];
+                    
+                    let extra_info = '';
+                    if (parts.length >= 5) extra_info = parts.slice(4).join(' | ');
+
+                    const payload = { card_number, expiry_date, cvv, status: importStatus, extra_info };
+                    if (importOwner) payload.owner = parseInt(importOwner);
+
+                    savePromises.push(
+                        apiRequest('/dashboard/api/cards/', {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        })
+                    );
+                }
+            }
+        }
+
+        if (savePromises.length === 0) {
+            alert('Không phát hiện dòng thẻ nào hợp lệ (số thẻ phải dài 15-16 chữ số và bắt đầu bằng 3, 4, 5, hoặc 6).');
+            return;
+        }
+
+        setImportLoading(true);
+
+        try {
+            await Promise.all(savePromises);
+            alert(`Đã hoàn tất import ${savePromises.length} thẻ vào cơ sở dữ liệu!`);
+            setImportOpen(false);
+            setImportText('');
+            fetchCards();
+        } catch (err) {
+            alert('Lỗi trong tiến trình import thẻ.');
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
+    // Bulk assign owner
+    const saveBulkAssign = async () => {
+        const payload = {
+            card_ids: selectedIds,
+            owner_id: bulkAssignOwner ? parseInt(bulkAssignOwner) : null
+        };
+
+        try {
+            const resp = await apiRequest('/dashboard/api/cards/bulk-assign/', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+                alert(`Đã gán sở hữu thành công cho ${selectedIds.length} thẻ.`);
+                setBulkAssignOpen(false);
+                setSelectedIds([]);
+                fetchCards();
+            }
+        } catch (err) {
+            alert('Lỗi gán sở hữu.');
+        }
+    };
+
+    // Bulk Status
+    const saveBulkStatus = async () => {
+        const payload = {
+            card_ids: selectedIds,
+            status: bulkStatusVal
+        };
+
+        try {
+            const resp = await apiRequest('/dashboard/api/cards/bulk-status/', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+                alert(`Đã cập nhật trạng thái thành công cho ${selectedIds.length} thẻ.`);
+                setBulkStatusOpen(false);
+                setSelectedIds([]);
+                fetchCards();
+            }
+        } catch (err) {
+            alert('Lỗi cập nhật trạng thái.');
+        }
+    };
+
+    // Open Edit card
+    const openEditModal = async () => {
+        if (selectedIds.length !== 1) return;
+        const id = selectedIds[0];
+        try {
+            const resp = await apiRequest(`/dashboard/api/cards/${id}/`);
+            if (resp.ok) {
+                const card = await resp.json();
+                setEditCardId(id);
+                setEditCardNumber(card.card_number);
+                setEditCardExpiry(card.expiry_date || '');
+                setEditCardCVV(card.cvv || '');
+                setEditCardStatus(card.status);
+                setEditCardOwner(card.owner || '');
+                setEditCardUsedBy(card.used_by || '');
+                setEditOpen(true);
+            }
+        } catch (err) {
+            alert('Lỗi tải thông tin thẻ.');
+        }
+    };
+
+    const saveEditCard = async () => {
+        const payload = {
+            card_number: editCardNumber,
+            expiry_date: editCardExpiry,
+            cvv: editCardCVV,
+            status: editCardStatus,
+            owner: editCardOwner ? parseInt(editCardOwner) : null,
+            used_by: editCardUsedBy ? parseInt(editCardUsedBy) : null
+        };
+
+        try {
+            const resp = await apiRequest(`/dashboard/api/cards/${editCardId}/`, {
+                method: 'PATCH',
+                body: JSON.stringify(payload)
+            });
+            if (resp.ok) {
+                alert('Cập nhật thẻ thành công!');
+                setEditOpen(false);
+                setSelectedIds([]);
+                fetchCards();
+            }
+        } catch (err) {
+            alert('Lỗi lưu thẻ.');
+        }
+    };
+
+    // Pagination Calculation
+    const fromVal = count === 0 ? 0 : (page - 1) * pageSize + 1;
+    const toVal = Math.min(page * pageSize, count);
+    const prevDisabled = page <= 1;
+    const nextDisabled = page * pageSize >= count;
+
+    return (
+        <div>
+            <div className="control-bar">
+                <div className="control-filters">
+                    <div className="search-box">
+                        <input 
+                            type="text" 
+                            className="search-input" 
+                            placeholder="Tìm kiếm số thẻ..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <select className="filter-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <option value="Chưa sử dụng">Chưa sử dụng</option>
+                        <option value="Đang sử dụng">Đang sử dụng</option>
+                        <option value="Thẻ chết">Thẻ chết</option>
+                        <option value="Thẻ sống">Thẻ sống</option>
+                        <option value="Thẻ tốt">Thẻ tốt</option>
+                        <option value="Thẻ lỗi">Thẻ lỗi</option>
+                        <option value="Sub OK">Sub OK</option>
+                        <option value="Sub lỗi">Sub lỗi</option>
+                        <option value="Tất cả">Tất cả</option>
+                    </select>
+                    {currentUser.is_staff && (
+                        <select className="filter-select" value={owner} onChange={(e) => setOwner(e.target.value)}>
+                            <option value="all">Tất cả chủ sở hữu</option>
+                            <option value="unassigned">Chưa chỉ định</option>
+                            {clients.map(u => (
+                                <option key={u.id} value={u.id}>{u.username}</option>
+                            ))}
+                        </select>
+                    )}
+                    <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(parseInt(e.target.value)); onPageChange(1); }}>
+                        <option value={20}>20 dòng</option>
+                        <option value={50}>50 dòng</option>
+                        <option value={100}>100 dòng</option>
+                    </select>
+                </div>
+                <div className="action-buttons">
+                    <button className="btn btn-secondary" onClick={fetchCards}>Làm mới</button>
+                    {currentUser.is_staff && (
+                        <>
+                            <button className="btn btn-success" onClick={() => setImportOpen(true)}>Thêm thẻ</button>
+                            <button className="btn btn-primary" onClick={() => setBulkAssignOpen(true)} disabled={selectedIds.length === 0}>Sở hữu</button>
+                            <button className="btn btn-primary" onClick={openEditModal} disabled={selectedIds.length !== 1}>Sửa</button>
+                            <button className="btn btn-danger" onClick={deleteSelectedCards} disabled={selectedIds.length === 0}>Xóa</button>
+                            <button className="btn btn-warning" onClick={() => setBulkStatusOpen(true)} disabled={selectedIds.length === 0}>Đổi trạng thái</button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <div className="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style={{ width: '50px', textAlign: 'center' }}>
+                                <input 
+                                    type="checkbox" 
+                                    className="table-chk" 
+                                    checked={cards.length > 0 && selectedIds.length === cards.length}
+                                    onChange={toggleSelectAll} 
+                                />
+                            </th>
+                            <th style={{ width: '60px', textAlign: 'center' }}>STT</th>
+                            <th>Số thẻ</th>
+                            <th style={{ textAlign: 'center' }}>Ngày hết hạn</th>
+                            <th style={{ textAlign: 'center' }}>CVV</th>
+                            <th style={{ textAlign: 'center' }}>Trạng thái</th>
+                            <th style={{ textAlign: 'center' }}>Sở hữu bởi</th>
+                            <th style={{ textAlign: 'center' }}>Sử dụng gần nhất</th>
+                            <th style={{ textAlign: 'center' }}>Ngày tạo</th>
+                            <th style={{ textAlign: 'center' }}>Ngày cập nhật</th>
+                            <th style={{ textAlign: 'center' }}>Giao dịch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                                    Đang tải danh sách thẻ...
+                                </td>
+                            </tr>
+                        ) : cards.length === 0 ? (
+                            <tr>
+                                <td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                                    Không tìm thấy thẻ nào phù hợp.
+                                </td>
+                            </tr>
+                        ) : (
+                            cards.map((c, index) => {
+                                const masked = c.card_number.replace(/\D/g, '');
+                                let formattedNum = c.card_number;
+                                if (masked.length >= 15) {
+                                    formattedNum = `${masked.substring(0, 4)} ${masked.substring(4, 6)}** **** ${masked.substring(masked.length - 4)}`;
+                                }
+                                const stt = (page - 1) * pageSize + index + 1;
+
+                                return (
+                                    <tr key={c.id}>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                className="table-chk" 
+                                                checked={selectedIds.includes(c.id)}
+                                                onChange={() => handleSelectRow(c.id)}
+                                            />
+                                        </td>
+                                        <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--text-muted)' }}>{stt}</td>
+                                        <td style={{ fontWeight: 600 }}>{formattedNum}</td>
+                                        <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.expiry_date || '**/**'}</td>
+                                        <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>{c.cvv || '***'}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <select 
+                                                className={`inline-select ${getCardStatusBadgeClass(c.status)}`}
+                                                value={c.status}
+                                                onChange={(e) => updateCardStatusInline(c.id, e.target.value)}
+                                            >
+                                                <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                                <option value="Đang sử dụng">Đang sử dụng</option>
+                                                <option value="Thẻ chết">Thẻ chết</option>
+                                                <option value="Thẻ sống">Thẻ sống</option>
+                                                <option value="Thẻ tốt">Thẻ tốt</option>
+                                                <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                                <option value="Sub OK">Sub OK</option>
+                                                <option value="Sub lỗi">Sub lỗi</option>
+                                            </select>
+                                        </td>
+                                        <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--accent)' }}>{c.owner_username || 'Chưa chỉ định'}</td>
+                                        <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--success)' }}>{c.used_by_username || '-'}</td>
+                                        <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>{formatDateString(c.created_at)}</td>
+                                        <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>{formatDateString(c.updated_at)}</td>
+                                        <td style={{ textAlign: 'center', fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent)' }}>{c.used_count}</td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination 
+                infoText={`Hiển thị ${fromVal} - ${toVal} của ${count}`}
+                onPrev={() => onPageChange(page - 1)}
+                onNext={() => onPageChange(page + 1)}
+                prevDisabled={prevDisabled}
+                nextDisabled={nextDisabled}
+            />
+
+            {/* Import Cards Modal */}
+            {importOpen && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box modal-large">
+                        <div className="modal-header">
+                            <h3>Nhập/Import danh sách thẻ mới</h3>
+                            <button className="modal-close" onClick={() => setImportOpen(false)}>&times;</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Dữ liệu thẻ (Mỗi thẻ 1 dòng, định dạng: Số thẻ|Tháng|Năm|CVV|Tên...)</label>
+                                <textarea 
+                                    className="form-textarea" 
+                                    placeholder="4147098472726991|03|27|502|David Miranda|Hendersonton|Ohio|88313|US"
+                                    value={importText}
+                                    onChange={(e) => setImportText(e.target.value)}
+                                ></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Trạng thái thẻ ban đầu</label>
+                                <select className="filter-select" style={{ width: '100%' }} value={importStatus} onChange={(e) => setImportStatus(e.target.value)}>
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ sống">Thẻ sống</option>
+                                    <option value="Thẻ tốt">Thẻ tốt</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub OK">Sub OK</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Sở hữu bởi (Owner)</label>
+                                <select className="filter-select" style={{ width: '100%' }} value={importOwner} onChange={(e) => setImportOwner(e.target.value)}>
+                                    <option value="">-- Không chỉ định --</option>
+                                    {clients.map(u => (
+                                        <option key={u.id} value={u.id}>{u.username}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setImportOpen(false)}>Hủy</button>
+                            <button className="btn btn-success" onClick={saveImportedCards} disabled={importLoading}>
+                                {importLoading ? 'Đang xử lý...' : 'Nhập thẻ'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Assign Owner Modal */}
+            {bulkAssignOpen && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box">
+                        <div className="modal-header">
+                            <h3>Gán sở hữu hàng loạt</h3>
+                            <button className="modal-close" onClick={() => setBulkAssignOpen(false)}>&times;</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Đang chọn {selectedIds.length} thẻ</label>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Chỉ định sở hữu bởi</label>
+                                <select className="filter-select" style={{ width: '100%' }} value={bulkAssignOwner} onChange={(e) => setBulkAssignOwner(e.target.value)}>
+                                    <option value="">-- Không chỉ định --</option>
+                                    {clients.map(u => (
+                                        <option key={u.id} value={u.id}>{u.username}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setBulkAssignOpen(false)}>Hủy</button>
+                            <button className="btn btn-primary" onClick={saveBulkAssign}>Gán sở hữu</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Card Modal */}
+            {editOpen && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box">
+                        <div className="modal-header">
+                            <h3>Chỉnh sửa thẻ</h3>
+                            <button className="modal-close" onClick={() => setEditOpen(false)}>&times;</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Số thẻ</label>
+                                <input type="text" className="form-input" value={editCardNumber} onChange={(e) => setEditCardNumber(e.target.value)} required />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Ngày hết hạn (MM/YY)</label>
+                                    <input type="text" className="form-input" value={editCardExpiry} onChange={(e) => setEditCardExpiry(e.target.value)} placeholder="03/27" />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">CVV</label>
+                                    <input type="text" className="form-input" value={editCardCVV} onChange={(e) => setEditCardCVV(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Trạng thái</label>
+                                <select className="filter-select" style={{ width: '100%' }} value={editCardStatus} onChange={(e) => setEditCardStatus(e.target.value)}>
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ sống">Thẻ sống</option>
+                                    <option value="Thẻ tốt">Thẻ tốt</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub OK">Sub OK</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </select>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Sở hữu bởi</label>
+                                    <select className="filter-select" style={{ width: '100%' }} value={editCardOwner} onChange={(e) => setEditCardOwner(e.target.value)}>
+                                        <option value="">-- Không chỉ định --</option>
+                                        {clients.map(u => (
+                                            <option key={u.id} value={u.id}>{u.username}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Sử dụng gần nhất</label>
+                                    <select className="filter-select" style={{ width: '100%' }} value={editCardUsedBy} onChange={(e) => setEditCardUsedBy(e.target.value)}>
+                                        <option value="">-- Không chỉ định --</option>
+                                        {clients.map(u => (
+                                            <option key={u.id} value={u.id}>{u.username}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setEditOpen(false)}>Hủy</button>
+                            <button className="btn btn-primary" onClick={saveEditCard}>Lưu thay đổi</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Status Modal */}
+            {bulkStatusOpen && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box">
+                        <div className="modal-header">
+                            <h3>Đổi trạng thái hàng loạt</h3>
+                            <button className="modal-close" onClick={() => setBulkStatusOpen(false)}>&times;</button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="form-label">Đang chọn {selectedIds.length} thẻ</label>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Trạng thái mới</label>
+                                <select className="filter-select" style={{ width: '100%' }} value={bulkStatusVal} onChange={(e) => setBulkStatusVal(e.target.value)}>
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ sống">Thẻ sống</option>
+                                    <option value="Thẻ tốt">Thẻ tốt</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub OK">Sub OK</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-secondary" onClick={() => setBulkStatusOpen(false)}>Hủy</button>
+                            <button className="btn btn-primary" onClick={saveBulkStatus}>Cập nhật</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
