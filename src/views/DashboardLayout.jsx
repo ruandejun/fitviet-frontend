@@ -834,7 +834,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             td.classList.add('cell-chk');
                         }
                         
-                        if (label && label !== 'STT' && !td.querySelector('input[type="checkbox"]') && !td.classList.contains('cell-chk')) {
+                        if (label && label !== 'STT' && label !== '#' && !td.querySelector('input[type="checkbox"]') && !td.classList.contains('cell-chk')) {
                             td.setAttribute('data-label', label);
                         } else {
                             td.removeAttribute('data-label');
@@ -1197,7 +1197,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                 </div>
 
                 {/* View Content Porting - Keep-alive pattern with visited-tabs check */}
-                <div style={{ 
+                <div className="view-content-wrapper" style={{ 
                     flex: 1, 
                     overflow: currentTab === 'notes' ? 'hidden' : 'auto', 
                     padding: currentTab === 'notes' ? '0' : '24px', 

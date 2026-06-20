@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api';
 import Pagination from '../components/Pagination';
+import SearchableSelect from '../components/SearchableSelect';
 
 const getAccountStatusBadgeClass = (status) => {
     const map = {
@@ -48,7 +49,6 @@ export default function Accounts({ currentUser, page, onPageChange }) {
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
     const [createdByFilter, setCreatedByFilter] = useState('');
-    const [systemUsers, setSystemUsers] = useState([]);
     const [browserProfiles, setBrowserProfiles] = useState([]);
 
     // Selection
@@ -162,17 +162,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
         }
     };
 
-    const fetchSystemUsers = async () => {
-        try {
-            const response = await apiRequest('/dashboard/api/accounts/users-list/');
-            if (response.ok) {
-                const data = await response.json();
-                setSystemUsers(data);
-            }
-        } catch (err) {
-            console.error("Error fetching system users:", err);
-        }
-    };
+
 
     const fetchBrowserProfiles = async () => {
         try {
@@ -202,7 +192,6 @@ export default function Accounts({ currentUser, page, onPageChange }) {
     }, [search]);
 
     useEffect(() => {
-        fetchSystemUsers();
         fetchBrowserProfiles();
     }, []);
 
@@ -506,12 +495,15 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                         <option value="Other">Khác</option>
                     </select>
 
-                    <select className="filter-select" value={createdByFilter} onChange={(e) => setCreatedByFilter(e.target.value)}>
-                        <option value="">Tất cả người tạo</option>
-                        {systemUsers.map(u => (
-                            <option key={u.username} value={u.username}>{u.username}</option>
-                        ))}
-                    </select>
+                    <SearchableSelect
+                        currentUser={currentUser}
+                        value={createdByFilter}
+                        onChange={setCreatedByFilter}
+                        placeholder="Tất cả người tạo"
+                        valueKey="username"
+                        unassignedLabel="Tất cả người tạo"
+                        unassignedValue=""
+                    />
 
                     <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(parseInt(e.target.value)); onPageChange(1); }}>
                         <option value={10}>10 dòng</option>
@@ -667,12 +659,16 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Chủ sở hữu Sub</label>
-                                    <select className="filter-select" style={{ width: '100%' }} value={addSubOwner} onChange={(e) => setAddSubOwner(e.target.value)}>
-                                        <option value="">-- Không có --</option>
-                                        {systemUsers.map(u => (
-                                            <option key={u.username} value={u.username}>{u.username}</option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelect
+                                        currentUser={currentUser}
+                                        value={addSubOwner}
+                                        onChange={setAddSubOwner}
+                                        placeholder="Chọn chủ sở hữu Sub..."
+                                        valueKey="username"
+                                        unassignedLabel="-- Không có --"
+                                        unassignedValue=""
+                                        style={{ width: '100%' }}
+                                    />
                                 </div>
                             </div>
                             <div className="form-group">
@@ -748,12 +744,17 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Chủ sở hữu Sub</label>
-                                    <select className="filter-select" style={{ width: '100%' }} value={editSubOwner} onChange={(e) => setEditSubOwner(e.target.value)}>
-                                        <option value="">-- Không có --</option>
-                                        {systemUsers.map(u => (
-                                            <option key={u.username} value={u.username}>{u.username}</option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelect
+                                        currentUser={currentUser}
+                                        value={editSubOwner}
+                                        onChange={setEditSubOwner}
+                                        initialDisplayValue={accounts.find(a => a.id === editId)?.subscription_owner || ''}
+                                        placeholder="Chọn chủ sở hữu Sub..."
+                                        valueKey="username"
+                                        unassignedLabel="-- Không có --"
+                                        unassignedValue=""
+                                        style={{ width: '100%' }}
+                                    />
                                 </div>
                             </div>
                             <div className="form-row">

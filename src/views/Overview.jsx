@@ -22,6 +22,20 @@ const getCardStatusBadgeClass = (status) => {
 export default function Overview({ currentUser, onSwitchTab }) {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [legendPosition, setLegendPosition] = useState('right');
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 576) {
+                setLegendPosition('bottom');
+            } else {
+                setLegendPosition('right');
+            }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const loadStats = async () => {
         try {
@@ -119,7 +133,7 @@ export default function Overview({ currentUser, onSwitchTab }) {
                                 maintainAspectRatio: false,
                                 plugins: {
                                     legend: {
-                                        position: 'right',
+                                        position: legendPosition,
                                         labels: { color: '#94a3b8', font: { family: 'Outfit', size: 11 } }
                                     }
                                 }

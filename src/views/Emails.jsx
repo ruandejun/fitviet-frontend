@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api';
 import Pagination from '../components/Pagination';
+import SearchableSelect from '../components/SearchableSelect';
 
 const isMicrosoftEmail = (email) => {
     if (!email) return false;
@@ -45,7 +46,6 @@ export default function Emails({ currentUser, page, onPageChange }) {
     const [status, setStatus] = useState('');
     const [owner, setOwner] = useState('all');
     const [createdBy, setCreatedBy] = useState('all');
-    const [clients, setClients] = useState([]);
 
     // Selection
     const [selectedIds, setSelectedIds] = useState([]);
@@ -187,18 +187,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
         }
     };
 
-    const fetchClients = async () => {
-        if (!currentUser.is_staff) return;
-        try {
-            const resp = await apiRequest('/dashboard/api/users/?role=user');
-            if (resp.ok) {
-                const data = await resp.json();
-                setClients(data.results || data);
-            }
-        } catch (err) {
-            console.error("Error fetching clients:", err);
-        }
-    };
+
 
     useEffect(() => {
         fetchEmails();
@@ -215,9 +204,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
         return () => clearTimeout(t);
     }, [search]);
 
-    useEffect(() => {
-        fetchClients();
-    }, []);
+
 
     // Perform Microsoft Graph or IMAP read client-side to offload Django backend
     const readMailboxClientSide = async (emailId, emailObj = null) => {
@@ -632,8 +619,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
         setEditStatus(target.status !== undefined ? target.status : 0);
         setEditNote(target.note || '');
 
-        const clientObj = clients.find(u => u.username === target.owner);
-        setEditOwner(clientObj ? clientObj.id : '');
+        setEditOwner(target.owner_id || '');
         setEditOpen(true);
     };
 
@@ -912,20 +898,30 @@ export default function Emails({ currentUser, page, onPageChange }) {
 
                     {currentUser.is_staff && (
                         <>
-                            <select className="filter-select" value={owner} onChange={(e) => setOwner(e.target.value)}>
-                                <option value="all">Tất cả chủ sở hữu</option>
-                                <option value="unassigned">Chưa chỉ định</option>
-                                {clients.map(u => (
-                                    <option key={u.id} value={u.username}>{u.username}</option>
-                                ))}
-                            </select>
+                            <SearchableSelect
+                                currentUser={currentUser}
+                                value={owner}
+                                onChange={setOwner}
+                                placeholder="Chọn chủ sở hữu..."
+                                valueKey="id"
+                                role="user"
+                                extraOptions={[
+                                    { label: 'Tất cả chủ sở hữu', value: 'all' },
+                                    { label: 'Chưa chỉ định', value: 'unassigned' }
+                                ]}
+                            />
 
-                            <select className="filter-select" value={createdBy} onChange={(e) => setCreatedBy(e.target.value)}>
-                                <option value="all">Tất cả người tạo</option>
-                                {clients.map(u => (
-                                    <option key={u.id} value={u.username}>{u.username}</option>
-                                ))}
-                            </select>
+                            <SearchableSelect
+                                currentUser={currentUser}
+                                value={createdBy}
+                                onChange={setCreatedBy}
+                                placeholder="Tất cả người tạo"
+                                valueKey="id"
+                                role="user"
+                                extraOptions={[
+                                    { label: 'Tất cả người tạo', value: 'all' }
+                                ]}
+                            />
                         </>
                     )}
 
@@ -1113,12 +1109,17 @@ export default function Emails({ currentUser, page, onPageChange }) {
                             {currentUser.is_staff && (
                                 <div className="form-group" style={{ marginTop: '12px' }}>
                                     <label className="form-label">Sở hữu bởi (Owner)</label>
-                                    <select className="filter-select" style={{ width: '100%' }} value={addOwner} onChange={(e) => setAddOwner(e.target.value)}>
-                                        <option value="">-- Không chỉ định --</option>
-                                        {clients.map(u => (
-                                            <option key={u.id} value={u.id}>{u.username}</option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelect
+                                        currentUser={currentUser}
+                                        value={addOwner}
+                                        onChange={setAddOwner}
+                                        placeholder="Chọn chủ sở hữu..."
+                                        valueKey="id"
+                                        role="user"
+                                        unassignedLabel="-- Không chỉ định --"
+                                        unassignedValue=""
+                                        style={{ width: '100%' }}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -1186,12 +1187,18 @@ export default function Emails({ currentUser, page, onPageChange }) {
                             {currentUser.is_staff && (
                                 <div className="form-group" style={{ marginTop: '12px' }}>
                                     <label className="form-label">Sở hữu bởi (Owner)</label>
-                                    <select className="filter-select" style={{ width: '100%' }} value={editOwner} onChange={(e) => setEditOwner(e.target.value)}>
-                                        <option value="">-- Không chỉ định --</option>
-                                        {clients.map(u => (
-                                            <option key={u.id} value={u.id}>{u.username}</option>
-                                        ))}
-                                    </select>
+                                    <SearchableSelect
+                                        currentUser={currentUser}
+                                        value={editOwner}
+                                        onChange={setEditOwner}
+                                        initialDisplayValue={emails.find(e => e.id === editId)?.owner || ''}
+                                        placeholder="Chọn chủ sở hữu..."
+                                        valueKey="id"
+                                        role="user"
+                                        unassignedLabel="-- Không chỉ định --"
+                                        unassignedValue=""
+                                        style={{ width: '100%' }}
+                                    />
                                 </div>
                             )}
                         </div>
