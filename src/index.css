@@ -1753,3 +1753,104 @@
             }
         }
 
+        /* ==========================================================================
+           US ADDRESS MODAL STYLING
+           ========================================================================== */
+        .addr-modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 95%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            animation: pop-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(25px) saturate(190%);
+            -webkit-backdrop-filter: blur(25px) saturate(190%);
+        }
+
+        .addr-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .addr-field:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .addr-field-info {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .addr-field-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .addr-field-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            word-break: break-word;
+        }
+
+        .addr-copy-btn {
+            background: var(--btn-secondary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 12px;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .addr-copy-btn:hover {
+            background: var(--active-bg);
+            border-color: var(--primary);
+            color: var(--text-color);
+        }
+
+        .addr-copy-btn.copied {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        @media (max-width: 480px) {
+            .addr-modal-box {
+                padding: 16px;
+                width: 95%;
+            }
+            .addr-field {
+                padding: 8px 10px;
+            }
+            .addr-field-value {
+                font-size: 13px;
+            }
+            .addr-copy-btn {
+                padding: 4px 8px;
+                margin-left: 8px;
+                font-size: 11px;
+            }
+        }
+
+

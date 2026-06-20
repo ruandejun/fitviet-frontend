@@ -1238,7 +1238,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         <div>
                             {Object.entries(addressData).map(([key, val]) => (
                                 <div className="addr-field" key={key}>
-                                    <div>
+                                    <div className="addr-field-info">
                                         <div className="addr-field-label">
                                             {key === 'name' ? 'Họ và tên (Full Name)' :
                                              key === 'address' ? 'Địa chỉ (Address)' :
