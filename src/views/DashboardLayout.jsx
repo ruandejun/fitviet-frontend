@@ -83,8 +83,19 @@ async function calculateTotp(secret) {
 }
 
 export default function DashboardLayout({ currentUser, onLogout }) {
-    const [currentTab, setCurrentTab] = useState('overview');
-    const [currentPage, setCurrentPage] = useState(1);
+    // Helper to get initial URL parameters synchronously
+    const getInitialUrlState = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab') || 'overview';
+        const page = parseInt(params.get('page')) || 1;
+        return { tab, page };
+    };
+
+    const urlState = getInitialUrlState();
+    const [currentTab, setCurrentTab] = useState(urlState.tab);
+    const [currentPage, setCurrentPage] = useState(urlState.page);
+    const [visitedTabs, setVisitedTabs] = useState(new Set([urlState.tab]));
+
     const [unreadNotifCount, setUnreadNotifCount] = useState(0);
     const [headerNotifOpen, setHeaderNotifOpen] = useState(false);
     const [headerNotifs, setHeaderNotifs] = useState([]);
@@ -101,17 +112,32 @@ export default function DashboardLayout({ currentUser, onLogout }) {
 
     // Load initial routing state from URL query parameters
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const tab = params.get('tab') || 'overview';
-        const page = parseInt(params.get('page')) || 1;
-        setCurrentTab(tab);
-        setCurrentPage(page);
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            const tab = params.get('tab') || 'overview';
+            const page = parseInt(params.get('page')) || 1;
+            setCurrentTab(tab);
+            setCurrentPage(page);
+            setVisitedTabs(prev => {
+                const next = new Set(prev);
+                next.add(tab);
+                return next;
+            });
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
     // Sync state changes back to URL query parameters
     const handleSwitchTab = (tabName, pageNum = 1) => {
         setCurrentTab(tabName);
         setCurrentPage(pageNum);
+        
+        setVisitedTabs(prev => {
+            const next = new Set(prev);
+            next.add(tabName);
+            return next;
+        });
         
         const url = new URL(window.location.href);
         url.searchParams.set('tab', tabName);
@@ -359,17 +385,39 @@ export default function DashboardLayout({ currentUser, onLogout }) {
                     </div>
                 </div>
 
-                {/* View Content Porting */}
+                {/* View Content Porting - Keep-alive pattern with visited-tabs check */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px', width: '100%' }}>
-                    {currentTab === 'overview' && <Overview currentUser={currentUser} onSwitchTab={handleSwitchTab} />}
-                    {currentTab === 'cards' && <Cards currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('cards', p)} />}
-                    {currentTab === 'users' && currentUser.is_staff && <Users currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('users', p)} />}
-                    {currentTab === 'profiles' && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
-                    {currentTab === 'proxies' && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
-                    {currentTab === 'emails' && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
-                    {currentTab === 'accounts' && <Accounts currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('accounts', p)} />}
-                    {currentTab === 'hwids' && currentUser.is_staff && <HWIDs currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('hwids', p)} />}
-                    {currentTab === 'notifications' && <Notifications fetchNotificationCount={fetchNotificationCount} />}
+                    <div style={{ display: currentTab === 'overview' ? 'block' : 'none' }}>
+                        {visitedTabs.has('overview') && <Overview currentUser={currentUser} onSwitchTab={handleSwitchTab} />}
+                    </div>
+                    <div style={{ display: currentTab === 'cards' ? 'block' : 'none' }}>
+                        {visitedTabs.has('cards') && <Cards currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('cards', p)} />}
+                    </div>
+                    {currentUser.is_staff && (
+                        <div style={{ display: currentTab === 'users' ? 'block' : 'none' }}>
+                            {visitedTabs.has('users') && <Users currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('users', p)} />}
+                        </div>
+                    )}
+                    <div style={{ display: currentTab === 'profiles' ? 'block' : 'none' }}>
+                        {visitedTabs.has('profiles') && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
+                    </div>
+                    <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
+                        {visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
+                    </div>
+                    <div style={{ display: currentTab === 'emails' ? 'block' : 'none' }}>
+                        {visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
+                    </div>
+                    <div style={{ display: currentTab === 'accounts' ? 'block' : 'none' }}>
+                        {visitedTabs.has('accounts') && <Accounts currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('accounts', p)} />}
+                    </div>
+                    {currentUser.is_staff && (
+                        <div style={{ display: currentTab === 'hwids' ? 'block' : 'none' }}>
+                            {visitedTabs.has('hwids') && <HWIDs currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('hwids', p)} />}
+                        </div>
+                    )}
+                    <div style={{ display: currentTab === 'notifications' ? 'block' : 'none' }}>
+                        {visitedTabs.has('notifications') && <Notifications fetchNotificationCount={fetchNotificationCount} />}
+                    </div>
                 </div>
             </div>
 
