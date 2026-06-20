@@ -792,17 +792,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                 /* ====== TABLET / SMALL DESKTOP ====== */
                 @media (max-width: 768px) {
                     .toolbar {
-                        flex-wrap: wrap;
-                        padding: 10px 12px;
-                        gap: 8px;
-                    }
-                    .logo-section {
-                        order: 1;
-                        flex: 1 1 auto;
-                        min-width: 0;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
+                        padding: 10px 16px;
                     }
                     .logo-title {
                         font-size: 17px;
@@ -815,47 +805,11 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                         text-overflow: ellipsis;
                         white-space: nowrap;
                     }
-                    .status-section {
-                        order: 2;
-                        flex: 0 0 auto;
-                        font-size: 11px;
-                        gap: 4px;
-                    }
-                    .right-section {
-                        display: contents;
-                    }
-                    .btn-login {
-                        order: 3;
-                        flex-shrink: 0;
-                        padding: 7px 12px;
-                        font-size: 12px;
-                        border-radius: 8px;
-                        white-space: nowrap;
-                    }
-                    .actions-section {
-                        order: 4;
-                        width: 100%;
-                        display: flex;
-                        overflow-x: auto;
-                        gap: 12px;
-                        padding: 8px 4px;
-                        -webkit-overflow-scrolling: touch;
-                        scrollbar-width: none;
-                    }
-                    .actions-section::-webkit-scrollbar {
-                        display: none;
-                    }
                     .btn-tool {
-                        flex-shrink: 0;
-                        padding: 10px 16px;
+                        padding: 8px 12px;
                         font-size: 13px;
-                        border-radius: 10px;
-                        gap: 6px;
-                        white-space: nowrap;
-                        min-height: 44px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
+                        border-radius: 8px;
+                        min-height: 38px;
                     }
                     .editor-container {
                         padding: 8px;
@@ -864,21 +818,8 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                         border-radius: 12px;
                     }
                     .editor-textarea {
-                        padding: 14px;
+                        padding: 16px;
                         font-size: 16px;
-                    }
-                    .metrics-bar {
-                        padding: 8px 12px;
-                        font-size: 11px;
-                        flex-wrap: wrap;
-                        gap: 4px;
-                        justify-content: center;
-                        text-align: center;
-                    }
-                    .metrics-left {
-                        gap: 10px;
-                        justify-content: center;
-                        width: 100%;
                     }
                     .modal-box {
                         padding: 20px;
@@ -896,74 +837,119 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                     }
                 }
 
-                /* ====== PHONE SMALL ====== */
-                @media (max-width: 480px) {
+                /* ====== MOBILE VIEWPORTS ====== */
+                @media (max-width: 576px) {
                     .toolbar {
-                        padding: 8px 10px;
-                        gap: 6px;
+                        flex-wrap: nowrap !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        padding: 8px 12px !important;
+                        gap: 0 !important;
+                    }
+                    .logo-section {
+                        flex: unset !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 6px !important;
                     }
                     .logo-title {
-                        font-size: 15px;
+                        font-size: 15px !important;
                     }
                     .note-badge {
-                        font-size: 10px;
-                        padding: 2px 6px;
-                        max-width: 60px;
-                    }
-                    .status-text {
-                        display: none;
+                        display: none !important;
                     }
                     .status-section {
-                        gap: 0;
+                        margin-left: 6px !important;
+                        margin-right: auto !important;
+                        font-size: 11px !important;
                     }
-                    .btn-login {
-                        padding: 8px 14px;
-                        font-size: 12px;
-                        min-height: 40px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
+                    .status-text {
+                        display: none !important; /* Only show dot on small screens to save space */
+                    }
+                    .right-section {
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 6px !important;
+                    }
+                    .actions-section {
+                        display: flex !important;
+                        width: auto !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        overflow: visible !important;
+                        gap: 4px !important;
+                    }
+                    
+                    /* Hide button labels on mobile to make buttons circular/square icon-only */
+                    .btn-label-text {
+                        display: none !important;
                     }
                     .btn-tool {
-                        padding: 10px 14px;
-                        font-size: 13px;
-                        min-height: 44px;
+                        padding: 0 !important;
+                        width: 36px !important;
+                        height: 36px !important;
+                        min-height: 36px !important;
+                        min-width: 36px !important;
+                        justify-content: center !important;
+                        border-radius: 8px !important;
+                        font-size: 14px !important;
+                        margin: 0 !important;
+                    }
+                    .btn-login {
+                        padding: 0 !important;
+                        width: 36px !important;
+                        height: 36px !important;
+                        min-height: 36px !important;
+                        min-width: 36px !important;
+                        justify-content: center !important;
+                        border-radius: 50% !important;
+                        font-size: 14px !important;
+                        margin: 0 !important;
                     }
                     .editor-container {
-                        padding: 6px;
+                        padding: 6px !important;
                     }
                     .editor-textarea {
-                        padding: 12px;
-                        font-size: 16px;
-                    }
-                    .metrics-bar {
-                        padding: 6px 10px;
-                        font-size: 10px;
+                        padding: 12px !important;
+                        font-size: 16px !important;
                     }
                     .toast {
-                        bottom: 20px;
-                        font-size: 13px;
-                        padding: 10px 18px;
-                        max-width: 90vw;
+                        bottom: 20px !important;
+                        font-size: 13px !important;
+                        padding: 10px 18px !important;
+                        max-width: 90vw !important;
+                    }
+
+                    /* Responsive footer */
+                    .editor-footer {
+                        flex-direction: column !important;
+                        gap: 6px !important;
+                        padding: 10px 16px !important;
+                        text-align: center !important;
+                        font-size: 11px !important;
+                    }
+                    .metrics-group {
+                        gap: 12px !important;
+                        justify-content: center !important;
+                        width: 100% !important;
+                    }
+                    .footer-note {
+                        font-size: 10px !important;
+                        opacity: 0.8 !important;
                     }
                 }
 
                 /* ====== VERY SMALL PHONE (320px) ====== */
-                @media (max-width: 360px) {
+                @media (max-width: 340px) {
                     .logo-title {
-                        font-size: 14px;
+                        font-size: 13px !important;
                     }
-                    .note-badge {
-                        display: none;
-                    }
-                    .btn-login {
-                        padding: 5px 8px;
-                        font-size: 11px;
-                        gap: 2px;
-                    }
-                    .btn-tool {
-                        padding: 5px 7px;
-                        font-size: 10px;
+                    .btn-tool, .btn-login {
+                        width: 32px !important;
+                        height: 32px !important;
+                        min-height: 32px !important;
+                        min-width: 32px !important;
+                        font-size: 12px !important;
                     }
                 }
 
@@ -1050,30 +1036,30 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                 <div className="right-section" style={isEmbedded ? { flex: 1, justifyContent: 'flex-end' } : {}}>
                     <div className="actions-section">
                         <button className="btn-tool" onClick={() => handleSave(content)} style={{ background: 'var(--primary-glow)', color: 'white', borderColor: 'var(--primary-glow)' }}>
-                            💾 Lưu
+                            💾 <span className="btn-label-text">Lưu</span>
                         </button>
                         <button className="btn-tool" onClick={copyShareLink}>
-                            🔗 Chia sẻ
+                            🔗 <span className="btn-label-text">Chia sẻ</span>
                         </button>
                         <button className={`btn-tool ${hasPasswordState ? 'active' : ''}`} onClick={() => setShowLockModal(true)}>
-                            🔒 {hasPasswordState ? 'Đổi khóa' : 'Khóa'}
+                            🔒 <span className="btn-label-text">{hasPasswordState ? 'Đổi khóa' : 'Khóa'}</span>
                         </button>
                         <button className="btn-tool" onClick={toggleFont}>
-                            🔤 {font === 'sans' ? 'Sans-serif' : 'Monospace'}
+                            🔤 <span className="btn-label-text">{font === 'sans' ? 'Sans-serif' : 'Monospace'}</span>
                         </button>
                         <button className="btn-tool" onClick={downloadNote}>
-                            📥 Tải xuống
+                            📥 <span className="btn-label-text">Tải xuống</span>
                         </button>
                     </div>
 
                     {!isEmbedded && (
                         currentUser ? (
                             <button className="btn-tool btn-login" onClick={() => setShowUserInfoModal(true)}>
-                                👤 {currentUser.username}
+                                👤 <span className="btn-label-text">{currentUser.username}</span>
                             </button>
                         ) : (
                             <button className="btn-tool btn-login" onClick={() => setShowQuickLoginModal(true)}>
-                                🔑 Đăng nhập
+                                🔑 <span className="btn-label-text">Đăng nhập</span>
                             </button>
                         )
                     )}
@@ -1093,7 +1079,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                 </div>
             </main>
 
-            <footer style={{
+            <footer className="editor-footer" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -1103,12 +1089,12 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                 fontSize: '13px',
                 color: 'var(--text-muted)'
             }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div className="metrics-group" style={{ display: 'flex', gap: '16px' }}>
                     <span>Ký tự: <strong>{metrics.chars}</strong></span>
                     <span>Từ: <strong>{metrics.words}</strong></span>
                     <span>Dòng: <strong>{metrics.lines}</strong></span>
                 </div>
-                <div>
+                <div className="footer-note">
                     <span>Ghi chú tự động xóa sau 6 tháng nếu không bảo mật.</span>
                 </div>
             </footer>
