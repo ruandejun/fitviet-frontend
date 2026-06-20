@@ -52,6 +52,54 @@ export default function Cards({ currentUser, page, onPageChange }) {
     const [bulkAssignOwner, setBulkAssignOwner] = useState('');
     const [ownerSearchQuery, setOwnerSearchQuery] = useState('');
 
+    const [modalClients, setModalClients] = useState([]);
+    const [modalClientsPage, setModalClientsPage] = useState(1);
+    const [modalClientsLoading, setModalClientsLoading] = useState(false);
+    const [modalClientsHasMore, setModalClientsHasMore] = useState(true);
+
+    const fetchModalClients = async (pageNumber, searchQuery, replace = false) => {
+        setModalClientsLoading(true);
+        try {
+            let url = `/dashboard/api/users/?role=user&page=${pageNumber}&page_size=20`;
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+            }
+            const resp = await apiRequest(url);
+            if (resp.ok) {
+                const data = await resp.json();
+                const results = data.results || data;
+                if (replace) {
+                    setModalClients(results);
+                } else {
+                    setModalClients(prev => [...prev, ...results]);
+                }
+                setModalClientsHasMore(!!data.next);
+                setModalClientsPage(pageNumber);
+            }
+        } catch (err) {
+            console.error("Error loading modal clients:", err);
+        } finally {
+            setModalClientsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!bulkAssignOpen) return;
+        const delayDebounce = setTimeout(() => {
+            fetchModalClients(1, ownerSearchQuery, true);
+        }, 250);
+        return () => clearTimeout(delayDebounce);
+    }, [ownerSearchQuery, bulkAssignOpen]);
+
+    const handleModalScroll = (e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollHeight - scrollTop - clientHeight < 20) {
+            if (!modalClientsLoading && modalClientsHasMore) {
+                fetchModalClients(modalClientsPage + 1, ownerSearchQuery, false);
+            }
+        }
+    };
+
     const [editOpen, setEditOpen] = useState(false);
     const [editCardId, setEditCardId] = useState(null);
     const [editCardNumber, setEditCardNumber] = useState('');
@@ -613,7 +661,10 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                     onChange={(e) => setOwnerSearchQuery(e.target.value)} 
                                     style={{ marginBottom: '10px' }}
                                 />
-                                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}>
+                                <div 
+                                    onScroll={handleModalScroll}
+                                    style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}
+                                >
                                     <div
                                         onClick={() => setBulkAssignOwner('')}
                                         style={{
@@ -628,33 +679,35 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                     >
                                         -- Không chỉ định --
                                     </div>
-                                    {clients
-                                        .filter(u => u.username.toLowerCase().includes(ownerSearchQuery.toLowerCase()))
-                                        .map(u => {
-                                            const isSelected = String(u.id) === String(bulkAssignOwner);
-                                            return (
-                                                <div
-                                                    key={u.id}
-                                                    onClick={() => setBulkAssignOwner(String(u.id))}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        cursor: 'pointer',
-                                                        background: isSelected ? 'var(--active-bg)' : 'transparent',
-                                                        color: isSelected ? 'var(--primary)' : 'var(--text-color)',
-                                                        fontWeight: isSelected ? 'bold' : 'normal',
-                                                        borderBottom: '1px solid var(--border-color)',
-                                                        fontSize: '13px',
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center'
-                                                    }}
-                                                >
-                                                    <span>{u.username}</span>
-                                                    {isSelected && <span>✓</span>}
-                                                </div>
-                                            );
-                                        })
-                                    }
+                                    {modalClients.map(u => {
+                                        const isSelected = String(u.id) === String(bulkAssignOwner);
+                                        return (
+                                            <div
+                                                key={u.id}
+                                                onClick={() => setBulkAssignOwner(String(u.id))}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    background: isSelected ? 'var(--active-bg)' : 'transparent',
+                                                    color: isSelected ? 'var(--primary)' : 'var(--text-color)',
+                                                    fontWeight: isSelected ? 'bold' : 'normal',
+                                                    borderBottom: '1px solid var(--border-color)',
+                                                    fontSize: '13px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <span>{u.username}</span>
+                                                {isSelected && <span>✓</span>}
+                                            </div>
+                                        );
+                                    })}
+                                    {modalClientsLoading && (
+                                        <div style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                                            🔄 Đang tải thêm...
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

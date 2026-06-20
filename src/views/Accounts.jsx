@@ -88,6 +88,54 @@ export default function Accounts({ currentUser, page, onPageChange }) {
     const [bulkSubOwnerVal, setBulkSubOwnerVal] = useState('');
     const [subOwnerSearchQuery, setSubOwnerSearchQuery] = useState('');
 
+    const [modalUsers, setModalUsers] = useState([]);
+    const [modalUsersPage, setModalUsersPage] = useState(1);
+    const [modalUsersLoading, setModalUsersLoading] = useState(false);
+    const [modalUsersHasMore, setModalUsersHasMore] = useState(true);
+
+    const fetchModalUsers = async (pageNumber, searchQuery, replace = false) => {
+        setModalUsersLoading(true);
+        try {
+            let url = `/dashboard/api/users/?status=active&page=${pageNumber}&page_size=20`;
+            if (searchQuery) {
+                url += `&search=${encodeURIComponent(searchQuery)}`;
+            }
+            const resp = await apiRequest(url);
+            if (resp.ok) {
+                const data = await resp.json();
+                const results = data.results || data;
+                if (replace) {
+                    setModalUsers(results);
+                } else {
+                    setModalUsers(prev => [...prev, ...results]);
+                }
+                setModalUsersHasMore(!!data.next);
+                setModalUsersPage(pageNumber);
+            }
+        } catch (err) {
+            console.error("Error loading modal users:", err);
+        } finally {
+            setModalUsersLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!bulkSubOwnerOpen) return;
+        const delayDebounce = setTimeout(() => {
+            fetchModalUsers(1, subOwnerSearchQuery, true);
+        }, 250);
+        return () => clearTimeout(delayDebounce);
+    }, [subOwnerSearchQuery, bulkSubOwnerOpen]);
+
+    const handleModalScroll = (e) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollHeight - scrollTop - clientHeight < 20) {
+            if (!modalUsersLoading && modalUsersHasMore) {
+                fetchModalUsers(modalUsersPage + 1, subOwnerSearchQuery, false);
+            }
+        }
+    };
+
     const [viewOpen, setViewOpen] = useState(false);
     const [viewData, setViewData] = useState(null);
     const [viewOtp, setViewOtp] = useState('');
@@ -794,7 +842,10 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                     onChange={(e) => setSubOwnerSearchQuery(e.target.value)} 
                                     style={{ marginBottom: '10px' }}
                                 />
-                                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}>
+                                <div 
+                                    onScroll={handleModalScroll}
+                                    style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}
+                                >
                                     <div
                                         onClick={() => setBulkSubOwnerVal('')}
                                         style={{
@@ -809,33 +860,35 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                     >
                                         -- Không có (Bỏ gán) --
                                     </div>
-                                    {systemUsers
-                                        .filter(u => u.username.toLowerCase().includes(subOwnerSearchQuery.toLowerCase()))
-                                        .map(u => {
-                                            const isSelected = u.username === bulkSubOwnerVal;
-                                            return (
-                                                <div
-                                                    key={u.username}
-                                                    onClick={() => setBulkSubOwnerVal(u.username)}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        cursor: 'pointer',
-                                                        background: isSelected ? 'var(--active-bg)' : 'transparent',
-                                                        color: isSelected ? 'var(--primary)' : 'var(--text-color)',
-                                                        fontWeight: isSelected ? 'bold' : 'normal',
-                                                        borderBottom: '1px solid var(--border-color)',
-                                                        fontSize: '13px',
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center'
-                                                    }}
-                                                >
-                                                    <span>{u.username}</span>
-                                                    {isSelected && <span>✓</span>}
-                                                </div>
-                                            );
-                                        })
-                                    }
+                                    {modalUsers.map(u => {
+                                        const isSelected = u.username === bulkSubOwnerVal;
+                                        return (
+                                            <div
+                                                key={u.username}
+                                                onClick={() => setBulkSubOwnerVal(u.username)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    background: isSelected ? 'var(--active-bg)' : 'transparent',
+                                                    color: isSelected ? 'var(--primary)' : 'var(--text-color)',
+                                                    fontWeight: isSelected ? 'bold' : 'normal',
+                                                    borderBottom: '1px solid var(--border-color)',
+                                                    fontSize: '13px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <span>{u.username}</span>
+                                                {isSelected && <span>✓</span>}
+                                            </div>
+                                        );
+                                    })}
+                                    {modalUsersLoading && (
+                                        <div style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                                            🔄 Đang tải thêm...
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
