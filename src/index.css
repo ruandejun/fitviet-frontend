@@ -1,18 +1,18 @@
         :root {
-            --bg-color: #070913;
-            --sidebar-bg: #0b0d1b;
-            --panel-bg: rgba(18, 22, 43, 0.4);
-            --border-color: rgba(255, 255, 255, 0.05);
+            --bg-color: #03050c;
+            --sidebar-bg: #050814;
+            --panel-bg: rgba(6, 10, 26, 0.6);
+            --border-color: rgba(0, 242, 254, 0.08);
             --text-color: #f8fafc;
             --text-muted: #94a3b8;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
+            --primary: #d946ef;
+            --primary-hover: #c084fc;
             --accent: #00f2fe;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --active-bg: rgba(99, 102, 241, 0.15);
-            --table-hover: rgba(255, 255, 255, 0.02);
+            --success: #00ff9f;
+            --warning: #fff01f;
+            --danger: #ff073a;
+            --active-bg: rgba(0, 242, 254, 0.08);
+            --table-hover: rgba(0, 242, 254, 0.02);
             --font-family: 'Outfit', sans-serif;
         }
 
@@ -126,8 +126,8 @@
         .menu-item.active {
             color: var(--text-color);
             background: var(--active-bg);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--accent);
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
         }
 
         .sidebar-footer {
@@ -370,7 +370,7 @@
 
         .search-input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.25);
         }
 
         .filter-select {
@@ -387,6 +387,7 @@
 
         .filter-select:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.25);
         }
 
         .action-buttons {
@@ -754,6 +755,7 @@
 
         .form-input:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.25);
         }
 
         .form-textarea {
@@ -772,6 +774,7 @@
 
         .form-textarea:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.25);
         }
 
         /* ATM CARD DETAILS WIDGET */

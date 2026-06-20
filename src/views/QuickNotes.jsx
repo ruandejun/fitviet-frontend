@@ -1210,14 +1210,14 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
             }}>
                 <style>{`
                     :root {
-                        --bg-color: #080b11;
-                        --panel-bg: rgba(13, 17, 28, 0.45);
-                        --border-color: rgba(255, 255, 255, 0.06);
-                        --primary-glow: #6366f1;
-                        --accent-glow: #e11d48;
+                        --bg-color: #03050c;
+                        --panel-bg: rgba(6, 10, 26, 0.6);
+                        --border-color: rgba(0, 242, 254, 0.08);
+                        --primary-glow: #d946ef;
+                        --accent-glow: #00f2fe;
                         --text-color: #f1f5f9;
                         --text-muted: #94a3b8;
-                        --error-color: #ef4444;
+                        --error-color: #ff073a;
                     }
                     [data-theme="light"] {
                         --bg-color: #f8fafc;
@@ -1357,19 +1357,19 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
         }}>
             <style>{`
                 :root {
-                    --bg-color: #0b0f19;
-                    --container-bg: rgba(17, 24, 39, 0.45);
-                    --border-color: rgba(255, 255, 255, 0.06);
+                    --bg-color: #03050c;
+                    --container-bg: rgba(6, 10, 26, 0.6);
+                    --border-color: rgba(0, 242, 254, 0.08);
                     --text-color: #e2e8f0;
-                    --text-muted: #64748b;
-                    --primary-glow: #6366f1;
+                    --text-muted: #94a3b8;
+                    --primary-glow: #d946ef;
                     --accent-glow: #00f2fe;
                     --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
                     --editor-bg: transparent;
-                    --toolbar-bg: rgba(17, 24, 39, 0.6);
-                    --modal-bg: rgba(15, 23, 42, 0.95);
+                    --toolbar-bg: rgba(5, 8, 20, 0.7);
+                    --modal-bg: rgba(5, 8, 20, 0.95);
                     --btn-hover: rgba(255, 255, 255, 0.08);
-                    --toast-bg: rgba(99, 102, 241, 0.9);
+                    --toast-bg: rgba(217, 70, 239, 0.9);
                     --otp-text: #34d399;
                     --otp-bg: rgba(16, 185, 129, 0.15);
                     --otp-border: rgba(16, 185, 129, 0.3);
@@ -1396,7 +1396,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     position: absolute;
                     border-radius: 50%;
                     filter: blur(130px);
-                    opacity: 0.18;
+                    opacity: 0.3;
                     pointer-events: none;
                     z-index: 1;
                 }
@@ -1463,8 +1463,13 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     border-radius: 16px;
                     display: flex;
                     flex-direction: column;
-                    box-shadow: var(--card-shadow);
+                    box-shadow: var(--card-shadow), 0 0 20px rgba(0, 242, 254, 0.05);
                     overflow: hidden;
+                    transition: border-color 0.3s, box-shadow 0.3s;
+                }
+                .editor-card:focus-within {
+                    border-color: rgba(0, 242, 254, 0.3);
+                    box-shadow: var(--card-shadow), 0 0 25px rgba(0, 242, 254, 0.15);
                 }
                 .editor-textarea {
                     flex: 1;
@@ -1516,7 +1521,10 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     font-size: 14px;
                     outline: none;
                 }
-                .form-input:focus { border-color: var(--primary-glow); }
+                .form-input:focus {
+                    border-color: var(--primary-glow);
+                    box-shadow: 0 0 10px rgba(217, 70, 239, 0.3);
+                }
                 .btn {
                     border: none;
                     padding: 10px 16px;
@@ -1527,7 +1535,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     transition: all 0.2s ease;
                 }
                 .btn-secondary { background: var(--btn-hover); color: var(--text-color); }
-                .btn-primary { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
+                .btn-primary { background: linear-gradient(135deg, #d946ef, #a855f7); color: white; }
                 .btn-danger { background: #e11d48; color: white; }
                 
                 .addr-modal-box {
