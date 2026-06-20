@@ -1865,3 +1865,62 @@
                 gap: 8px;
             }
         }
+
+        /* Responsive tab layout for email retrieval */
+        .email-get-tabs {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        @media (max-width: 480px) {
+            .email-get-tabs {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .email-get-tabs label {
+                padding: 8px 12px !important;
+                font-size: 12px !important;
+            }
+        }
+
+        /* Responsive filter layout for email retrieval */
+        .email-get-filters {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+        @media (max-width: 480px) {
+            .email-get-filters {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+        }
+
+        /* Responsive buttons for modals */
+        .email-get-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        @media (max-width: 480px) {
+            .email-get-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        /* Responsive padding for email getter modal box */
+        .email-get-modal-box {
+            padding: 24px;
+        }
+        @media (max-width: 480px) {
+            .email-get-modal-box {
+                padding: 16px;
+            }
+            .login-card {
+                padding: 24px 20px;
+            }
+        }
+

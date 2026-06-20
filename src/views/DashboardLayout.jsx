@@ -1328,7 +1328,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             ))}
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '18px' }}>
+                        <div className="email-get-buttons" style={{ marginTop: '18px' }}>
                             <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleGenerateAddress}>🎲 Tạo địa chỉ mới</button>
                             <button className="btn btn-secondary" style={{ flex: 1 }} onClick={handleCopyAllAddress}>📑 Copy toàn bộ</button>
                         </div>
@@ -1339,7 +1339,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
             {/* Email Getter Modal */}
             {showEmailGetModal && (
                 <div className="modal-overlay" style={{ display: 'flex' }} onClick={handleCloseEmailGetModal}>
-                    <div className="modal-box" style={{ maxWidth: '550px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-box email-get-modal-box" style={{ maxWidth: '550px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                             <h3 style={{ margin: 0 }}>✉️ Lấy Info</h3>
                             <button onClick={handleCloseEmailGetModal} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
@@ -1349,7 +1349,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             {/* Radio tabs selector */}
                             <div style={{ marginBottom: '15px' }}>
                                 <label className="form-label">Trạng thái tài khoản</label>
-                                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                <div className="email-get-tabs">
                                     <label style={{
                                         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px',
                                         background: infoSourceType === 'uncreated' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255,255,255,0.02)',
@@ -1382,7 +1382,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
                             {/* Dropdown filters (only for uncreated / created) */}
                             {infoSourceType !== 'address' && (
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', marginBottom: '12px' }}>
+                                <div className="email-get-filters">
                                     <div style={{ flex: 1 }}>
                                         <label className="form-label">Loại tài khoản</label>
                                         <select
@@ -1556,7 +1556,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                             </div>
                                         ))}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                    <div className="email-get-buttons">
                                         <button className="btn btn-primary" style={{ flex: 1, height: '36px' }} onClick={handleGenerateTabAddress}>🎲 Tạo địa chỉ mới</button>
                                         <button className="btn btn-secondary" style={{ flex: 1, height: '36px' }} onClick={handleCopyAllTabAddress}>📑 Copy toàn bộ</button>
                                     </div>
