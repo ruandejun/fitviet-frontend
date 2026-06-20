@@ -813,73 +813,73 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '20px' }}>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Email / Username</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 600 }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 600 }}>
                                         {viewData.email || viewData.username || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Mật khẩu</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace' }}>
                                         {viewData.password || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Loại tài khoản</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--accent)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--accent)' }}>
                                         {viewData.type || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Browser Profile ID</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {viewData.browser_profiles || 'Không có'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>IP Đăng ký</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {viewData.signup_ip || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Phone / Service</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {viewData.phone_number || '-'}{viewData.phone_service && ` (${viewData.phone_service})`}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Socks5 / Proxy</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace' }}>
                                         {viewData.socks5 || viewData.proxy || 'Không có'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Trạng thái</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {getAccountStatusLabel(viewData.status)}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Tạo bởi</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--accent)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--accent)' }}>
                                         {viewData.created_by || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Ngày tạo</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {formatDateString(viewData.created)}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Subscription (Apple)</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {viewData.subscription || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Chủ sở hữu Sub</label>
-                                    <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                                         {viewData.subscription_owner || '-'}
                                     </div>
                                 </div>
@@ -904,7 +904,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                         )}
                                     </div>
                                 </div>
-                                <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
                                     {viewData.two_factor_auth || '-'}
                                 </div>
                             </div>
@@ -915,13 +915,13 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                         <button className="btn btn-primary" onClick={handleCopyCookies} style={{ padding: '2px 8px', fontSize: '11px', borderRadius: '4px' }}>Copy Cookies</button>
                                     )}
                                 </div>
-                                <div style={{ padding: '10px 14px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace', maxHeight: '120px', overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '11px' }}>
+                                <div style={{ padding: '10px 14px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontFamily: 'monospace', maxHeight: '120px', overflowY: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '11px' }}>
                                     {viewData.cookies || 'Không có cookies'}
                                 </div>
                             </div>
                             <div className="form-group">
                                 <label className="form-label" style={{ color: 'var(--text-muted)' }}>Ghi chú</label>
-                                <div style={{ padding: '8px 12px', background: 'rgba(30, 41, 59, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', minHeight: '38px' }}>
+                                <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', minHeight: '38px' }}>
                                     {viewData.note || '-'}
                                 </div>
                             </div>

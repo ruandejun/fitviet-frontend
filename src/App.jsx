@@ -75,6 +75,10 @@ export default function App() {
         checkAuth();
     }, []);
 
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+    }, [theme]);
+
     // Redirect or set note ID on root path
     useEffect(() => {
         const currentId = getNoteIdFromPath();

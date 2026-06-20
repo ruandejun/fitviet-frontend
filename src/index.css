@@ -21,30 +21,40 @@
             --table-th-bg: rgba(11, 13, 27, 0.4);
             --btn-secondary-bg: rgba(255, 255, 255, 0.03);
             --btn-secondary-hover-bg: rgba(255, 255, 255, 0.06);
+            --panel-bg-darker: rgba(15, 23, 42, 0.4);
+            --panel-bg-inset: rgba(30, 41, 59, 0.3);
+            --otp-text: #34d399;
+            --otp-bg: rgba(16, 185, 129, 0.15);
+            --otp-border: rgba(16, 185, 129, 0.3);
         }
 
         [data-theme="light"] {
-            --bg-color: #f5f5f7;
-            --sidebar-bg: rgba(255, 255, 255, 0.55);
-            --panel-bg: rgba(255, 255, 255, 0.5);
-            --border-color: rgba(0, 0, 0, 0.12); /* Higher contrast border */
-            --text-color: #1d1d1f; /* Premium high contrast Apple charcoal */
-            --text-muted: #515154;
-            --primary: #5e5ce6;
-            --primary-hover: #4b49c7;
-            --accent: #0071e3;
-            --success: #24b249; /* slightly darker green for readability */
-            --warning: #e07b00; /* slightly darker warning */
-            --danger: #ff3b30;
-            --active-bg: rgba(94, 92, 230, 0.12);
-            --table-hover: rgba(0, 0, 0, 0.03);
-            --modal-bg: rgba(255, 255, 255, 0.85); /* Apple glass popup */
-            --input-bg: rgba(255, 255, 255, 0.8);
-            --scrollbar-border: #f5f5f7;
-            --header-bg: rgba(245, 245, 247, 0.65); /* Apple top bar glass */
-            --table-th-bg: rgba(0, 0, 0, 0.05);
-            --btn-secondary-bg: rgba(0, 0, 0, 0.05);
-            --btn-secondary-hover-bg: rgba(0, 0, 0, 0.09);
+            --bg-color: #ffffff;
+            --sidebar-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.08); /* Higher contrast border */
+            --text-color: #0f172a; /* Premium high contrast Slate charcoal */
+            --text-muted: #475569;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --active-bg: rgba(99, 102, 241, 0.08);
+            --table-hover: rgba(99, 102, 241, 0.02);
+            --modal-bg: #ffffff;
+            --input-bg: #f8fafc;
+            --scrollbar-border: #ffffff;
+            --header-bg: #ffffff;
+            --table-th-bg: #f1f5f9;
+            --btn-secondary-bg: #f1f5f9;
+            --btn-secondary-hover-bg: #e2e8f0;
+            --panel-bg-darker: #f1f5f9;
+            --panel-bg-inset: #f8fafc;
+            --otp-text: #047857;
+            --otp-bg: rgba(16, 185, 129, 0.08);
+            --otp-border: rgba(16, 185, 129, 0.2);
         }
 
 
@@ -357,8 +367,8 @@
             align-items: center;
             justify-content: space-between;
             padding: 10px 14px;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.02);
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
         }
@@ -398,7 +408,7 @@
 
         .search-input {
             width: 100%;
-            background: rgba(11, 13, 27, 0.8);
+            background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 10px 16px;
@@ -414,7 +424,7 @@
         }
 
         .filter-select {
-            background: rgba(11, 13, 27, 0.8);
+            background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 10px 16px;
@@ -585,7 +595,7 @@
 
         /* Inline select input */
         .inline-select {
-            background: #111526;
+            background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 4px 8px;
@@ -1060,7 +1070,7 @@
 
             .table-container td {
                 border: none !important;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+                border-bottom: 1px solid var(--border-color) !important;
                 position: relative !important;
                 padding: 10px 0 10px 45% !important;
                 text-align: right !important;
@@ -1923,4 +1933,41 @@
                 padding: 24px 20px;
             }
         }
+
+        /* LIGHT THEME OVERRIDES AND EXTRA CONTRAST STYLES */
+        [data-theme="light"] .stat-val {
+            background: linear-gradient(135deg, #0f172a, #334155);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        [data-theme="light"] .badge-unused { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        [data-theme="light"] .badge-active { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+        [data-theme="light"] .badge-used { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+        [data-theme="light"] .badge-dead { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        [data-theme="light"] .badge-live { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+        [data-theme="light"] .badge-good { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+        [data-theme="light"] .badge-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        [data-theme="light"] .badge-sub-ok { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+        [data-theme="light"] .badge-sub-error { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+
+        [data-theme="light"] .inline-select.badge-unused, [data-theme="light"] .filter-select.badge-unused { background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; }
+        [data-theme="light"] .inline-select.badge-active, [data-theme="light"] .filter-select.badge-active { background: #ffedd5 !important; color: #c2410c !important; border: 1px solid #fed7aa !important; }
+        [data-theme="light"] .inline-select.badge-used, [data-theme="light"] .filter-select.badge-used { background: #f3e8ff !important; color: #6b21a8 !important; border: 1px solid #e9d5ff !important; }
+        [data-theme="light"] .inline-select.badge-dead, [data-theme="light"] .filter-select.badge-dead { background: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important; }
+        [data-theme="light"] .inline-select.badge-live, [data-theme="light"] .filter-select.badge-live { background: #d1fae5 !important; color: #047857 !important; border: 1px solid #a7f3d0 !important; }
+        [data-theme="light"] .inline-select.badge-good, [data-theme="light"] .filter-select.badge-good { background: #ccfbf1 !important; color: #0f766e !important; border: 1px solid #99f6e4 !important; }
+        [data-theme="light"] .inline-select.badge-error, [data-theme="light"] .filter-select.badge-error { background: #fee2e2 !important; color: #b91c1c !important; border: 1px solid #fecaca !important; }
+        [data-theme="light"] .inline-select.badge-sub-ok, [data-theme="light"] .filter-select.badge-sub-ok { background: #d1fae5 !important; color: #047857 !important; border: 1px solid #a7f3d0 !important; }
+        [data-theme="light"] .inline-select.badge-sub-error, [data-theme="light"] .filter-select.badge-sub-error { background: #ffe4e6 !important; color: #be123c !important; border: 1px solid #fecdd3 !important; }
+
+        [data-theme="light"] select option.badge-unused { background-color: #f1f5f9; color: #475569; }
+        [data-theme="light"] select option.badge-active { background-color: #ffedd5; color: #c2410c; }
+        [data-theme="light"] select option.badge-used { background-color: #f3e8ff; color: #6b21a8; }
+        [data-theme="light"] select option.badge-dead { background-color: #fee2e2; color: #b91c1c; }
+        [data-theme="light"] select option.badge-live { background-color: #d1fae5; color: #047857; }
+        [data-theme="light"] select option.badge-good { background-color: #ccfbf1; color: #0f766e; }
+        [data-theme="light"] select option.badge-error { background-color: #fee2e2; color: #b91c1c; }
+        [data-theme="light"] select option.badge-sub-ok { background-color: #d1fae5; color: #047857; }
+        [data-theme="light"] select option.badge-sub-error { background-color: #ffe4e6; color: #be123c; }
 

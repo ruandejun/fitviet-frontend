@@ -454,7 +454,7 @@ export default function Users({ currentUser, page, onPageChange }) {
                         <div className="modal-body">
                             <div className="form-group">
                                 <label className="form-label">Username</label>
-                                <input type="text" className="form-input" value={editUsername} readOnly style={{ background: 'rgba(255,255,255,0.01)', color: 'var(--text-muted)' }} />
+                                <input type="text" className="form-input" value={editUsername} readOnly style={{ background: 'var(--input-bg)', color: 'var(--text-muted)' }} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Mật khẩu mới (Bỏ trống nếu không đổi)</label>

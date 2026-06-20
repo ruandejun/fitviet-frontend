@@ -518,22 +518,22 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                     --otp-border: rgba(16, 185, 129, 0.3);
                 }
                 [data-theme="light"] {
-                    --bg-color: #f5f5f7;
-                    --container-bg: rgba(255, 255, 255, 0.5); /* frosted glass */
-                    --border-color: rgba(0, 0, 0, 0.12); /* higher contrast */
-                    --text-color: #1d1d1f; /* Apple charcoal */
-                    --text-muted: #515154;
-                    --primary-glow: #5e5ce6; /* Apple Indigo */
-                    --accent-glow: #0071e3; /* Apple Blue */
-                    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+                    --bg-color: #ffffff;
+                    --container-bg: #ffffff;
+                    --border-color: rgba(0, 0, 0, 0.08);
+                    --text-color: #0f172a;
+                    --text-muted: #475569;
+                    --primary-glow: #6366f1;
+                    --accent-glow: #0ea5e9;
+                    --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
                     --editor-bg: transparent;
-                    --toolbar-bg: rgba(255, 255, 255, 0.6);
-                    --modal-bg: rgba(255, 255, 255, 0.85);
-                    --btn-hover: rgba(0, 0, 0, 0.05);
-                    --toast-bg: rgba(94, 92, 230, 0.95);
-                    --otp-text: #065f46;
-                    --otp-bg: rgba(6, 95, 70, 0.08);
-                    --otp-border: rgba(6, 95, 70, 0.2);
+                    --toolbar-bg: #ffffff;
+                    --modal-bg: #ffffff;
+                    --btn-hover: rgba(0, 0, 0, 0.03);
+                    --toast-bg: rgba(99, 102, 241, 0.95);
+                    --otp-text: #047857;
+                    --otp-bg: rgba(16, 185, 129, 0.08);
+                    --otp-border: rgba(16, 185, 129, 0.2);
                 }
                 .glowing-orb {
                     position: absolute;
@@ -999,6 +999,10 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                         height: 34px !important;
                     }
                 }
+                [data-theme="light"] .form-input,
+                [data-theme="light"] .addr-field {
+                    background: #f8fafc;
+                }
             `}</style>
 
             {!isEmbedded && (
@@ -1089,13 +1093,12 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
                 </div>
             </main>
 
-            {/* Metrics Footer */}
             <footer style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px 24px',
-                background: 'rgba(0, 0, 0, 0.15)',
+                background: theme === 'light' ? '#f1f5f9' : 'rgba(0, 0, 0, 0.15)',
                 borderTop: '1px solid var(--border-color)',
                 fontSize: '13px',
                 color: 'var(--text-muted)'

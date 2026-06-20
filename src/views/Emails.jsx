@@ -1284,7 +1284,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
                             )}
 
                             {!mailboxLoading && !mailboxError && (
-                                <div className="table-container" style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', marginBottom: '16px', background: 'rgba(30, 41, 59, 0.2)' }}>
+                                <div className="table-container" style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', marginBottom: '16px', background: 'var(--input-bg)' }}>
                                     <table style={{ margin: 0, width: '100%' }}>
                                         <thead>
                                             <tr>
@@ -1336,7 +1336,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
 
                             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                                 <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'var(--accent)' }}>Chi tiết Email</h4>
-                                <div style={{ padding: '14px', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '6px', border: '1px solid var(--border-color)', minHeight: '150px', maxHeight: '380px', overflowY: 'auto', fontSize: '13px', lineHeight: 1.6 }}>
+                                <div style={{ padding: '14px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', minHeight: '150px', maxHeight: '380px', overflowY: 'auto', fontSize: '13px', lineHeight: 1.6 }}>
                                     {activeMailIndex !== null && mailboxEmails[activeMailIndex] ? (
                                         mailboxEmails[activeMailIndex].body && (mailboxEmails[activeMailIndex].body.includes('<html') || mailboxEmails[activeMailIndex].body.includes('<body') || mailboxEmails[activeMailIndex].body.includes('<div')) ? (
                                             <iframe 
@@ -1385,14 +1385,14 @@ export default function Emails({ currentUser, page, onPageChange }) {
                                 ></textarea>
                             </div>
 
-                            <div style={{ marginBottom: '16px', background: 'rgba(30, 41, 59, 0.3)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
+                            <div style={{ marginBottom: '16px', background: 'var(--input-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
                                 <h4 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
                                     <span>Trạng thái kết nối các tài khoản:</span>
                                     <span style={{ color: 'var(--accent)' }}>{bulkStatusSummary}</span>
                                 </h4>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
                                     {Object.keys(bulkAccountsStatus).map((email, idx) => (
-                                        <div key={idx} style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div key={idx} style={{ background: 'var(--input-bg)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <span style={{ fontWeight: 500 }}>{email}</span>: 
                                             <span style={{ color: bulkAccountsColor[email] }}>{bulkAccountsStatus[email]}</span>
                                         </div>
@@ -1418,7 +1418,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
 
                             <div className="bulk-mail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                                 {/* Left List: Message list */}
-                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                     <div style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', fontSize: '13px' }}>
                                         Danh sách thư nhận được
                                     </div>
@@ -1464,7 +1464,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
                                 </div>
 
                                 {/* Right Detail Box: Full body content */}
-                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'rgba(15, 23, 42, 0.4)', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '14px' }}>
+                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '14px' }}>
                                     <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent)' }}>
                                         {activeBulkMail ? activeBulkMail.subject : 'Chọn thư để xem chi tiết'}
                                     </h4>
