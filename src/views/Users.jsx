@@ -380,11 +380,10 @@ export default function Users({ currentUser, page, onPageChange }) {
             </div>
 
             <Pagination 
-                infoText={`Hiển thị ${fromVal} - ${toVal} của ${count}`}
-                onPrev={() => onPageChange(page - 1)}
-                onNext={() => onPageChange(page + 1)}
-                prevDisabled={prevDisabled}
-                nextDisabled={nextDisabled}
+                page={page}
+                count={count}
+                pageSize={pageSize}
+                onPageChange={onPageChange}
             />
 
             {/* Add User Modal */}
