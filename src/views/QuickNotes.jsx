@@ -26,6 +26,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout, isEmbedded =
 
     // Modals
     const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+    const [showQuickLoginModal, setShowQuickLoginModal] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
     const [lockPasswordInput, setLockPasswordInput] = useState('');
 
