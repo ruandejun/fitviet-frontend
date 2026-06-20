@@ -84,6 +84,9 @@ async function calculateTotp(secret) {
 
 import QuickNotes from './QuickNotes';
 import { US_ADDRESSES, US_FIRST_NAMES, US_LAST_NAMES, US_AREA_CODES, US_STATE_NAMES, randItem, generateUSPhone } from './usAddressData';
+import Login from './Login';
+import Register from './Register';
+import ForgotPassword from './ForgotPassword';
 
 // Polyfill clipboard for non-secure HTTP contexts
 try {
@@ -206,6 +209,13 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     // Status On Close Selection
     const [modalStatusSelect, setModalStatusSelect] = useState('');
     const [statusSelectDisabled, setStatusSelectDisabled] = useState(false);
+
+    // Auth Modal states
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [authModalScreen, setAuthModalScreen] = useState('login'); // login, register, forgot
+
+    // User Info Modal states
+    const [showUserInfoModal, setShowUserInfoModal] = useState(false);
 
     // US Address generation logic
     const handleGenerateAddress = () => {
@@ -1025,7 +1035,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                 <div className="sidebar-footer" style={{ padding: '15px' }}>
                     {currentUser ? (
                         <>
-                            <div className="user-info menu-text">
+                            <div className="user-info menu-text" onClick={() => { setShowUserInfoModal(true); setSidebarVisible(false); }} style={{ cursor: 'pointer' }}>
                                 <span className="user-name">{currentUser.username}</span>
                                 <span className="user-role">{currentUser.is_staff ? 'Quản trị viên' : 'Khách hàng'}</span>
                             </div>
@@ -1034,9 +1044,22 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             </button>
                         </>
                     ) : (
-                        <a href="/dashboard/" className="menu-item" style={{ width: '100%', justifyContent: 'center', border: '1px dashed var(--border-color)', gap: '8px', padding: '10px' }}>
+                        <button 
+                            onClick={() => { setAuthModalScreen('login'); setShowAuthModal(true); setSidebarVisible(false); }} 
+                            className="menu-item" 
+                            style={{ 
+                                width: '100%', 
+                                justifyContent: 'center', 
+                                border: '1px dashed var(--border-color)', 
+                                gap: '8px', 
+                                padding: '10px', 
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                color: 'var(--text-color)'
+                            }}
+                        >
                             <span>🔑</span><span className="menu-text">Đăng nhập</span>
-                        </a>
+                        </button>
                     )}
                 </div>
             </div>
@@ -1105,7 +1128,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         {/* Login/User Button */}
                         {currentUser ? (
                             <button 
-                                onClick={onLogout} 
+                                onClick={() => setShowUserInfoModal(true)} 
                                 style={{ 
                                     background: 'linear-gradient(135deg, var(--primary), var(--primary-hover))', 
                                     border: 'none', 
@@ -1120,15 +1143,16 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                     fontSize: '13px',
                                     height: '40px'
                                 }}
-                                title="Đăng xuất"
+                                title="Xem thông tin tài khoản"
                             >
                                 👤 <span className="header-username">{currentUser.username}</span>
                             </button>
                         ) : (
-                            <a 
-                                href="/dashboard/" 
+                            <button 
+                                onClick={() => { setAuthModalScreen('login'); setShowAuthModal(true); }}
                                 style={{ 
                                     background: 'linear-gradient(135deg, var(--accent), var(--primary))', 
+                                    border: 'none',
                                     borderRadius: '10px', 
                                     padding: '8px 16px', 
                                     color: 'white', 
@@ -1136,14 +1160,13 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     gap: '6px', 
-                                    textDecoration: 'none',
                                     fontSize: '13px',
                                     height: '40px',
-                                    boxSizing: 'border-box'
+                                    cursor: 'pointer'
                                 }}
                             >
                                 🔑 <span className="header-login-text">Đăng nhập</span>
-                            </a>
+                            </button>
                         )}
 
                         {/* Popover list */}
@@ -1385,14 +1408,14 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">Địa chỉ Email</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={emailGetAddress} style={{ fontWeight: '600', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={emailGetAddress} style={{ fontWeight: '600', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(emailGetAddress).then(() => triggerToast('Đã copy Email')); }} style={{ padding: '0 10px', height: '36px' }}>📋</button>
                                             </div>
                                         </div>
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">Mật khẩu Email</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={emailGetPassword} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={emailGetPassword} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(emailGetPassword).then(() => triggerToast('Đã copy Mật khẩu')); }} style={{ padding: '0 10px', height: '36px' }}>📋</button>
                                             </div>
                                         </div>
@@ -1404,14 +1427,14 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                             <div className="form-group" style={{ marginBottom: '8px' }}>
                                                 <label className="form-label">Mật khẩu mới</label>
                                                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                    <input type="text" className="form-input" placeholder="Mật khẩu tạo..." value={emailGetAccPassword} onChange={(e) => setEmailGetAccPassword(e.target.value)} style={{ height: '36px', fontSize: '13px' }} />
+                                                    <input type="text" className="form-input" placeholder="Mật khẩu tạo..." value={emailGetAccPassword} onChange={(e) => setEmailGetAccPassword(e.target.value)} style={{ height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                     <button className="btn btn-secondary" onClick={() => setEmailGetAccPassword('Zxcv@123')} style={{ padding: '0 10px', height: '36px' }}>🔒</button>
                                                 </div>
                                             </div>
                                             <div className="form-group" style={{ marginBottom: '8px' }}>
                                                 <label className="form-label">Khóa 2FA</label>
                                                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                    <input type="text" className="form-input" placeholder="2FA Secret..." value={emailGetAcc2Fa} onChange={(e) => setEmailGetAcc2Fa(e.target.value)} style={{ height: '36px', fontSize: '13px' }} />
+                                                    <input type="text" className="form-input" placeholder="2FA Secret..." value={emailGetAcc2Fa} onChange={(e) => setEmailGetAcc2Fa(e.target.value)} style={{ height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                     <button className="btn btn-primary" onClick={handleGetOtpForUncreatedAcc} style={{ padding: '0 10px', height: '36px', fontSize: '12px', whiteSpace: 'nowrap' }}>Mã OTP</button>
                                                 </div>
                                                 {emailGetAcc2FaOtpDisplay && (
@@ -1452,14 +1475,14 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">Username</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={createdAccUsername} style={{ fontWeight: '600', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={createdAccUsername} style={{ fontWeight: '600', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(createdAccUsername).then(() => triggerToast('Đã copy Username')); }} style={{ padding: '0 10px', height: '36px' }}>📋</button>
                                             </div>
                                         </div>
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">Email</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={createdAccEmail} style={{ fontWeight: '600', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={createdAccEmail} style={{ fontWeight: '600', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(createdAccEmail).then(() => triggerToast('Đã copy Email')); }} style={{ padding: '0 10px', height: '36px' }}>📋</button>
                                             </div>
                                         </div>
@@ -1469,14 +1492,14 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">Mật khẩu</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={createdAccPassword} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={createdAccPassword} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={() => { navigator.clipboard.writeText(createdAccPassword).then(() => triggerToast('Đã copy Mật khẩu')); }} style={{ padding: '0 10px', height: '36px' }}>📋</button>
                                             </div>
                                         </div>
                                         <div className="form-group" style={{ marginBottom: '8px' }}>
                                             <label className="form-label">2FA Secret Key</label>
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                                <input type="text" className="form-input" readOnly value={createdAcc2Fa} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px' }} />
+                                                <input type="text" className="form-input" readOnly value={createdAcc2Fa} style={{ fontFamily: 'monospace', height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
                                                 <button className="btn btn-primary" onClick={fetchCreatedAccOtp} style={{ padding: '0 10px', height: '36px' }}>🔑</button>
                                             </div>
                                             {createdAccOtpDisplayBadge && (
@@ -1568,6 +1591,67 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             <button className="btn btn-secondary" disabled={statusSelectDisabled} onClick={handleCloseEmailGetModal}>
                                 {statusSelectDisabled ? 'Đang lưu...' : 'Đóng'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Auth Modal (Login / Register / Forgot Password) */}
+            {showAuthModal && (
+                <div className="modal-overlay" style={{ display: 'flex', zIndex: 9999 }} onClick={() => setShowAuthModal(false)}>
+                    <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '95%', maxWidth: '440px', display: 'flex', flexDirection: 'column' }}>
+                        <button onClick={() => setShowAuthModal(false)} style={{ position: 'absolute', top: '25px', right: '25px', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer', zIndex: 20 }}>✕</button>
+                        {authModalScreen === 'login' && (
+                            <Login onLoginSuccess={() => { setShowAuthModal(false); window.location.reload(); }} onSwitchForm={setAuthModalScreen} />
+                        )}
+                        {authModalScreen === 'register' && (
+                            <Register onRegisterSuccess={() => { setShowAuthModal(false); window.location.reload(); }} onSwitchForm={setAuthModalScreen} />
+                        )}
+                        {authModalScreen === 'forgot' && (
+                            <ForgotPassword onSwitchForm={setAuthModalScreen} />
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* User Info Modal */}
+            {showUserInfoModal && currentUser && (
+                <div className="modal-overlay" style={{ display: 'flex', zIndex: 9999 }} onClick={() => setShowUserInfoModal(false)}>
+                    <div className="addr-modal-box" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', maxWidth: '400px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                                👤 Thông tin tài khoản
+                            </h3>
+                            <button onClick={() => setShowUserInfoModal(false)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer' }}>✕</button>
+                        </div>
+
+                        <div style={{ padding: '10px 0' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Tên đăng nhập:</span>
+                                    <strong style={{ color: 'var(--text-color)', fontSize: '13px' }}>{currentUser.username}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Email:</span>
+                                    <strong style={{ color: 'var(--text-color)', fontSize: '13px' }}>{currentUser.email || '-'}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Vai trò:</span>
+                                    <strong style={{ color: 'var(--text-color)', fontSize: '13px' }}>
+                                        {currentUser.is_superuser ? 'Quản trị viên cấp cao' :
+                                         currentUser.is_staff ? 'Quản trị viên' : 'Thành viên'}
+                                    </strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px' }}>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Ngày tham gia:</span>
+                                    <strong style={{ color: 'var(--text-color)', fontSize: '13px' }}>{currentUser.date_joined || '-'}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '15px', borderTop: '1px solid var(--border-color)' }}>
+                            <a href="/dashboard/" className="btn btn-primary" style={{ textDecoration: 'none', flex: 1, textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '36px', fontSize: '13px' }}>Vào quản trị</a>
+                            <button onClick={() => { setShowUserInfoModal(false); onLogout(); }} className="btn btn-danger" style={{ flex: 1, height: '36px', fontSize: '13px', background: '#ef4444', borderColor: '#ef4444', color: 'white' }}>Đăng xuất</button>
                         </div>
                     </div>
                 </div>

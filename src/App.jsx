@@ -104,6 +104,9 @@ export default function App() {
     };
 
     const handleLogout = async () => {
+        if (!window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+            return;
+        }
         try {
             await apiRequest('/dashboard/logout/', { method: 'POST' });
         } catch (err) {
