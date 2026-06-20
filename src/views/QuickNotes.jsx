@@ -1595,6 +1595,17 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                 .status-dot.offline { background-color: #ef4444; }
                 .status-dot.typing { background-color: #6366f1; }
 
+                .right-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .actions-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
                 .modal-tabs {
                     display: flex;
                     border-bottom: 1px solid var(--border-color);
@@ -1624,10 +1635,215 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     background: var(--primary-glow);
                 }
 
+                /* ====== TABLET / SMALL DESKTOP ====== */
                 @media (max-width: 768px) {
-                    .toolbar { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
-                    .editor-container { padding: 8px; }
-                    .btn-tool { padding: 10px 12px; font-size: 13px; }
+                    .toolbar {
+                        flex-wrap: wrap;
+                        padding: 10px 12px;
+                        gap: 8px;
+                    }
+                    .logo-section {
+                        order: 1;
+                        flex: 1 1 auto;
+                        min-width: 0;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    .logo-title {
+                        font-size: 17px;
+                    }
+                    .note-badge {
+                        font-size: 11px;
+                        padding: 3px 7px;
+                        max-width: 80px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                    .status-section {
+                        order: 2;
+                        flex: 0 0 auto;
+                        font-size: 11px;
+                        gap: 4px;
+                    }
+                    .right-section {
+                        display: contents;
+                    }
+                    .btn-login {
+                        order: 3;
+                        flex-shrink: 0;
+                        padding: 7px 12px;
+                        font-size: 12px;
+                        border-radius: 8px;
+                        white-space: nowrap;
+                    }
+                    .actions-section {
+                        order: 4;
+                        width: 100%;
+                        display: flex;
+                        overflow-x: auto;
+                        gap: 12px;
+                        padding: 8px 4px;
+                        -webkit-overflow-scrolling: touch;
+                        scrollbar-width: none;
+                    }
+                    .actions-section::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .btn-tool {
+                        flex-shrink: 0;
+                        padding: 10px 16px;
+                        font-size: 13px;
+                        border-radius: 10px;
+                        gap: 6px;
+                        white-space: nowrap;
+                        min-height: 44px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .editor-container {
+                        padding: 8px;
+                    }
+                    .editor-card {
+                        border-radius: 12px;
+                    }
+                    .editor-textarea {
+                        padding: 14px;
+                        font-size: 16px;
+                    }
+                    .metrics-bar {
+                        padding: 8px 12px;
+                        font-size: 11px;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                        justify-content: center;
+                        text-align: center;
+                    }
+                    .metrics-left {
+                        gap: 10px;
+                        justify-content: center;
+                        width: 100%;
+                    }
+                    .modal-box {
+                        padding: 20px;
+                        width: 95%;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                    }
+                    .orb-1 {
+                        width: 250px;
+                        height: 250px;
+                    }
+                    .orb-2 {
+                        width: 200px;
+                        height: 200px;
+                    }
+                }
+
+                /* ====== PHONE SMALL ====== */
+                @media (max-width: 480px) {
+                    .toolbar {
+                        padding: 8px 10px;
+                        gap: 6px;
+                    }
+                    .logo-title {
+                        font-size: 15px;
+                    }
+                    .note-badge {
+                        font-size: 10px;
+                        padding: 2px 6px;
+                        max-width: 60px;
+                    }
+                    .status-text {
+                        display: none;
+                    }
+                    .status-section {
+                        gap: 0;
+                    }
+                    .btn-login {
+                        padding: 8px 14px;
+                        font-size: 12px;
+                        min-height: 40px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .btn-tool {
+                        padding: 10px 14px;
+                        font-size: 13px;
+                        min-height: 44px;
+                    }
+                    .editor-container {
+                        padding: 6px;
+                    }
+                    .editor-textarea {
+                        padding: 12px;
+                        font-size: 16px;
+                    }
+                    .metrics-bar {
+                        padding: 6px 10px;
+                        font-size: 10px;
+                    }
+                    .toast {
+                        bottom: 20px;
+                        font-size: 13px;
+                        padding: 10px 18px;
+                        max-width: 90vw;
+                    }
+                }
+
+                /* ====== VERY SMALL PHONE (320px) ====== */
+                @media (max-width: 360px) {
+                    .logo-title {
+                        font-size: 14px;
+                    }
+                    .note-badge {
+                        display: none;
+                    }
+                    .btn-login {
+                        padding: 5px 8px;
+                        font-size: 11px;
+                        gap: 2px;
+                    }
+                    .btn-tool {
+                        padding: 5px 7px;
+                        font-size: 10px;
+                    }
+                }
+
+                /* Email retrieval modal responsive overrides */
+                @media (max-width: 576px) {
+                    #emailGetModal .modal-box {
+                        padding: 14px 16px;
+                        max-width: 95%;
+                        margin: 10px;
+                    }
+                    .email-get-grid-2col {
+                        gap: 8px;
+                    }
+                    #emailGetModal .form-group {
+                        margin-bottom: 6px !important;
+                    }
+                    #emailGetModal .form-label {
+                        font-size: 11px;
+                        margin-bottom: 2px;
+                    }
+                    #emailGetModal .form-input {
+                        padding: 6px 8px;
+                        font-size: 13px;
+                        height: 34px;
+                    }
+                    #emailGetModal p {
+                        font-size: 12px !important;
+                        margin-bottom: 8px !important;
+                    }
+                    #emailGetModal .btn {
+                        padding: 6px 10px;
+                        font-size: 12px;
+                        height: 34px !important;
+                    }
                 }
             `}</style>
 
@@ -1636,8 +1852,8 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
 
             {/* Header Toolbar */}
             <header className="toolbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <a href="/" style={{
+                <div className="logo-section">
+                    <a href="/" className="logo-title" style={{
                         fontWeight: '700',
                         fontSize: '20px',
                         letterSpacing: '0.5px',
@@ -1647,7 +1863,7 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                         textTransform: 'uppercase',
                         textDecoration: 'none'
                     }}>Ghi chú</a>
-                    <span style={{
+                    <span className="note-badge" style={{
                         background: 'rgba(99, 102, 241, 0.15)',
                         color: 'var(--primary-glow)',
                         padding: '4px 10px',
@@ -1658,13 +1874,13 @@ export default function QuickNotes({ noteId, currentUser, onLogout }) {
                     }}>{noteId}</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                <div className="status-section">
                     <span className={`status-dot ${statusState}`}></span>
-                    <span>{statusMessage}</span>
+                    <span className="status-text">{statusMessage}</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="right-section">
+                    <div className="actions-section">
                         <button className="btn-tool" onClick={() => handleSave(content)} style={{ background: 'var(--primary-glow)', color: 'white', borderColor: 'var(--primary-glow)' }}>
                             💾 Lưu
                         </button>

@@ -170,6 +170,57 @@ export default function DashboardLayout({ currentUser, onLogout }) {
         return () => clearInterval(countInterval);
     }, []);
 
+    // Automatically apply data-label and cell-chk to table cells for mobile responsive views
+    useEffect(() => {
+        const updateTableLabels = (table) => {
+            const ths = Array.from(table.querySelectorAll('thead th'));
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const tds = row.querySelectorAll('td');
+                tds.forEach((td, idx) => {
+                    if (idx < ths.length) {
+                        const label = ths[idx].innerText.trim();
+                        // Automatically tag checkbox cells with cell-chk
+                        if (td.querySelector('input[type="checkbox"]')) {
+                            td.classList.add('cell-chk');
+                        }
+                        
+                        if (label && label !== 'STT' && !td.querySelector('input[type="checkbox"]') && !td.classList.contains('cell-chk')) {
+                            td.setAttribute('data-label', label);
+                        } else {
+                            td.removeAttribute('data-label');
+                        }
+                    }
+                });
+            });
+        };
+
+        const processAllTables = () => {
+            document.querySelectorAll('.table-container table').forEach(updateTableLabels);
+        };
+
+        // Run immediately
+        processAllTables();
+
+        // Observe changes to the DOM to handle dynamic tables/rows rendering
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList' && (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+                    shouldUpdate = true;
+                    break;
+                }
+            }
+            if (shouldUpdate) {
+                processAllTables();
+            }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        return () => observer.disconnect();
+    }, [currentTab]);
+
     // Mark notifications as read
     const markAllNotificationsAsRead = async (e) => {
         if (e) e.stopPropagation();
@@ -259,8 +310,11 @@ export default function DashboardLayout({ currentUser, onLogout }) {
 
     return (
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', width: '100%' }}>
+            {/* Sidebar Overlay */}
+            <div className={`sidebar-overlay ${sidebarVisible ? 'active' : ''}`} onClick={() => setSidebarVisible(false)}></div>
+
             {/* Sidebar */}
-            <div className={`sidebar ${sidebarVisible ? 'mobile-show' : ''}`} style={{ display: 'flex' }}>
+            <div className={`sidebar ${sidebarVisible ? 'active' : ''}`} style={{ display: 'flex' }}>
                 <div>
                     <a href="#" onClick={(e) => { e.preventDefault(); handleSwitchTab('overview'); }} className="sidebar-brand" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                         <span className="menu-icon" style={{ fontSize: '20px' }}>🚀</span>
