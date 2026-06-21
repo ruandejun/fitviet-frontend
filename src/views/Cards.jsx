@@ -84,12 +84,12 @@ export default function Cards({ currentUser, page, onPageChange }) {
     };
 
     useEffect(() => {
-        if (!bulkAssignOpen) return;
+        if (!bulkAssignOpen && !importOpen) return;
         const delayDebounce = setTimeout(() => {
             fetchModalClients(1, ownerSearchQuery, true);
         }, 250);
         return () => clearTimeout(delayDebounce);
-    }, [ownerSearchQuery, bulkAssignOpen]);
+    }, [ownerSearchQuery, bulkAssignOpen, importOpen]);
 
     const handleModalScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -491,7 +491,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                     <button className="btn btn-secondary" onClick={fetchCards}>Làm mới</button>
                     {currentUser.is_staff && (
                         <>
-                            <button className="btn btn-success" onClick={() => setImportOpen(true)}>Thêm thẻ</button>
+                            <button className="btn btn-success" onClick={() => { setImportOpen(true); setImportOwner(''); setOwnerSearchQuery(''); }}>Thêm thẻ</button>
                             <button className="btn btn-primary" onClick={() => { setBulkAssignOpen(true); setOwnerSearchQuery(''); }} disabled={selectedIds.length === 0}>Sở hữu</button>
                             <button className="btn btn-primary" onClick={openEditModal} disabled={selectedIds.length !== 1}>Sửa</button>
                             <button className="btn btn-danger" onClick={deleteSelectedCards} disabled={selectedIds.length === 0}>Xóa</button>
@@ -636,12 +636,55 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Sở hữu bởi (Owner)</label>
-                                <select className="filter-select" style={{ width: '100%' }} value={importOwner} onChange={(e) => setImportOwner(e.target.value)}>
-                                    <option value="">-- Không chỉ định --</option>
-                                    {clients.map(u => (
-                                        <option key={u.id} value={u.id}>{u.username}</option>
-                                    ))}
-                                </select>
+                                <input 
+                                    type="text" 
+                                    className="form-input" 
+                                    placeholder="Tìm tên chủ sở hữu..." 
+                                    value={ownerSearchQuery} 
+                                    onChange={(e) => setOwnerSearchQuery(e.target.value)} 
+                                    style={{ marginBottom: '10px' }}
+                                />
+                                <div 
+                                    onScroll={handleModalScroll}
+                                    style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)' }}
+                                >
+                                    <div
+                                        onClick={() => setImportOwner('')}
+                                        style={{
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            background: importOwner === '' ? 'var(--active-bg)' : 'transparent',
+                                            color: importOwner === '' ? 'var(--primary)' : 'var(--text-color)',
+                                            fontWeight: importOwner === '' ? 'bold' : 'normal',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            fontSize: '13px'
+                                        }}
+                                    >
+                                        -- Không chỉ định --
+                                    </div>
+                                    {modalClients.map(u => {
+                                        const isSelected = String(u.id) === String(importOwner);
+                                        const displayName = isSelected ? `✓ ${u.username}` : u.username;
+                                        return (
+                                            <div
+                                                key={u.id}
+                                                onClick={() => setImportOwner(String(u.id))}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    background: isSelected ? 'var(--active-bg)' : 'transparent',
+                                                    color: isSelected ? 'var(--primary)' : 'var(--text-color)',
+                                                    fontWeight: isSelected ? 'bold' : 'normal',
+                                                    borderBottom: '1px solid var(--border-color)',
+                                                    fontSize: '13px',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {displayName}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                         <div className="modal-footer">
