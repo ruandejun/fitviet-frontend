@@ -307,6 +307,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
             if (resp.ok) {
                 const data = await resp.json();
                 setViewData(data);
+                setAccounts(prevAccounts => prevAccounts.map(acc => acc.id === data.id ? data : acc));
             } else {
                 alert('Không thể tải chi tiết tài khoản.');
                 setViewOpen(false);
@@ -540,6 +541,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                             <th>Chủ sở hữu Sub</th>
                             <th>Trạng thái</th>
                             <th>Tạo bởi</th>
+                            <th>Sử dụng gần nhất</th>
                             <th>Ngày tạo</th>
                             <th style={{ width: '150px', textAlign: 'center' }}>Hành động</th>
                         </tr>
@@ -547,13 +549,13 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="10" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                                <td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
                                     Đang tải danh sách tài khoản...
                                 </td>
                             </tr>
                         ) : accounts.length === 0 ? (
                             <tr>
-                                <td colSpan="10" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                                <td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
                                     Không tìm thấy tài khoản nào.
                                 </td>
                             </tr>
@@ -584,6 +586,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                         </span>
                                     </td>
                                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--accent)' }}>{acc.created_by || '-'}</td>
+                                    <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--success)' }}>{acc.modified_by || '-'}</td>
                                     <td style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>{formatDateString(acc.created)}</td>
                                     <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
@@ -963,6 +966,12 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                     <label className="form-label" style={{ color: 'var(--text-muted)' }}>Tạo bởi</label>
                                     <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--accent)' }}>
                                         {viewData.created_by || '-'}
+                                    </div>
+                                </div>
+                                <div className="detail-item">
+                                    <label className="form-label" style={{ color: 'var(--text-muted)' }}>Sử dụng gần nhất</label>
+                                    <div style={{ padding: '8px 12px', background: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--border-color)', fontWeight: 'bold', color: 'var(--success)' }}>
+                                        {viewData.modified_by || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-item">

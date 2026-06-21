@@ -231,6 +231,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                 setViewCardData(card);
                 setViewCardCloseStatus(card.status);
                 setViewOpen(true);
+                setCards(prevCards => prevCards.map(c => c.id === card.id ? card : c));
             } else {
                 alert('Không thể tải chi tiết thẻ.');
             }
