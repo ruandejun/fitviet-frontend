@@ -114,6 +114,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
 
     const [viewOpen, setViewOpen] = useState(false);
     const [viewCardData, setViewCardData] = useState(null);
+    const [viewCardCloseStatus, setViewCardCloseStatus] = useState('Chưa sử dụng');
 
     const fetchCards = async () => {
         setLoading(true);
@@ -228,26 +229,40 @@ export default function Cards({ currentUser, page, onPageChange }) {
             if (resp.ok) {
                 const card = await resp.json();
                 setViewCardData(card);
+                setViewCardCloseStatus(card.status);
                 setViewOpen(true);
-                
-                if (card.status !== 'Đang sử dụng') {
-                    // Update status in backend
-                    await apiRequest(`/dashboard/api/cards/${id}/`, {
-                        method: 'PATCH',
-                        body: JSON.stringify({ status: 'Đang sử dụng' })
-                    });
-                    // Refresh parent list
-                    fetchCards();
-                    // Update locally shown status to 'Đang sử dụng'
-                    card.status = 'Đang sử dụng';
-                    setViewCardData({ ...card });
-                }
             } else {
                 alert('Không thể tải chi tiết thẻ.');
             }
         } catch (err) {
             alert('Lỗi kết nối khi tải chi tiết thẻ.');
         }
+    };
+
+    const handleCloseViewModal = async () => {
+        if (!viewCardData) {
+            setViewOpen(false);
+            return;
+        }
+
+        if (viewCardCloseStatus !== viewCardData.status) {
+            try {
+                const resp = await apiRequest(`/dashboard/api/cards/${viewCardData.id}/`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: viewCardCloseStatus })
+                });
+                if (resp.ok) {
+                    fetchCards();
+                } else {
+                    alert('Không thể cập nhật trạng thái thẻ khi đóng.');
+                }
+            } catch (err) {
+                console.error("Lỗi cập nhật trạng thái khi đóng thẻ:", err);
+                alert('Lỗi kết nối khi cập nhật trạng thái thẻ.');
+            }
+        }
+        setViewOpen(false);
+        setViewCardData(null);
     };
 
     // Bulk delete
@@ -820,11 +835,11 @@ export default function Cards({ currentUser, page, onPageChange }) {
 
             {/* View Card Detail Modal */}
             {viewOpen && viewCardData && (
-                <div className="modal-overlay" style={{ display: 'flex' }} onClick={(e) => { if (e.target.className === 'modal-overlay') setViewOpen(false); }}>
+                <div className="modal-overlay" style={{ display: 'flex' }} onClick={(e) => { if (e.target.className === 'modal-overlay') handleCloseViewModal(); }}>
                     <div className="modal-box">
                         <div className="modal-header">
                             <h3>Chi tiết thẻ</h3>
-                            <button className="modal-close" onClick={() => setViewOpen(false)}>&times;</button>
+                            <button className="modal-close" onClick={handleCloseViewModal}>&times;</button>
                         </div>
                         <div className="modal-body">
                             {/* ATM CARD WIDGET */}
@@ -919,16 +934,12 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                 ></textarea>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Thay đổi trạng thái thẻ</label>
+                                <label className="form-label">Chọn trạng thái khi đóng</label>
                                 <select 
-                                    className={`filter-select ${getCardStatusBadgeClass(viewCardData.status)}`} 
-                                    value={viewCardData.status} 
+                                    className={`filter-select ${getCardStatusBadgeClass(viewCardCloseStatus)}`} 
+                                    value={viewCardCloseStatus} 
                                     style={{ width: '100%' }} 
-                                    onChange={async (e) => {
-                                        const newStatus = e.target.value;
-                                        await updateCardStatusInline(viewCardData.id, newStatus);
-                                        setViewCardData({ ...viewCardData, status: newStatus });
-                                    }}
+                                    onChange={(e) => setViewCardCloseStatus(e.target.value)}
                                 >
                                     <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
                                     <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
@@ -943,7 +954,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                         </div>
                         <div className="modal-footer">
                             <button className="btn btn-secondary" onClick={() => copyOriginalRow(viewCardData)}>Sao chép dòng gốc</button>
-                            <button className="btn btn-primary" onClick={() => setViewOpen(false)}>Đóng</button>
+                            <button className="btn btn-primary" onClick={handleCloseViewModal}>Đóng</button>
                         </div>
                     </div>
                 </div>
