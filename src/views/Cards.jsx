@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api';
 import Pagination from '../components/Pagination';
+import SearchableSelect from '../components/SearchableSelect';
 
 const getCardStatusBadgeClass = (status) => {
     const map = {
@@ -474,13 +475,19 @@ export default function Cards({ currentUser, page, onPageChange }) {
                         <option value="Tất cả">Tất cả</option>
                     </select>
                     {currentUser.is_staff && (
-                        <select className="filter-select" value={owner} onChange={(e) => setOwner(e.target.value)}>
-                            <option value="all">Tất cả chủ sở hữu</option>
-                            <option value="unassigned">Chưa chỉ định</option>
-                            {clients.map(u => (
-                                <option key={u.id} value={u.id}>{u.username}</option>
-                            ))}
-                        </select>
+                        <SearchableSelect
+                            currentUser={currentUser}
+                            value={owner}
+                            onChange={(val) => { setOwner(val); onPageChange(1); }}
+                            initialDisplayValue={clients.find(c => String(c.id) === String(owner))?.username || ''}
+                            placeholder="Tất cả chủ sở hữu"
+                            valueKey="id"
+                            unassignedLabel="Tất cả chủ sở hữu"
+                            unassignedValue="all"
+                            extraOptions={[
+                                { label: 'Chưa chỉ định', value: 'unassigned' }
+                            ]}
+                        />
                     )}
                     <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(parseInt(e.target.value)); onPageChange(1); }}>
                         <option value={20}>20 dòng</option>
