@@ -60,7 +60,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
     const fetchModalClients = async (pageNumber, searchQuery, replace = false) => {
         setModalClientsLoading(true);
         try {
-            let url = `/dashboard/api/users/?role=user&page=${pageNumber}&page_size=20`;
+            let url = `/dashboard/api/users/?status=active&page=${pageNumber}&page_size=20`;
             if (searchQuery) {
                 url += `&search=${encodeURIComponent(searchQuery)}`;
             }
@@ -93,7 +93,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
 
     const handleModalScroll = (e) => {
         const { scrollTop, scrollHeight, clientHeight } = e.target;
-        if (scrollHeight - scrollTop - clientHeight < 20) {
+        if (scrollHeight - scrollTop - clientHeight < 50) {
             if (!modalClientsLoading && modalClientsHasMore) {
                 fetchModalClients(modalClientsPage + 1, ownerSearchQuery, false);
             }
@@ -140,7 +140,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
     const fetchClients = async () => {
         if (!currentUser.is_staff) return;
         try {
-            const resp = await apiRequest('/dashboard/api/users/?role=user');
+            const resp = await apiRequest('/dashboard/api/users/?status=active');
             if (resp.ok) {
                 const data = await resp.json();
                 setClients(data.results || data);
