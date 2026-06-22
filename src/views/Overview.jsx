@@ -19,18 +19,28 @@ const getCardStatusBadgeClass = (status) => {
     return map[status] || 'badge-unused';
 };
 
-const getCountryFlag = (countryName) => {
-    if (!countryName || countryName === 'N/A') return '';
-    const name = countryName.toLowerCase();
-    if (name.includes('vietnam') || name.includes('việt nam')) return '🇻🇳 ';
-    if (name.includes('united states') || name.includes('us')) return '🇺🇸 ';
-    if (name.includes('germany') || name.includes('de')) return '🇩🇪 ';
-    if (name.includes('united kingdom') || name.includes('gb') || name.includes('uk')) return '🇬🇧 ';
-    if (name.includes('singapore') || name.includes('sg')) return '🇸🇬 ';
-    if (name.includes('japan') || name.includes('jp')) return '🇯🇵 ';
-    if (name.includes('france') || name.includes('fr')) return '🇫🇷 ';
-    if (name.includes('canada') || name.includes('ca')) return '🇨🇦 ';
-    return '🏳️ ';
+const getCountryFlag = (countryCode, countryName) => {
+    if (!countryCode || countryCode === 'N/A' || countryCode === '—') {
+        if (countryName) {
+            const name = countryName.toLowerCase();
+            if (name.includes('vietnam') || name.includes('việt nam')) return '🇻🇳 ';
+            if (name.includes('united states') || name.includes('us')) return '🇺🇸 ';
+            if (name.includes('germany') || name.includes('de')) return '🇩🇪 ';
+            if (name.includes('united kingdom') || name.includes('gb') || name.includes('uk')) return '🇬🇧 ';
+            if (name.includes('singapore') || name.includes('sg')) return '🇸🇬 ';
+            if (name.includes('japan') || name.includes('jp')) return '🇯🇵 ';
+            if (name.includes('france') || name.includes('fr')) return '🇫🇷 ';
+            if (name.includes('canada') || name.includes('ca')) return '🇨🇦 ';
+        }
+        return '🏳️ ';
+    }
+    const code = countryCode.toUpperCase();
+    if (code.length !== 2) return '🏳️ ';
+    try {
+        return String.fromCodePoint(...[...code].map(c => 127397 + c.charCodeAt(0))) + ' ';
+    } catch (e) {
+        return '🏳️ ';
+    }
 };
 
 export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, openAddressModal, openTwoFaModal }) {
@@ -45,6 +55,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
         city: '',
         region: '',
         country: '',
+        country_code: '',
         org: '',
         error: false
     });
@@ -94,6 +105,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     city: data.city || '—',
                     region: data.region || '—',
                     country: data.country || '—',
+                    country_code: data.country_code || '—',
                     org: data.org || '—',
                     error: false
                 });
@@ -112,6 +124,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                         city: data.city || '—',
                         region: data.region || '—',
                         country: data.country_name || '—',
+                        country_code: data.country || '—',
                         org: data.org || '—',
                         error: false
                     });
@@ -129,6 +142,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                             city: 'N/A',
                             region: 'N/A',
                             country: 'N/A',
+                            country_code: 'N/A',
                             org: 'N/A',
                             error: false
                         });
@@ -142,6 +156,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                         city: 'N/A',
                         region: 'N/A',
                         country: 'N/A',
+                        country_code: 'N/A',
                         org: 'N/A',
                         error: true
                     });
@@ -479,7 +494,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                                 <tbody>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Quốc gia</td>
-                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `${getCountryFlag(ipInfo.country)}${ipInfo.country}` : '—'}</td>
+                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `${getCountryFlag(ipInfo.ip ? ipInfo.country_code : '', ipInfo.country)}${ipInfo.country}` : '—'}</td>
                                     </tr>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Thành phố</td>
