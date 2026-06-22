@@ -1204,7 +1204,15 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     flexDirection: 'column'
                 }}>
                     <div style={{ display: currentTab === 'overview' ? 'block' : 'none' }}>
-                        {currentUser && visitedTabs.has('overview') && <Overview currentUser={currentUser} onSwitchTab={handleSwitchTab} />}
+                        {currentUser && visitedTabs.has('overview') && (
+                            <Overview 
+                                currentUser={currentUser} 
+                                onSwitchTab={handleSwitchTab} 
+                                openEmailGetModal={() => setShowEmailGetModal(true)}
+                                openAddressModal={() => { setShowAddressModal(true); handleGenerateAddress(); }}
+                                openTwoFaModal={openTwoFaModal}
+                            />
+                        )}
                     </div>
                     <div style={{ display: currentTab === 'cards' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('cards') && <Cards currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('cards', p)} />}
