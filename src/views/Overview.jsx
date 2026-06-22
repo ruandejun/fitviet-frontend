@@ -19,6 +19,20 @@ const getCardStatusBadgeClass = (status) => {
     return map[status] || 'badge-unused';
 };
 
+const getCountryFlag = (countryName) => {
+    if (!countryName || countryName === 'N/A') return '';
+    const name = countryName.toLowerCase();
+    if (name.includes('vietnam') || name.includes('việt nam')) return '🇻🇳 ';
+    if (name.includes('united states') || name.includes('us')) return '🇺🇸 ';
+    if (name.includes('germany') || name.includes('de')) return '🇩🇪 ';
+    if (name.includes('united kingdom') || name.includes('gb') || name.includes('uk')) return '🇬🇧 ';
+    if (name.includes('singapore') || name.includes('sg')) return '🇸🇬 ';
+    if (name.includes('japan') || name.includes('jp')) return '🇯🇵 ';
+    if (name.includes('france') || name.includes('fr')) return '🇫🇷 ';
+    if (name.includes('canada') || name.includes('ca')) return '🇨🇦 ';
+    return '🏳️ ';
+};
+
 export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, openAddressModal, openTwoFaModal }) {
     const [stats, setStats] = useState(null);
     const [statsLoading, setStatsLoading] = useState(true);
@@ -71,7 +85,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
     const fetchIp = async () => {
         setIpInfo(prev => ({ ...prev, loading: true, error: false }));
         try {
-            const res = await fetch('https://ipapi.co/json/');
+            const res = await apiRequest('/dashboard/api/ip-info/');
             if (res.ok) {
                 const data = await res.json();
                 setIpInfo({
@@ -79,40 +93,59 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     ip: data.ip || '—',
                     city: data.city || '—',
                     region: data.region || '—',
-                    country: data.country_name || '—',
+                    country: data.country || '—',
                     org: data.org || '—',
                     error: false
                 });
             } else {
-                throw new Error('Failed to fetch from ipapi');
+                throw new Error('Failed to fetch from local GeoIP database API');
             }
         } catch (err) {
+            console.error("Local GeoIP lookup failed, falling back to ipapi.co:", err);
             try {
-                const res = await fetch('https://api.ipify.org?format=json');
+                const res = await fetch('https://ipapi.co/json/');
                 if (res.ok) {
                     const data = await res.json();
                     setIpInfo({
                         loading: false,
                         ip: data.ip || '—',
+                        city: data.city || '—',
+                        region: data.region || '—',
+                        country: data.country_name || '—',
+                        org: data.org || '—',
+                        error: false
+                    });
+                } else {
+                    throw new Error('Failed to fetch from ipapi');
+                }
+            } catch (fallbackErr) {
+                try {
+                    const res = await fetch('https://api.ipify.org?format=json');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setIpInfo({
+                            loading: false,
+                            ip: data.ip || '—',
+                            city: 'N/A',
+                            region: 'N/A',
+                            country: 'N/A',
+                            org: 'N/A',
+                            error: false
+                        });
+                    } else {
+                        throw new Error('Fallback failed');
+                    }
+                } catch (fallbackErr2) {
+                    setIpInfo({
+                        loading: false,
+                        ip: 'Unknown',
                         city: 'N/A',
                         region: 'N/A',
                         country: 'N/A',
                         org: 'N/A',
-                        error: false
+                        error: true
                     });
-                } else {
-                    throw new Error('Fallback failed');
                 }
-            } catch (fallbackErr) {
-                setIpInfo({
-                    loading: false,
-                    ip: 'Unknown',
-                    city: 'N/A',
-                    region: 'N/A',
-                    country: 'N/A',
-                    org: 'N/A',
-                    error: true
-                });
             }
         }
     };
@@ -446,7 +479,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                                 <tbody>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Quốc gia</td>
-                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `🇺🇸 ${ipInfo.country}` : '—'}</td>
+                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `${getCountryFlag(ipInfo.country)}${ipInfo.country}` : '—'}</td>
                                     </tr>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Thành phố</td>
