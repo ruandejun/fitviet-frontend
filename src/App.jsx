@@ -138,7 +138,7 @@ export default function App() {
 
     // Protected tabs list
     const isTabProtected = (tabName) => {
-        return tabName !== 'notes';
+        return tabName !== 'notes' && tabName !== 'overview';
     };
 
     // If user is visiting a protected tab but is not logged in, show Auth screens

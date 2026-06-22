@@ -118,6 +118,10 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
     };
 
     const loadStats = async () => {
+        if (!currentUser) {
+            setStatsLoading(false);
+            return;
+        }
         try {
             const response = await apiRequest('/dashboard/api/stats/');
             if (response.ok) {
@@ -142,14 +146,20 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
         handleResize();
         window.addEventListener('resize', handleResize);
         fetchIp();
-        loadStats();
+        if (currentUser) {
+            loadStats();
+        }
 
-        const interval = setInterval(loadStats, 60000);
+        const interval = setInterval(() => {
+            if (currentUser) {
+                loadStats();
+            }
+        }, 60000);
         return () => {
             window.removeEventListener('resize', handleResize);
             clearInterval(interval);
         };
-    }, []);
+    }, [currentUser]);
 
     // Doughnut Data (Card distribution)
     const cardCounts = stats?.status_counts || {};
@@ -502,37 +512,39 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
             </div>
 
             {/* Summary Cards */}
-            <div className="stats-grid">
-                {!statsLoading && stats ? (
-                    <>
-                        <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('cards')}>
-                            <span className="stat-title">Tổng số thẻ</span>
-                            <span className="stat-val">{stats.total_cards}</span>
-                        </div>
-                        <div className="stat-card card-unused" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('cards')}>
-                            <span className="stat-title">Thẻ chưa sử dụng</span>
-                            <span className="stat-val">{cardCounts.chua_su_dung || 0}</span>
-                        </div>
-                        {currentUser.is_staff && (
-                            <>
-                                <div className="stat-card card-users" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('users')}>
-                                    <span className="stat-title">Khách hàng (Client)</span>
-                                    <span className="stat-val">{stats.total_users}</span>
-                                </div>
-                                <div className="stat-card card-sessions">
-                                    <span className="stat-title">Active Sessions</span>
-                                    <span className="stat-val">{stats.active_sessions}</span>
-                                </div>
-                            </>
-                        )}
-                    </>
-                ) : (
-                    <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Đang tải số liệu thống kê hệ thống...</div>
-                )}
-            </div>
+            {currentUser && (
+                <div className="stats-grid">
+                    {!statsLoading && stats ? (
+                        <>
+                            <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('cards')}>
+                                <span className="stat-title">Tổng số thẻ</span>
+                                <span className="stat-val">{stats.total_cards}</span>
+                            </div>
+                            <div className="stat-card card-unused" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('cards')}>
+                                <span className="stat-title">Thẻ chưa sử dụng</span>
+                                <span className="stat-val">{cardCounts.chua_su_dung || 0}</span>
+                            </div>
+                            {currentUser.is_staff && (
+                                <>
+                                    <div className="stat-card card-users" style={{ cursor: 'pointer' }} onClick={() => onSwitchTab('users')}>
+                                        <span className="stat-title">Khách hàng (Client)</span>
+                                        <span className="stat-val">{stats.total_users}</span>
+                                    </div>
+                                    <div className="stat-card card-sessions">
+                                        <span className="stat-title">Active Sessions</span>
+                                        <span className="stat-val">{stats.active_sessions}</span>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <div style={{ padding: '20px', color: 'var(--text-muted)' }}>Đang tải số liệu thống kê hệ thống...</div>
+                    )}
+                </div>
+            )}
 
             {/* Charts Row */}
-            {!statsLoading && stats && cardsData && (
+            {currentUser && !statsLoading && stats && cardsData && (
                 <div className="charts-row">
                     <div className="chart-panel">
                         <div className="chart-header">
@@ -587,7 +599,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
             )}
 
             {/* Activity Lists */}
-            {!statsLoading && stats && (
+            {currentUser && !statsLoading && stats && (
                 <div className="activity-grid">
                     <div className="activity-panel">
                         <span className="chart-title">Cập nhật thẻ gần đây</span>

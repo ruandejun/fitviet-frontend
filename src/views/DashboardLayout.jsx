@@ -974,11 +974,11 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         <h1 className="menu-text">c69</h1>
                     </a>
                     <div className="sidebar-menu">
+                        <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
+                            <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
+                        </a>
                         {currentUser ? (
                             <>
-                                <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
-                                    <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
-                                </a>
                                 <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
                                     <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
                                 </a>
@@ -1204,7 +1204,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     flexDirection: 'column'
                 }}>
                     <div style={{ display: currentTab === 'overview' ? 'block' : 'none' }}>
-                        {currentUser && visitedTabs.has('overview') && (
+                        {visitedTabs.has('overview') && (
                             <Overview 
                                 currentUser={currentUser} 
                                 onSwitchTab={handleSwitchTab} 
