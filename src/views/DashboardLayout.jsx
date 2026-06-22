@@ -785,7 +785,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
             window.history.replaceState({}, '', `/${noteId}/`);
         } else {
             const url = new URL(window.location.href);
-            url.pathname = '/dashboard/';
+            url.pathname = '/';
             url.searchParams.set('tab', tabName);
             url.searchParams.set('page', pageNum);
             // Clean up any note_id parameter if we switch away from notes

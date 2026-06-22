@@ -21,7 +21,9 @@ const getNoteIdFromPath = () => {
     const pathname = window.location.pathname;
     const parts = pathname.split('/').filter(Boolean);
     if (parts.length === 1 && /^[a-zA-Z0-9]+$/.test(parts[0])) {
-        return parts[0];
+        if (parts[0] !== 'dashboard') {
+            return parts[0];
+        }
     }
     return null;
 };
@@ -39,9 +41,9 @@ export default function App() {
     };
 
     const pathname = window.location.pathname;
-    const isDashboardPath = pathname.startsWith('/dashboard');
+    const isDashboardPath = pathname === '/' || pathname === '' || pathname.startsWith('/dashboard');
     const noteIdFromPath = getNoteIdFromPath();
-    const [noteId, setNoteId] = useState(noteIdFromPath);
+    const [noteId, setNoteId] = useState(() => noteIdFromPath || generateRandomNoteId());
     
     // The current tab name (default to 'overview' if on /dashboard, or 'notes' if on note paths)
     const getInitialTab = () => {
@@ -87,11 +89,6 @@ export default function App() {
             if (!isDashboardPath) {
                 setActiveTab('notes');
             }
-        } else if (pathname === '/' || pathname === '') {
-            const generatedId = generateRandomNoteId();
-            window.history.replaceState(null, '', `/${generatedId}/`);
-            setNoteId(generatedId);
-            setActiveTab('notes');
         } else if (isDashboardPath) {
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab') || 'overview';
