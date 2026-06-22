@@ -132,7 +132,7 @@ export default function App() {
                 fontFamily: 'Outfit, sans-serif'
             }}>
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>Fitviet Admin Dashboard 🚀</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>C69 Admin Dashboard 🚀</div>
                     <div style={{ color: '#94a3b8' }}>Đang kết nối hệ thống...</div>
                 </div>
             </div>

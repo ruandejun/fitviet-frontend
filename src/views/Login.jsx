@@ -34,7 +34,7 @@ export default function Login({ onLoginSuccess, onSwitchForm }) {
     return (
         <div className="login-card">
             <div className="logo-header">
-                <h1>Fitviet Portal 🚀</h1>
+                <h1>C69 Portal 🚀</h1>
                 <p>Hệ thống quản lý dịch vụ và khách hàng</p>
             </div>
 
@@ -79,7 +79,7 @@ export default function Login({ onLoginSuccess, onSwitchForm }) {
                 </div>
             </form>
 
-            <p className="footer-note">Fitviet Management Dashboard &copy; 2026. All rights reserved.</p>
+            <p className="footer-note">C69 Management Dashboard &copy; 2026. All rights reserved.</p>
         </div>
     );
 }

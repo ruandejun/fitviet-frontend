@@ -119,7 +119,7 @@ export default function Register({ onRegisterSuccess, onSwitchForm }) {
                 </div>
             </form>
 
-            <p className="footer-note">Fitviet Management Dashboard &copy; 2026. All rights reserved.</p>
+            <p className="footer-note">C69 Management Dashboard &copy; 2026. All rights reserved.</p>
         </div>
     );
 }

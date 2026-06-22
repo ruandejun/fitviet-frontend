@@ -971,7 +971,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
             <div className={`sidebar ${sidebarVisible ? 'active' : ''}`} style={{ display: 'flex' }}>
                 <a href="#" onClick={(e) => { e.preventDefault(); handleSwitchTab('overview'); }} className="sidebar-brand" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                         <span className="menu-icon" style={{ fontSize: '20px' }}>🚀</span>
-                        <h1 className="menu-text">fitviet</h1>
+                        <h1 className="menu-text">c69</h1>
                     </a>
                     <div className="sidebar-menu">
                         {currentUser ? (
