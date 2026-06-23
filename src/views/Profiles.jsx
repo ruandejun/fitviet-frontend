@@ -12,6 +12,46 @@ const formatDateString = (str) => {
     }
 };
 
+const WebGLOptions = {
+    "": {
+        label: "Mặc định (Ngẫu nhiên)",
+        renderers: [
+            { value: "", label: "Mặc định (Ngẫu nhiên)" }
+        ]
+    },
+    "Google Inc. (Intel)": {
+        label: "Google Inc. (Intel)",
+        renderers: [
+            { value: "", label: "Mặc định (Ngẫu nhiên Intel)" },
+            { value: "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "Intel(R) UHD Graphics 630" },
+            { value: "ANGLE (Intel, Intel(R) UHD Graphics 770 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "Intel(R) UHD Graphics 770" },
+            { value: "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "Intel(R) Iris(R) Xe Graphics" },
+            { value: "ANGLE (Intel, Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "Intel(R) HD Graphics 4000" }
+        ]
+    },
+    "Google Inc. (NVIDIA)": {
+        label: "Google Inc. (NVIDIA)",
+        renderers: [
+            { value: "", label: "Mặc định (Ngẫu nhiên NVIDIA)" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce RTX 3060" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce RTX 3070" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce RTX 4060" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce RTX 4070" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 SUPER Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce GTX 1660 SUPER" },
+            { value: "ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "NVIDIA GeForce GTX 1080" }
+        ]
+    },
+    "Google Inc. (AMD)": {
+        label: "Google Inc. (AMD)",
+        renderers: [
+            { value: "", label: "Mặc định (Ngẫu nhiên AMD)" },
+            { value: "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "AMD Radeon RX 580" },
+            { value: "ANGLE (AMD, AMD Radeon RX 6600 XT Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "AMD Radeon RX 6600 XT" },
+            { value: "ANGLE (AMD, AMD Radeon RX 7600 Direct3D11 vs_5_0 ps_5_0, D3D11)", label: "AMD Radeon RX 7600" }
+        ]
+    }
+};
+
 export default function Profiles({ currentUser, page, onPageChange }) {
     const [profiles, setProfiles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,8 +73,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
         profile_socks5_details: '',
         profile_proxy_username: '',
         profile_proxy_password: '',
-        profile_vendor: 'Google Inc. (ATI Technologies Inc.)',
-        profile_renderer: 'ANGLE (Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0)',
+        profile_vendor: '',
+        profile_renderer: '',
         profile_start_url: 'https://iphey.com',
         profile_note: ''
     });
@@ -75,8 +115,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                     profile_socks5_details: '',
                     profile_proxy_username: '',
                     profile_proxy_password: '',
-                    profile_vendor: 'Google Inc. (ATI Technologies Inc.)',
-                    profile_renderer: 'ANGLE (Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0)',
+                    profile_vendor: '',
+                    profile_renderer: '',
                     profile_start_url: 'https://iphey.com',
                     profile_note: ''
                 });
@@ -525,25 +565,36 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                                 )}
                                 <div className="form-group" style={{ marginBottom: '15px' }}>
                                     <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Vendor</label>
-                                    <input 
-                                        type="text" 
+                                    <select 
                                         className="search-input" 
-                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
-                                        placeholder="Ví dụ: Google Inc. (Intel)"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: '#1d1b26', color: 'var(--text-color)' }}
                                         value={newProfile.profile_vendor}
-                                        onChange={(e) => setNewProfile({ ...newProfile, profile_vendor: e.target.value })}
-                                    />
+                                        onChange={(e) => {
+                                            const newVendor = e.target.value;
+                                            setNewProfile({ 
+                                                ...newProfile, 
+                                                profile_vendor: newVendor,
+                                                profile_renderer: "" 
+                                            });
+                                        }}
+                                    >
+                                        {Object.keys(WebGLOptions).map(v => (
+                                            <option key={v} value={v}>{WebGLOptions[v].label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '15px' }}>
                                     <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Renderer</label>
-                                    <input 
-                                        type="text" 
+                                    <select 
                                         className="search-input" 
-                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
-                                        placeholder="Ví dụ: ANGLE (Intel(R) HD Graphics 4000)"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: '#1d1b26', color: 'var(--text-color)' }}
                                         value={newProfile.profile_renderer}
                                         onChange={(e) => setNewProfile({ ...newProfile, profile_renderer: e.target.value })}
-                                    />
+                                    >
+                                        {(WebGLOptions[newProfile.profile_vendor] || WebGLOptions[""]).renderers.map(r => (
+                                            <option key={r.value} value={r.value}>{r.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="form-group" style={{ marginBottom: '15px' }}>
                                     <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Trang Web Bắt Đầu</label>
