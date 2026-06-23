@@ -188,6 +188,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     const [emailGetOtpDisplay, setEmailGetOtpDisplay] = useState('');
     const [emailGetMailContent, setEmailGetMailContent] = useState('Không có dữ liệu thư.');
     const [emailGetLoader, setEmailGetLoader] = useState(false);
+    const [infoSearchText, setInfoSearchText] = useState('');
 
     // Email Getter -> Created Acc Section states
     const [createdAccId, setCreatedAccId] = useState('');
@@ -385,6 +386,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     const handleInfoSourceChange = (type) => {
         setInfoSourceType(type);
         setModalStatusSelect('');
+        setInfoSearchText('');
         if (type === 'address' && tabAddressData.name === '—') {
             handleGenerateTabAddress();
         }
@@ -402,7 +404,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     const fetchActiveCreatedAccount = async () => {
         setEmailGetLoader(true);
         try {
-            const resp = await apiRequest(`/dashboard/api/accounts/get-active-account/?type=${emailSelectType}`);
+            const resp = await apiRequest(`/dashboard/api/accounts/get-active-account/?type=${emailSelectType}&search=${encodeURIComponent(infoSearchText)}`);
             if (resp.status === 401 || resp.status === 403) {
                 triggerToast('Vui lòng đăng nhập Dashboard trước!');
                 return;
@@ -490,7 +492,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     const fetchUnusedEmail = async () => {
         setEmailGetLoader(true);
         try {
-            const resp = await apiRequest(`/dashboard/api/emails/get-unused-email/?type=${emailSelectType}`);
+            const resp = await apiRequest(`/dashboard/api/emails/get-unused-email/?type=${emailSelectType}&search=${encodeURIComponent(infoSearchText)}`);
             if (resp.status === 401 || resp.status === 403) {
                 triggerToast('Vui lòng đăng nhập Dashboard trước!');
                 return;
@@ -743,6 +745,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         setEmailGetId('');
         setCreatedAccId('');
         setModalStatusSelect('');
+        setInfoSearchText('');
         setStatusSelectDisabled(false);
         setShowEmailGetModal(false);
     };
@@ -1392,23 +1395,38 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
                             {/* Dropdown filters (only for uncreated / created) */}
                             {infoSourceType !== 'address' && (
-                                <div className="email-get-filters">
-                                    <div style={{ flex: 1 }}>
-                                        <label className="form-label">Loại tài khoản</label>
-                                        <select
-                                            className="form-input"
-                                            style={{ background: 'var(--input-bg)', color: 'var(--text-color)', height: '36px', padding: '0 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)' }}
-                                            value={emailSelectType}
-                                            onChange={(e) => setEmailSelectType(e.target.value)}
-                                        >
-                                            <option value="Apple">Apple</option>
-                                            <option value="Tiktok">Tiktok</option>
-                                        </select>
+                                <>
+                                    <div className="email-get-filters" style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', marginBottom: '15px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label className="form-label">Loại tài khoản</label>
+                                            <select
+                                                className="form-input"
+                                                style={{ background: 'var(--input-bg)', color: 'var(--text-color)', height: '36px', padding: '0 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                                                value={emailSelectType}
+                                                onChange={(e) => setEmailSelectType(e.target.value)}
+                                            >
+                                                <option value="Apple">Apple</option>
+                                                <option value="Tiktok">Tiktok</option>
+                                            </select>
+                                        </div>
+                                        <div style={{ flex: 2 }}>
+                                            <label className="form-label">{infoSourceType === 'uncreated' ? 'Email muốn lấy (Tùy chọn)' : 'Email / Tài khoản muốn lấy (Tùy chọn)'}</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                placeholder={infoSourceType === 'uncreated' ? 'Nhập email cần lấy...' : 'Nhập username hoặc email...'}
+                                                style={{ background: 'var(--input-bg)', color: 'var(--text-color)', height: '36px', padding: '0 10px', width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}
+                                                value={infoSearchText}
+                                                onChange={(e) => setInfoSearchText(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <button className="btn btn-primary" onClick={handleGetInfo} disabled={emailGetLoader} style={{ height: '36px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                                        {infoSourceType === 'uncreated' ? '✉️ Lấy Email' : '🔑 Lấy Info'}
-                                    </button>
-                                </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+                                        <button className="btn btn-primary" onClick={handleGetInfo} disabled={emailGetLoader} style={{ height: '36px', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', width: '100%', justifyContent: 'center' }}>
+                                            {infoSourceType === 'uncreated' ? '✉️ Lấy Email' : '🔑 Lấy Info'}
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* Uncreated Results */}
