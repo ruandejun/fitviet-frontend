@@ -1163,299 +1163,7 @@ export default function QHTDDevice() {
                     </div>
                 </div>
 
-                {/* Column 2: Selected Device Control Panel (Center, 340px) */}
-                <div style={{ 
-                    width: '340px',
-                    minWidth: '340px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxSizing: 'border-box'
-                }}>
-                    {selectedDevice ? (
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            flex: 1,
-                            background: 'var(--panel-bg)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            boxSizing: 'border-box'
-                        }}>
-                            {/* Device Overview Header */}
-                            <div style={{ 
-                                textAlign: 'center', 
-                                padding: '16px 0',
-                                borderBottom: '1px solid var(--border-color)',
-                                marginBottom: '16px'
-                            }}>
-                                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🍎</div>
-                                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 800, color: '#f8fafc' }}>
-                                    {selectedDevice.name || 'iPhone'}
-                                </h3>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
-                                    {selectedDevice.model || 'Unknown Model'}
-                                </div>
-                            </div>
-
-                            {/* Info Grid (2x2 grid-cards) */}
-                            <div style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: '1fr 1fr', 
-                                gap: '10px', 
-                                flex: 1,
-                                overflowY: 'auto',
-                                paddingRight: '2px',
-                                alignContent: 'start',
-                                marginBottom: '16px'
-                            }}>
-                                {/* Card 1: iOS Version */}
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.01)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '10px 12px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4px'
-                                }}>
-                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Hệ điều hành</span>
-                                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>iOS {selectedDevice.ios_version || '—'}</span>
-                                </div>
-
-                                {/* Card 2: IP Address */}
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.01)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '10px 12px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4px'
-                                }}>
-                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>IP WiFi</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                        <div style={{ 
-                                            width: '6px', 
-                                            height: '6px', 
-                                            borderRadius: '50%', 
-                                            backgroundColor: selectedDevice.wifi_address ? 'var(--success)' : 'var(--text-muted)' 
-                                        }} />
-                                        <span style={{ 
-                                            fontSize: '12px', 
-                                            fontWeight: 600, 
-                                            color: selectedDevice.wifi_address ? 'var(--success)' : 'var(--text-muted)',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            maxWidth: '100px'
-                                        }} title={selectedDevice.wifi_address || 'Chưa kết nối'}>
-                                            {selectedDevice.wifi_address || 'Offline'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Card 3: Serial Number */}
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.01)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '10px 12px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4px',
-                                    gridColumn: 'span 2',
-                                    position: 'relative'
-                                }}>
-                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Số Serial</span>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#cbd5e1', fontWeight: 600 }}>
-                                            {selectedDevice.serial || '—'}
-                                        </span>
-                                        {selectedDevice.serial && (
-                                            <button 
-                                                className="copy-btn-hover"
-                                                onClick={() => handleCopyToClipboard(selectedDevice.serial, 'Serial')}
-                                                style={{
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    color: 'var(--text-muted)',
-                                                    cursor: 'pointer',
-                                                    fontSize: '11px',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    transition: 'all 0.2s',
-                                                    fontWeight: 600
-                                                }}
-                                            >
-                                                📋 Sao chép
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Card 4: UDID */}
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.01)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '10px 12px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4px',
-                                    gridColumn: 'span 2',
-                                    position: 'relative'
-                                }}>
-                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Mã UDID</span>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ 
-                                            fontSize: '11px', 
-                                            fontFamily: 'monospace', 
-                                            color: '#cbd5e1', 
-                                            fontWeight: 600,
-                                            maxWidth: '190px',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }} title={selectedDevice.udid}>
-                                            {selectedDevice.udid || '—'}
-                                        </span>
-                                        {selectedDevice.udid && (
-                                            <button 
-                                                className="copy-btn-hover"
-                                                onClick={() => handleCopyToClipboard(selectedDevice.udid, 'UDID')}
-                                                style={{
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    color: 'var(--text-muted)',
-                                                    cursor: 'pointer',
-                                                    fontSize: '11px',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    transition: 'all 0.2s',
-                                                    fontWeight: 600
-                                                }}
-                                            >
-                                                📋 Sao chép
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Card 5: App Counts */}
-                                <div style={{
-                                    background: 'rgba(255,255,255,0.01)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    padding: '10px 12px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '4px',
-                                    gridColumn: 'span 2'
-                                }}>
-                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ứng dụng cài đặt</span>
-                                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--success)' }}>
-                                        {loadingApps ? '⏳ Đang quét...' : `${apps.length} ứng dụng`}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* System Status Alert Panel */}
-                            <div style={{
-                                padding: '10px 12px',
-                                borderRadius: '8px',
-                                background: 'rgba(0, 242, 254, 0.02)',
-                                border: '1px solid rgba(0, 242, 254, 0.1)',
-                                fontSize: '11px',
-                                color: '#38bdf8',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                marginBottom: '16px'
-                            }}>
-                                <span>ℹ️</span>
-                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    Trạng thái: <strong>{statusText}</strong>
-                                </div>
-                            </div>
-
-                            {/* System Actions Area */}
-                            <div style={{ 
-                                borderTop: '1px solid var(--border-color)', 
-                                paddingTop: '16px',
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: '10px'
-                            }}>
-                                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>
-                                    ⚙️ Thao tác thiết bị
-                                </span>
-                                <button 
-                                    className="btn btn-primary" 
-                                    style={{ 
-                                        width: '100%', 
-                                        minHeight: '38px', 
-                                        background: 'linear-gradient(135deg, var(--accent), #3b82f6)',
-                                        border: 'none',
-                                        justifyContent: 'center',
-                                        fontSize: '13px',
-                                        boxShadow: '0 4px 12px rgba(0, 242, 254, 0.15)'
-                                    }}
-                                    onClick={() => handleActivate(selectedDevice.serial)}
-                                    disabled={!!runningAction}
-                                >
-                                    ⚡ Kích hoạt iPhone (USA/EN)
-                                </button>
-                                <button 
-                                    className="btn" 
-                                    style={{ 
-                                        width: '100%', 
-                                        minHeight: '38px',
-                                        background: 'transparent',
-                                        border: '1px solid var(--danger)',
-                                        color: 'var(--danger)',
-                                        justifyContent: 'center',
-                                        fontSize: '13px'
-                                    }}
-                                    onClick={() => handleErase(selectedDevice.serial)}
-                                    disabled={!!runningAction}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'rgba(255, 7, 58, 0.05)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent';
-                                    }}
-                                >
-                                    ⚠️ Xóa sạch thiết bị (Erase)
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div style={{
-                            width: '100%',
-                            background: 'var(--panel-bg)',
-                            border: '1px dashed var(--border-color)',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'var(--text-muted)',
-                            padding: '40px 20px',
-                            textAlign: 'center',
-                            flex: 1,
-                            boxSizing: 'border-box'
-                        }}>
-                            <span style={{ fontSize: '48px', marginBottom: '16px' }}>🍎</span>
-                            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700, color: 'var(--text-color)' }}>Chưa chọn thiết bị</h4>
-                            <p style={{ fontSize: '12px', margin: 0, color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                                Vui lòng chọn một thiết bị USB bên trái để thực hiện cấu hình và thao tác.
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Column 3: Tabs Manager (Right, flex: 1) */}
+                {/* Column 2 & 3 Merged: Device Details & Tabs Manager (Right, flex: 1) */}
                 <div style={{ 
                     flex: 1,
                     background: 'var(--panel-bg)',
@@ -1469,6 +1177,112 @@ export default function QHTDDevice() {
                 }}>
                     {selectedDevice ? (
                         <>
+                            {/* Horizontal Device Info Bar */}
+                            <div style={{
+                                background: 'rgba(255, 255, 255, 0.01)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '10px',
+                                padding: '12px 16px',
+                                marginBottom: '16px',
+                                display: 'flex',
+                                gap: '16px',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap'
+                            }}>
+                                {/* Left group: Apple icon, name, model & OS version */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ fontSize: '24px' }}>🍎</div>
+                                    <div>
+                                        <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: 800, color: '#f8fafc' }}>
+                                            {selectedDevice.name || 'iPhone'}
+                                        </h3>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                            {selectedDevice.model || 'Unknown Model'} (iOS {selectedDevice.ios_version || '—'})
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Center group: IP, Serial, UDID & status */}
+                                <div style={{ display: 'flex', gap: '24px', flex: 1, minWidth: '300px', flexWrap: 'wrap', justifyContent: 'flex-start', paddingLeft: '12px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>IP WiFi</span>
+                                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: selectedDevice.wifi_address ? 'var(--success)' : 'var(--text-muted)' }}>
+                                            {selectedDevice.wifi_address || 'Offline'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Số Serial</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#cbd5e1', fontWeight: 600 }}>{selectedDevice.serial || '—'}</span>
+                                            <button 
+                                                className="copy-btn-hover"
+                                                onClick={() => handleCopyToClipboard(selectedDevice.serial, 'Serial')}
+                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '10px', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}
+                                                title="Sao chép Serial"
+                                            >
+                                                📋
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Mã UDID</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontSize: '11.5px', fontFamily: 'monospace', color: '#cbd5e1', fontWeight: 600, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedDevice.udid}>{selectedDevice.udid || '—'}</span>
+                                            <button 
+                                                className="copy-btn-hover"
+                                                onClick={() => handleCopyToClipboard(selectedDevice.udid, 'UDID')}
+                                                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '10px', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }}
+                                                title="Sao chép UDID"
+                                            >
+                                                📋
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <span style={{ fontSize: '9px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Trạng thái</span>
+                                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#38bdf8' }}>{statusText}</span>
+                                    </div>
+                                </div>
+
+                                {/* Right group: Device actions */}
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button 
+                                        className="btn btn-primary" 
+                                        style={{ 
+                                            height: '32px', 
+                                            background: 'linear-gradient(135deg, var(--accent), #3b82f6)',
+                                            border: 'none',
+                                            fontSize: '12px',
+                                            padding: '0 12px',
+                                            fontWeight: 600
+                                        }}
+                                        onClick={() => handleActivate(selectedDevice.serial)}
+                                        disabled={!!runningAction}
+                                    >
+                                        ⚡ Kích hoạt iPhone
+                                    </button>
+                                    <button 
+                                        className="btn" 
+                                        style={{ 
+                                            height: '32px',
+                                            background: 'transparent',
+                                            border: '1px solid var(--danger)',
+                                            color: 'var(--danger)',
+                                            fontSize: '12px',
+                                            padding: '0 12px',
+                                            fontWeight: 600
+                                        }}
+                                        onClick={() => handleErase(selectedDevice.serial)}
+                                        disabled={!!runningAction}
+                                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 7, 58, 0.05)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                    >
+                                        ⚠️ Xóa sạch
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Sub-Tabs Header Selection */}
                             <div style={{
                                 display: 'flex',
