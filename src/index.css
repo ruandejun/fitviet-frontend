@@ -2209,4 +2209,83 @@
             box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
         }
 
+        /* ==========================================================================
+           MOBILE RESPONSIVE OVERRIDES (max-width: 576px)
+           ========================================================================== */
+        @media (max-width: 576px) {
+            /* 1. Header & General Layout */
+            .header-title h2 {
+                font-size: 15px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                max-width: 140px !important;
+            }
+
+            .view-content-wrapper {
+                padding: 12px !important;
+            }
+
+            .view-content-wrapper.notes-tab-content {
+                padding: 0 !important;
+            }
+
+            /* 2. Overview Tab */
+            .ip-badge {
+                font-size: 14px !important;
+                word-break: break-all !important;
+                flex-wrap: wrap !important;
+            }
+
+            .fingerprint-tag,
+            .fingerprint-tag.webgl,
+            .fingerprint-tag.ua {
+                word-break: break-all !important;
+                white-space: normal !important;
+                max-width: 100% !important;
+                display: inline-block !important;
+            }
+
+            /* 3. GetInfo Tab */
+            .email-get-tabs {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+
+            .email-get-tabs label {
+                flex: none !important;
+                width: 100% !important;
+            }
+
+            .email-get-grid-2col {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+
+            /* 4. Quick Notes Tab Toolbar Buttons Spacing */
+            .right-section {
+                flex: 1 !important;
+                justify-content: space-around !important;
+            }
+
+            .actions-section {
+                width: 100% !important;
+                justify-content: space-around !important;
+                gap: 4px !important;
+            }
+
+            /* 5. Modals Overflow & Scroll Control */
+            .modal-overlay {
+                overflow-y: auto !important;
+                align-items: flex-start !important;
+                padding: 20px 10px 40px 10px !important;
+            }
+
+            .modal-box, 
+            .addr-modal-box {
+                margin: 20px auto 40px auto !important;
+            }
+        }
+
+
 
