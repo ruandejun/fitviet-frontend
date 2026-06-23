@@ -51,7 +51,8 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
     // IP Monitor state
     const [ipInfo, setIpInfo] = useState({
         loading: true,
-        ip: '',
+        ipv4: '',
+        ipv6: '',
         city: '',
         region: '',
         country: '',
@@ -95,74 +96,117 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
 
     const fetchIp = async () => {
         setIpInfo(prev => ({ ...prev, loading: true, error: false }));
+        let detectedIpv4 = '—';
+        let detectedIpv6 = 'Không hỗ trợ / Không có';
+        let geoData = null;
+
+        // 1. Fetch from local backend first (gets the primary connected IP and geo info)
         try {
             const res = await apiRequest('/dashboard/api/ip-info/');
             if (res.ok) {
                 const data = await res.json();
-                setIpInfo({
-                    loading: false,
-                    ip: data.ip || '—',
-                    city: data.city || '—',
-                    region: data.region || '—',
-                    country: data.country || '—',
-                    country_code: data.country_code || '—',
-                    org: data.org || '—',
-                    error: false
-                });
-            } else {
-                throw new Error('Failed to fetch from local GeoIP database API');
+                geoData = data;
+                if (data.ip && data.ip !== '—') {
+                    if (data.ip.includes(':')) {
+                        detectedIpv6 = data.ip;
+                    } else {
+                        detectedIpv4 = data.ip;
+                    }
+                }
             }
         } catch (err) {
-            console.error("Local GeoIP lookup failed, falling back to ipapi.co:", err);
+            console.error("Local GeoIP lookup failed:", err);
+        }
+
+        // 2. Fetch missing IP type in parallel (or fallbacks)
+        const fetchIpv4Promise = (async () => {
+            if (detectedIpv4 !== '—') return;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const res = await fetch('https://api4.ipify.org?format=json', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json();
+                    detectedIpv4 = data.ip || '—';
+                }
+            } catch (e) {
+                console.warn("Failed to fetch IPv4 from ipify:", e);
+            }
+        })();
+
+        const fetchIpv6Promise = (async () => {
+            if (detectedIpv6 !== 'Không hỗ trợ / Không có') return;
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const res = await fetch('https://api6.ipify.org?format=json', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json();
+                    detectedIpv6 = data.ip || 'Không hỗ trợ / Không có';
+                }
+            } catch (e) {
+                console.log("IPv6 not available or request failed:", e);
+            }
+        })();
+
+        await Promise.allSettled([fetchIpv4Promise, fetchIpv6Promise]);
+
+        // 3. If local backend failed completely, query fallback ipapi.co to get geo info
+        if (!geoData) {
             try {
                 const res = await fetch('https://ipapi.co/json/');
                 if (res.ok) {
                     const data = await res.json();
-                    setIpInfo({
-                        loading: false,
-                        ip: data.ip || '—',
-                        city: data.city || '—',
-                        region: data.region || '—',
-                        country: data.country_name || '—',
-                        country_code: data.country || '—',
-                        org: data.org || '—',
-                        error: false
-                    });
-                } else {
-                    throw new Error('Failed to fetch from ipapi');
-                }
-            } catch (fallbackErr) {
-                try {
-                    const res = await fetch('https://api.ipify.org?format=json');
-                    if (res.ok) {
-                        const data = await res.json();
-                        setIpInfo({
-                            loading: false,
-                            ip: data.ip || '—',
-                            city: 'N/A',
-                            region: 'N/A',
-                            country: 'N/A',
-                            country_code: 'N/A',
-                            org: 'N/A',
-                            error: false
-                        });
-                    } else {
-                        throw new Error('Fallback failed');
+                    geoData = {
+                        ip: data.ip,
+                        city: data.city,
+                        region: data.region,
+                        country: data.country_name,
+                        country_code: data.country,
+                        org: data.org
+                    };
+                    if (data.ip) {
+                        if (data.ip.includes(':')) {
+                            detectedIpv6 = data.ip;
+                        } else {
+                            detectedIpv4 = data.ip;
+                        }
                     }
-                } catch (fallbackErr2) {
-                    setIpInfo({
-                        loading: false,
-                        ip: 'Unknown',
-                        city: 'N/A',
-                        region: 'N/A',
-                        country: 'N/A',
-                        country_code: 'N/A',
-                        org: 'N/A',
-                        error: true
-                    });
                 }
+            } catch (e) {
+                console.error("Fallback ipapi.co failed:", e);
             }
         }
+
+        // Try to query geolocation for dynamic IP if we got it from external APIs but local check failed to find geo
+        if (geoData && (geoData.country === 'N/A' || !geoData.country) && detectedIpv4 !== '—') {
+            try {
+                const res = await apiRequest(`/dashboard/api/ip-info/?ip=${detectedIpv4}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.country && data.country !== 'N/A') {
+                        geoData = data;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to query geolocation for detected IPv4:", e);
+            }
+        }
+
+        // 4. Update state
+        setIpInfo({
+            loading: false,
+            ipv4: detectedIpv4,
+            ipv6: detectedIpv6,
+            city: geoData?.city || '—',
+            region: geoData?.region || '—',
+            country: geoData?.country || '—',
+            country_code: geoData?.country_code || '—',
+            org: geoData?.org || '—',
+            error: !geoData && detectedIpv4 === '—' && detectedIpv6 === 'Không hỗ trợ / Không có'
+        });
     };
 
     const loadStats = async () => {
@@ -245,69 +289,6 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
         <div>
             {/* Inject Custom Scoped CSS */}
             <style>{`
-                .quick-actions-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                    gap: 16px;
-                    margin-bottom: 28px;
-                }
-                .action-card {
-                    background: var(--card-bg, #0b0f19);
-                    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
-                    border-radius: 16px;
-                    padding: 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 12px;
-                    cursor: pointer;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    position: relative;
-                    overflow: hidden;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                }
-                .action-card::before {
-                    content: '';
-                    position: absolute;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                    z-index: 1;
-                }
-                .action-card:hover::before {
-                    opacity: 1;
-                }
-                .action-card:hover {
-                    transform: translateY(-4px);
-                    border-color: var(--primary, #6366f1);
-                    box-shadow: 0 12px 20px -8px rgba(99, 102, 241, 0.25);
-                }
-                .action-card > * {
-                    position: relative;
-                    z-index: 2;
-                }
-                .action-icon {
-                    font-size: 26px;
-                    padding: 10px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.04);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .action-title {
-                    font-size: 15px;
-                    font-weight: 700;
-                    color: var(--text-color, #f8fafc);
-                }
-                .action-desc {
-                    font-size: 11.5px;
-                    color: var(--text-muted, #94a3b8);
-                    line-height: 1.4;
-                }
-
                 .monitor-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
@@ -353,12 +334,25 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                 .pulse-indicator {
                     width: 10px;
                     height: 10px;
-                    background: #10b981;
                     border-radius: 50%;
-                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-                    animation: pulse 1.6s infinite;
+                    display: inline-block;
                 }
-                @keyframes pulse {
+                .pulse-indicator.ipv4 {
+                    background: #10b981;
+                    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+                    animation: pulse-ipv4 1.6s infinite;
+                }
+                .pulse-indicator.ipv6 {
+                    background: #8b5cf6;
+                    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+                    animation: pulse-ipv6 1.6s infinite;
+                }
+                .pulse-indicator.inactive {
+                    background: #64748b;
+                    box-shadow: none;
+                    animation: none;
+                }
+                @keyframes pulse-ipv4 {
                     0% {
                         transform: scale(0.95);
                         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
@@ -370,6 +364,20 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     100% {
                         transform: scale(0.95);
                         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+                    }
+                }
+                @keyframes pulse-ipv6 {
+                    0% {
+                        transform: scale(0.95);
+                        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+                    }
+                    70% {
+                        transform: scale(1);
+                        box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+                    }
+                    100% {
+                        transform: scale(0.95);
+                        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
                     }
                 }
                 .monitor-data-table {
@@ -443,30 +451,6 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                 }
             `}</style>
 
-            {/* Quick Actions Panel */}
-            <div className="quick-actions-grid">
-                <div className="action-card" onClick={openEmailGetModal}>
-                    <div className="action-icon">✉️</div>
-                    <div className="action-title">Lấy Info</div>
-                    <div className="action-desc">Nhận thông tin tài khoản hoặc email tạm thời nhanh chóng.</div>
-                </div>
-                <div className="action-card" onClick={openAddressModal}>
-                    <div className="action-icon">🇺🇸</div>
-                    <div className="action-title">US Địa Chỉ</div>
-                    <div className="action-desc">Tạo thông tin cá nhân và địa chỉ Mỹ ngẫu nhiên để đăng ký.</div>
-                </div>
-                <div className="action-card" onClick={openTwoFaModal}>
-                    <div className="action-icon">🔑</div>
-                    <div className="action-title">Trình Tạo 2FA</div>
-                    <div className="action-desc">Tạo mã OTP bảo mật 2FA tức thì bằng khóa Secret Key.</div>
-                </div>
-                <div className="action-card" onClick={() => onSwitchTab('notes')}>
-                    <div className="action-icon">📝</div>
-                    <div className="action-title">Ghi Chú Nhanh</div>
-                    <div className="action-desc">Mở công cụ lưu trữ ghi chú nhanh đồng bộ trực tiếp.</div>
-                </div>
-            </div>
-
             {/* IP & Browser Fingerprint Monitor Grid */}
             <div className="monitor-grid">
                 {/* IP Geolocation Panel */}
@@ -482,11 +466,20 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                         <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Đang tải địa chỉ IP...</div>
                     ) : (
                         <div>
-                            <div style={{ marginBottom: '18px' }}>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Địa chỉ IP WAN</div>
-                                <div className="ip-badge">
-                                    <span className="pulse-indicator"></span>
-                                    {ipInfo.ip}
+                            <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 'bold' }}>Địa chỉ IPv4</div>
+                                    <div className="ip-badge" style={{ fontSize: '18px' }}>
+                                        <span className={`pulse-indicator ${ipInfo.ipv4 !== '—' ? 'ipv4' : 'inactive'}`}></span>
+                                        {ipInfo.ipv4}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 'bold' }}>Địa chỉ IPv6</div>
+                                    <div className="ip-badge" style={{ fontSize: '18px', color: ipInfo.ipv6.includes(':') ? '#8b5cf6' : '#64748b' }}>
+                                        <span className={`pulse-indicator ${ipInfo.ipv6.includes(':') ? 'ipv6' : 'inactive'}`}></span>
+                                        {ipInfo.ipv6}
+                                    </div>
                                 </div>
                             </div>
 
@@ -494,7 +487,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                                 <tbody>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Quốc gia</td>
-                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `${getCountryFlag(ipInfo.ip ? ipInfo.country_code : '', ipInfo.country)}${ipInfo.country}` : '—'}</td>
+                                        <td className="monitor-data-value">{ipInfo.country !== 'N/A' ? `${getCountryFlag(ipInfo.country_code, ipInfo.country)}${ipInfo.country}` : '—'}</td>
                                     </tr>
                                     <tr className="monitor-data-row">
                                         <td className="monitor-data-label">Thành phố</td>
