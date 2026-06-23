@@ -169,12 +169,19 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
     // QHTD Desktop detection via User-Agent or QWebChannel bridge
     const [isDesktopApp, setIsDesktopApp] = useState(() => {
-        return navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
+        const params = new URLSearchParams(window.location.search);
+        return navigator.userAgent.includes('QHTD-Desktop') || 
+               !!(window.__QHTD_DESKTOP__ || window.qhtdBridge) ||
+               params.get('desktop') === 'true';
     });
     useEffect(() => {
         // Check immediately and also with a small delay (bridge may load async)
         const checkDesktop = () => {
-            if (navigator.userAgent.includes('QHTD-Desktop') || window.__QHTD_DESKTOP__ || window.qhtdBridge) {
+            const params = new URLSearchParams(window.location.search);
+            if (navigator.userAgent.includes('QHTD-Desktop') || 
+                window.__QHTD_DESKTOP__ || 
+                window.qhtdBridge ||
+                params.get('desktop') === 'true') {
                 setIsDesktopApp(true);
                 console.log('[c69.us] QHTD Desktop bridge detected');
             }
