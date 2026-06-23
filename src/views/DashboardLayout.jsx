@@ -636,18 +636,18 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                 <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
                                     <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
                                 </a>
-                                <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
-                                    <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
-                                </a>
-                                <a className={`menu-item ${currentTab === 'ipa-downgrade' ? 'active' : ''}`} onClick={() => handleSwitchTab('ipa-downgrade')}>
-                                    <span className="menu-icon">📲</span><span className="menu-text">IPA Downgrade</span>
-                                </a>
                                 {/* QHTD Desktop-only tabs */}
                                 {isDesktopApp && (
                                     <>
                                         <div style={{ padding: '8px 16px', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '8px', fontWeight: 700 }}>
                                             <span className="menu-text">⚡ QHTD Desktop</span>
                                         </div>
+                                        <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
+                                            <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
+                                        </a>
+                                        <a className={`menu-item ${currentTab === 'ipa-downgrade' ? 'active' : ''}`} onClick={() => handleSwitchTab('ipa-downgrade')}>
+                                            <span className="menu-icon">📲</span><span className="menu-text">IPA Downgrade</span>
+                                        </a>
                                         <a className={`menu-item ${currentTab === 'qhtd-device' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-device')}>
                                             <span className="menu-icon">📱</span><span className="menu-text">Thiết bị iOS</span>
                                         </a>
@@ -853,9 +853,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     <div style={{ display: currentTab === 'profiles' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('profiles') && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
                     </div>
-                    <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
-                        {currentUser && visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
-                    </div>
                     <div style={{ display: currentTab === 'emails' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
                     </div>
@@ -879,11 +876,14 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         )}
                     </div>
                     {/* QHTD Desktop-only views */}
-                    <div style={{ display: currentTab === 'ipa-downgrade' ? 'block' : 'none' }}>
-                        {visitedTabs.has('ipa-downgrade') && <IPADowngrade />}
-                    </div>
                     {isDesktopApp && (
                         <>
+                            <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
+                                {currentUser && visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
+                            </div>
+                            <div style={{ display: currentTab === 'ipa-downgrade' ? 'block' : 'none' }}>
+                                {visitedTabs.has('ipa-downgrade') && <IPADowngrade />}
+                            </div>
                             <div style={{ display: currentTab === 'qhtd-device' ? 'block' : 'none' }}>
                                 {visitedTabs.has('qhtd-device') && <QHTDDevice />}
                             </div>
