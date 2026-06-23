@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
+const APP_GRADIENTS = [
+    'linear-gradient(135deg, #ec4899, #8b5cf6)',
+    'linear-gradient(135deg, #3b82f6, #06b6d4)',
+    'linear-gradient(135deg, #10b981, #3b82f6)',
+    'linear-gradient(135deg, #f59e0b, #ec4899)',
+    'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+    'linear-gradient(135deg, #06b6d4, #10b981)',
+];
+
+const getAppGradient = (bundleId) => {
+    if (!bundleId) return APP_GRADIENTS[0];
+    let hash = 0;
+    for (let i = 0; i < bundleId.length; i++) {
+        hash = bundleId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % APP_GRADIENTS.length;
+    return APP_GRADIENTS[index];
+};
+
 /**
  * QHTDDevice — Tab "Thiết bị iOS" cho desktop app
  * Chỉ hiển thị khi chạy trong QHTD Desktop (window.__QHTD_DESKTOP__ === true)
@@ -208,38 +227,105 @@ export default function QHTDDevice() {
         }
     }, []);
 
+    const handleCopyToClipboard = (text, label) => {
+        navigator.clipboard.writeText(text)
+            .then(() => alert(`Đã sao chép ${label} vào bộ nhớ tạm!`))
+            .catch(err => alert('Lỗi khi sao chép: ' + err));
+    };
+
     const filteredApps = apps.filter(app => 
         app.name.toLowerCase().includes(appSearch.toLowerCase()) || 
         app.bundle_id.toLowerCase().includes(appSearch.toLowerCase())
     );
 
     return (
-        <div>
-            {/* Tool Info Banner */}
-            {toolInfo && (
-                <div className="stat-cards" style={{ marginBottom: '20px' }}>
-                    <div className="stat-card">
-                        <div className="stat-label">Phiên bản</div>
-                        <div className="stat-value">v{toolInfo.version}</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-label">Platform</div>
-                        <div className="stat-value">{toolInfo.os === 'win32' ? 'Windows' : toolInfo.os}</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-label">pymobiledevice3</div>
-                        <div className="stat-value" style={{ color: toolInfo.pymobiledevice3 ? 'var(--success)' : 'var(--danger)' }}>
-                            {toolInfo.pymobiledevice3 ? '✅ Sẵn sàng' : '❌ Chưa cài'}
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-label">MunLogin</div>
-                        <div className="stat-value" style={{ color: toolInfo.mun_anti_browser ? 'var(--success)' : 'var(--danger)' }}>
-                            {toolInfo.mun_anti_browser ? '✅ Sẵn sàng' : '❌ Chưa cài'}
-                        </div>
-                    </div>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
+            <style>{`
+                @keyframes devicePulse {
+                    0% { transform: scale(0.95); opacity: 0.5; }
+                    50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 10px var(--success); }
+                    100% { transform: scale(0.95); opacity: 0.5; }
+                }
+                .device-pulse-dot {
+                    animation: devicePulse 1.5s infinite ease-in-out;
+                }
+                .copy-btn-hover:hover {
+                    color: var(--accent) !important;
+                    background: rgba(0, 242, 254, 0.08) !important;
+                }
+                .app-row-hover:hover {
+                    background: var(--table-hover) !important;
+                }
+            `}</style>
+
+            {/* Header / Title & System Status Pills */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '12px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, var(--accent), var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        📱 THIẾT BỊ IOS
+                    </h2>
+                    {scanning && (
+                        <div className="device-pulse-dot" style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--success)'
+                        }} />
+                    )}
                 </div>
-            )}
+
+                {toolInfo && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-muted)'
+                        }}>
+                            Client: <strong>v{toolInfo.version}</strong>
+                        </span>
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-muted)'
+                        }}>
+                            OS: <strong>{toolInfo.os === 'win32' ? 'Windows' : toolInfo.os}</strong>
+                        </span>
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            background: toolInfo.pymobiledevice3 ? 'rgba(0, 255, 159, 0.08)' : 'rgba(255, 7, 58, 0.08)',
+                            border: `1px solid ${toolInfo.pymobiledevice3 ? 'rgba(0, 255, 159, 0.2)' : 'rgba(255, 7, 58, 0.2)'}`,
+                            color: toolInfo.pymobiledevice3 ? 'var(--success)' : 'var(--danger)'
+                        }}>
+                            pymobiledevice3: {toolInfo.pymobiledevice3 ? 'Sẵn sàng' : 'Chưa cài'}
+                        </span>
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            background: toolInfo.mun_anti_browser ? 'rgba(0, 255, 159, 0.08)' : 'rgba(255, 7, 58, 0.08)',
+                            border: `1px solid ${toolInfo.mun_anti_browser ? 'rgba(0, 255, 159, 0.2)' : 'rgba(255, 7, 58, 0.2)'}`,
+                            color: toolInfo.mun_anti_browser ? 'var(--success)' : 'var(--danger)'
+                        }}>
+                            MunLogin: {toolInfo.mun_anti_browser ? 'Sẵn sàng' : 'Chưa cài'}
+                        </span>
+                    </div>
+                )}
+            </div>
 
             {/* Error Message */}
             {error && (
@@ -256,13 +342,13 @@ export default function QHTDDevice() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 180px)', minHeight: '620px' }}>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 150px)', minHeight: '580px', boxSizing: 'border-box' }}>
                 
                 {/* Column 1: USB Devices List (Left, 280px) */}
                 <div style={{ 
                     width: '280px', 
                     minWidth: '280px',
-                    background: 'var(--card-bg, rgba(255,255,255,0.01))',
+                    background: 'var(--panel-bg)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '16px',
@@ -271,7 +357,7 @@ export default function QHTDDevice() {
                     boxSizing: 'border-box'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             📱 Thiết bị USB ({devices.length})
                         </span>
                         <button 
@@ -280,7 +366,12 @@ export default function QHTDDevice() {
                             disabled={scanning}
                             style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}
                         >
-                            {scanning ? '⏳' : '🔄 Quét'}
+                            {scanning ? (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div className="device-pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ffffff' }} />
+                                    Quét
+                                </span>
+                            ) : '🔄 Quét'}
                         </button>
                     </div>
 
@@ -290,57 +381,74 @@ export default function QHTDDevice() {
                                 textAlign: 'center', 
                                 padding: '40px 10px', 
                                 color: 'var(--text-muted)', 
-                                fontSize: '13px',
+                                fontSize: '12px',
                                 border: '1px dashed var(--border-color)',
                                 borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.01)'
+                                background: 'rgba(255,255,255,0.01)',
+                                lineHeight: '1.6'
                             }}>
-                                {scanning ? 'Đang tìm kiếm...' : 'Chưa có thiết bị. Cắm iPhone qua cáp USB và bấm Quét.'}
+                                {scanning ? 'Đang tìm kiếm thiết bị...' : 'Chưa nhận diện được iPhone. Hãy cắm cáp USB và bấm nút Quét ở trên.'}
                             </div>
                         ) : (
-                            devices.map((dev, idx) => (
-                                <div 
-                                    key={dev.serial || idx} 
-                                    onClick={() => setSelectedDevice(dev)}
-                                    style={{
-                                        padding: '12px 14px',
-                                        borderRadius: '10px',
-                                        background: selectedDevice?.serial === dev.serial ? 'rgba(217, 70, 239, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                                        border: `1px solid ${selectedDevice?.serial === dev.serial ? 'rgba(217, 70, 239, 0.4)' : 'var(--border-color)'}`,
-                                        cursor: 'pointer',
-                                        marginBottom: '8px',
-                                        transition: 'all 0.2s ease',
-                                        boxShadow: selectedDevice?.serial === dev.serial ? '0 0 12px rgba(217, 70, 239, 0.15)' : 'none'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (selectedDevice?.serial !== dev.serial) {
-                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (selectedDevice?.serial !== dev.serial) {
-                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                                            e.currentTarget.style.borderColor = 'var(--border-color)';
-                                        }
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                                        <div style={{ fontWeight: 600, fontSize: '13px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
-                                            {dev.name || 'iPhone'}
+                            devices.map((dev, idx) => {
+                                const isActive = selectedDevice?.serial === dev.serial;
+                                return (
+                                    <div 
+                                        key={dev.serial || idx} 
+                                        onClick={() => setSelectedDevice(dev)}
+                                        style={{
+                                            padding: '12px 14px',
+                                            borderRadius: '10px',
+                                            background: isActive ? 'rgba(0, 242, 254, 0.04)' : 'rgba(255, 255, 255, 0.01)',
+                                            border: `1px solid ${isActive ? 'rgba(0, 242, 254, 0.3)' : 'var(--border-color)'}`,
+                                            cursor: 'pointer',
+                                            marginBottom: '8px',
+                                            transition: 'all 0.2s ease',
+                                            boxShadow: isActive ? '0 0 10px rgba(0, 242, 254, 0.1)' : 'none',
+                                            position: 'relative'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)';
+                                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                            }
+                                        }}
+                                    >
+                                        {isActive && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '12px',
+                                                right: '12px',
+                                                width: '6px',
+                                                height: '6px',
+                                                borderRadius: '50%',
+                                                backgroundColor: 'var(--accent)',
+                                                boxShadow: '0 0 6px var(--accent)'
+                                            }} />
+                                        )}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', paddingRight: isActive ? '12px' : '0' }}>
+                                            <div style={{ fontWeight: 700, fontSize: '13px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150px' }}>
+                                                {dev.name || 'iPhone'}
+                                            </div>
+                                            <span className="badge badge-info" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(0, 242, 254, 0.1)', color: 'var(--accent)', border: '1px solid rgba(0, 242, 254, 0.15)' }}>
+                                                iOS {dev.ios_version || '—'}
+                                            </span>
                                         </div>
-                                        <span className="badge badge-info" style={{ fontSize: '10px', padding: '2px 6px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
-                                            iOS {dev.ios_version || '—'}
-                                        </span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                            <span>{dev.model || 'Unknown'}</span>
+                                            <span style={{ fontFamily: 'monospace' }}>
+                                                {dev.udid ? dev.udid.substring(0, 8) + '...' : '—'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
-                                        <span>{dev.model || 'Unknown'}</span>
-                                        <span style={{ fontFamily: 'monospace' }}>
-                                            {dev.udid ? dev.udid.substring(0, 8) + '...' : '—'}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -351,96 +459,262 @@ export default function QHTDDevice() {
                     minWidth: '340px',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center'
+                    boxSizing: 'border-box'
                 }}>
                     {selectedDevice ? (
                         <div style={{
-                            width: '100%',
-                            background: '#0a0f1d',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '16px',
-                            padding: '24px 20px 20px 20px',
-                            position: 'relative',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                            boxSizing: 'border-box',
                             display: 'flex',
                             flexDirection: 'column',
-                            flex: 1
+                            flex: 1,
+                            background: 'var(--panel-bg)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            boxSizing: 'border-box'
                         }}>
-                            {/* Phone Screen Container inside the card */}
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                background: 'radial-gradient(circle at top, #1e1b4b 0%, #030712 100%)',
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                borderRadius: '14px',
-                                padding: '20px',
-                                boxSizing: 'border-box',
-                                overflow: 'hidden'
+                            {/* Device Overview Header */}
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '16px 0',
+                                borderBottom: '1px solid var(--border-color)',
+                                marginBottom: '16px'
                             }}>
-                                <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '48px', marginBottom: '8px' }}>📱</div>
-                                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>
-                                        {selectedDevice.name || 'iPhone'}
-                                    </h4>
-                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                        {selectedDevice.model || 'Unknown Model'}
-                                    </span>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#cbd5e1' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Hệ điều hành:</span>
-                                        <span style={{ fontWeight: 600, color: '#c084fc' }}>iOS {selectedDevice.ios_version || '—'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Mã Serial:</span>
-                                        <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
-                                            {selectedDevice.serial || '—'}
-                                        </span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Địa chỉ IP WiFi:</span>
-                                        <span style={{ color: selectedDevice.wifi_address ? '#38bdf8' : 'var(--text-muted)' }}>
-                                            {selectedDevice.wifi_address || 'Không kết nối'}
-                                        </span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Số lượng Apps:</span>
-                                        <span style={{ fontWeight: 600, color: '#34d399' }}>{apps.length} ứng dụng</span>
-                                    </div>
-                                </div>
-
-                                <div style={{
-                                    marginTop: 'auto',
-                                    padding: '10px',
-                                    borderRadius: '8px',
-                                    background: 'rgba(255,255,255,0.02)',
-                                    border: '1px solid rgba(255,255,255,0.05)',
-                                    fontSize: '12px',
-                                    textAlign: 'center',
-                                    color: '#38bdf8'
-                                }}>
-                                    ℹ️ Trạng thái: {statusText}
+                                <div style={{ fontSize: '32px', marginBottom: '8px' }}>🍎</div>
+                                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 800, color: '#f8fafc' }}>
+                                    {selectedDevice.name || 'iPhone'}
+                                </h3>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                    {selectedDevice.model || 'Unknown Model'}
                                 </div>
                             </div>
 
-                            {/* Actions Group right below details */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                            {/* Info Grid (2x2 grid-cards) */}
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '1fr 1fr', 
+                                gap: '10px', 
+                                flex: 1,
+                                overflowY: 'auto',
+                                paddingRight: '2px',
+                                alignContent: 'start',
+                                marginBottom: '16px'
+                            }}>
+                                {/* Card 1: iOS Version */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px'
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Hệ điều hành</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>iOS {selectedDevice.ios_version || '—'}</span>
+                                </div>
+
+                                {/* Card 2: IP Address */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px'
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>IP WiFi</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <div style={{ 
+                                            width: '6px', 
+                                            height: '6px', 
+                                            borderRadius: '50%', 
+                                            backgroundColor: selectedDevice.wifi_address ? 'var(--success)' : 'var(--text-muted)' 
+                                        }} />
+                                        <span style={{ 
+                                            fontSize: '12px', 
+                                            fontWeight: 600, 
+                                            color: selectedDevice.wifi_address ? 'var(--success)' : 'var(--text-muted)',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '100px'
+                                        }} title={selectedDevice.wifi_address || 'Chưa kết nối'}>
+                                            {selectedDevice.wifi_address || 'Offline'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Card 3: Serial Number */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    gridColumn: 'span 2',
+                                    position: 'relative'
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Số Serial</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#cbd5e1', fontWeight: 600 }}>
+                                            {selectedDevice.serial || '—'}
+                                        </span>
+                                        {selectedDevice.serial && (
+                                            <button 
+                                                className="copy-btn-hover"
+                                                onClick={() => handleCopyToClipboard(selectedDevice.serial, 'Serial')}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-muted)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '11px',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    transition: 'all 0.2s',
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                📋 Sao chép
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Card 4: UDID */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    gridColumn: 'span 2',
+                                    position: 'relative'
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Mã UDID</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ 
+                                            fontSize: '11px', 
+                                            fontFamily: 'monospace', 
+                                            color: '#cbd5e1', 
+                                            fontWeight: 600,
+                                            maxWidth: '190px',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }} title={selectedDevice.udid}>
+                                            {selectedDevice.udid || '—'}
+                                        </span>
+                                        {selectedDevice.udid && (
+                                            <button 
+                                                className="copy-btn-hover"
+                                                onClick={() => handleCopyToClipboard(selectedDevice.udid, 'UDID')}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-muted)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '11px',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    transition: 'all 0.2s',
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                📋 Sao chép
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Card 5: App Counts */}
+                                <div style={{
+                                    background: 'rgba(255,255,255,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '10px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '4px',
+                                    gridColumn: 'span 2'
+                                }}>
+                                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ứng dụng cài đặt</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--success)' }}>
+                                        {loadingApps ? '⏳ Đang quét...' : `${apps.length} ứng dụng`}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* System Status Alert Panel */}
+                            <div style={{
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                background: 'rgba(0, 242, 254, 0.02)',
+                                border: '1px solid rgba(0, 242, 254, 0.1)',
+                                fontSize: '11px',
+                                color: '#38bdf8',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginBottom: '16px'
+                            }}>
+                                <span>ℹ️</span>
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    Trạng thái: <strong>{statusText}</strong>
+                                </div>
+                            </div>
+
+                            {/* System Actions Area */}
+                            <div style={{ 
+                                borderTop: '1px solid var(--border-color)', 
+                                paddingTop: '16px',
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '10px'
+                            }}>
+                                <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.5px' }}>
+                                    ⚙️ Thao tác thiết bị
+                                </span>
                                 <button 
                                     className="btn btn-primary" 
-                                    style={{ width: '100%', minHeight: '38px', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}
+                                    style={{ 
+                                        width: '100%', 
+                                        minHeight: '38px', 
+                                        background: 'linear-gradient(135deg, var(--accent), #3b82f6)',
+                                        border: 'none',
+                                        justifyContent: 'center',
+                                        fontSize: '13px',
+                                        boxShadow: '0 4px 12px rgba(0, 242, 254, 0.15)'
+                                    }}
                                     onClick={() => handleActivate(selectedDevice.serial)}
                                     disabled={!!runningAction}
                                 >
                                     ⚡ Kích hoạt iPhone (USA/EN)
                                 </button>
                                 <button 
-                                    className="btn btn-danger" 
-                                    style={{ width: '100%', minHeight: '38px' }}
+                                    className="btn" 
+                                    style={{ 
+                                        width: '100%', 
+                                        minHeight: '38px',
+                                        background: 'transparent',
+                                        border: '1px solid var(--danger)',
+                                        color: 'var(--danger)',
+                                        justifyContent: 'center',
+                                        fontSize: '13px'
+                                    }}
                                     onClick={() => handleErase(selectedDevice.serial)}
                                     disabled={!!runningAction}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'rgba(255, 7, 58, 0.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
                                 >
                                     ⚠️ Xóa sạch thiết bị (Erase)
                                 </button>
@@ -449,9 +723,9 @@ export default function QHTDDevice() {
                     ) : (
                         <div style={{
                             width: '100%',
-                            background: 'var(--card-bg, rgba(255,255,255,0.01))',
+                            background: 'var(--panel-bg)',
                             border: '1px dashed var(--border-color)',
-                            borderRadius: '16px',
+                            borderRadius: '12px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -462,8 +736,11 @@ export default function QHTDDevice() {
                             flex: 1,
                             boxSizing: 'border-box'
                         }}>
-                            <span style={{ fontSize: '48px', marginBottom: '16px' }}>📱</span>
-                            <p style={{ fontSize: '13px', margin: 0 }}>Chọn một thiết bị từ danh sách để xem thông tin chi tiết và thao tác</p>
+                            <span style={{ fontSize: '48px', marginBottom: '16px' }}>🍎</span>
+                            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700, color: 'var(--text-color)' }}>Chưa chọn thiết bị</h4>
+                            <p style={{ fontSize: '12px', margin: 0, color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                                Vui lòng chọn một thiết bị USB bên trái để thực hiện cấu hình và thao tác.
+                            </p>
                         </div>
                     )}
                 </div>
@@ -471,7 +748,7 @@ export default function QHTDDevice() {
                 {/* Column 3: Installed Apps Manager (Right, flex: 1) */}
                 <div style={{ 
                     flex: 1,
-                    background: 'var(--card-bg, rgba(255,255,255,0.01))',
+                    background: 'var(--panel-bg)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '16px',
@@ -483,31 +760,52 @@ export default function QHTDDevice() {
                     {selectedDevice ? (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '14px', flexWrap: 'wrap' }}>
-                                <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>
-                                    📦 Ứng dụng đã cài ({filteredApps.length}/{apps.length})
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    📦 Ứng dụng ({filteredApps.length}/{apps.length})
                                 </span>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: '0 1 300px' }}>
-                                    <input 
-                                        type="text" 
-                                        className="form-input" 
-                                        placeholder="🔍 Lọc theo tên hoặc bundle ID..." 
-                                        value={appSearch} 
-                                        onChange={(e) => setAppSearch(e.target.value)}
-                                        style={{ height: '30px', fontSize: '12px', margin: 0, padding: '4px 10px', flex: 1 }}
-                                    />
-                                    {loadingApps && <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>⏳ Loading...</span>}
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: '0 1 320px', position: 'relative' }}>
+                                    <div style={{ position: 'relative', width: '100%' }}>
+                                        <input 
+                                            type="text" 
+                                            className="form-input" 
+                                            placeholder="🔍 Lọc theo tên hoặc bundle ID..." 
+                                            value={appSearch} 
+                                            onChange={(e) => setAppSearch(e.target.value)}
+                                            style={{ height: '30px', fontSize: '12px', margin: 0, padding: '4px 28px 4px 10px', width: '100%', boxSizing: 'border-box' }}
+                                        />
+                                        {appSearch && (
+                                            <button 
+                                                onClick={() => setAppSearch('')}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '8px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-muted)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '14px',
+                                                    padding: '2px'
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    {loadingApps && <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>⏳ Quét...</span>}
                                 </div>
                             </div>
 
                             <div className="table-container" style={{ flex: 1, overflowY: 'auto', maxHeight: 'none', margin: 0 }}>
                                 <table style={{ width: '100%' }}>
                                     <thead>
-                                        <tr style={{ position: 'sticky', top: 0, background: '#080d1a', zIndex: 1 }}>
-                                            <th>#</th>
-                                            <th>Tên ứng dụng</th>
-                                            <th>Bundle ID</th>
-                                            <th>Phiên bản</th>
-                                            <th style={{ textAlign: 'center', width: '220px' }}>Thao tác dữ liệu</th>
+                                        <tr style={{ position: 'sticky', top: 0, background: 'var(--modal-bg)', zIndex: 1, boxShadow: '0 1px 0 var(--border-color)' }}>
+                                            <th style={{ width: '40px', padding: '10px' }}>#</th>
+                                            <th style={{ padding: '10px' }}>Ứng dụng</th>
+                                            <th style={{ padding: '10px' }}>Bundle ID</th>
+                                            <th style={{ padding: '10px', width: '90px' }}>Phiên bản</th>
+                                            <th style={{ textAlign: 'center', width: '190px', padding: '10px' }}>Thao tác dữ liệu</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -523,38 +821,75 @@ export default function QHTDDevice() {
                                             </tr>
                                         ) : (
                                             filteredApps.map((app, idx) => (
-                                                <tr key={app.bundle_id}>
-                                                    <td>{idx + 1}</td>
-                                                    <td style={{ fontWeight: 600, color: '#f1f5f9' }}>{app.name}</td>
-                                                    <td style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>{app.bundle_id}</td>
-                                                    <td>
-                                                        <span style={{ fontSize: '11px', padding: '2px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                                <tr key={app.bundle_id} className="app-row-hover">
+                                                    <td style={{ padding: '8px 10px', color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                                    <td style={{ padding: '8px 10px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                            {/* Custom Colored App Icon */}
+                                                            <div style={{
+                                                                width: '28px',
+                                                                height: '28px',
+                                                                borderRadius: '6px',
+                                                                background: getAppGradient(app.bundle_id),
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                color: '#ffffff',
+                                                                fontWeight: '800',
+                                                                fontSize: '12px',
+                                                                textTransform: 'uppercase',
+                                                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                                                flexShrink: 0
+                                                            }}>
+                                                                {app.name ? app.name.charAt(0) : '?'}
+                                                            </div>
+                                                            <div style={{ fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }} title={app.name}>
+                                                                {app.name}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }} title={app.bundle_id}>
+                                                        {app.bundle_id}
+                                                    </td>
+                                                    <td style={{ padding: '8px 10px' }}>
+                                                        <span style={{ fontSize: '10px', padding: '2px 6px', background: 'rgba(255,255,255,0.03)', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                                                             {app.version || '1.0'}
                                                         </span>
                                                     </td>
-                                                    <td>
+                                                    <td style={{ padding: '8px 10px' }}>
                                                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                                                             <button 
                                                                 className="btn btn-secondary" 
-                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                style={{ padding: '3px 8px', fontSize: '10px', minHeight: '24px', flex: 1, justifyContent: 'center' }}
                                                                 onClick={() => handleBackupApp(selectedDevice.serial, app.bundle_id)}
                                                                 disabled={!!runningAction}
+                                                                title="Sao lưu dữ liệu ứng dụng về máy tính local"
                                                             >
                                                                 💾 Lưu
                                                             </button>
                                                             <button 
                                                                 className="btn btn-secondary" 
-                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                style={{ padding: '3px 8px', fontSize: '10px', minHeight: '24px', flex: 1, justifyContent: 'center' }}
                                                                 onClick={() => handleRestoreApp(selectedDevice.serial, app.bundle_id)}
                                                                 disabled={!!runningAction}
+                                                                title="Nạp dữ liệu sao lưu trước đó vào ứng dụng"
                                                             >
                                                                 🔄 Nạp
                                                             </button>
                                                             <button 
                                                                 className="btn btn-danger" 
-                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                style={{ padding: '3px 8px', fontSize: '10px', minHeight: '24px', flex: 1, justifyContent: 'center', background: 'rgba(255, 7, 58, 0.1)', border: '1px solid rgba(255, 7, 58, 0.2)', color: 'var(--danger)' }}
                                                                 onClick={() => handleClearApp(selectedDevice.serial, app.bundle_id)}
                                                                 disabled={!!runningAction}
+                                                                title="Xóa sạch dữ liệu bộ nhớ cache/dữ liệu người dùng của ứng dụng"
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = 'var(--danger)';
+                                                                    e.currentTarget.style.color = '#ffffff';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = 'rgba(255, 7, 58, 0.1)';
+                                                                    e.currentTarget.style.color = 'var(--danger)';
+                                                                }}
                                                             >
                                                                 🗑 Xóa
                                                             </button>
@@ -575,10 +910,13 @@ export default function QHTDDevice() {
                             justifyContent: 'center',
                             color: 'var(--text-muted)',
                             flex: 1,
-                            textAlign: 'center'
+                            textAlign: 'center',
+                            border: '1px dashed var(--border-color)',
+                            borderRadius: '12px'
                         }}>
                             <span style={{ fontSize: '48px', marginBottom: '16px' }}>📦</span>
-                            <p style={{ fontSize: '13px', margin: 0 }}>Vui lòng chọn thiết bị ở danh sách bên trái để quản lý ứng dụng</p>
+                            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700, color: 'var(--text-color)' }}>Quản lý ứng dụng</h4>
+                            <p style={{ fontSize: '12px', margin: 0, color: 'var(--text-muted)' }}>Vui lòng chọn thiết bị ở danh sách bên trái để tải danh sách và quản lý.</p>
                         </div>
                     )}
                 </div>
