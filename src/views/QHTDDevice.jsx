@@ -13,6 +13,7 @@ export default function QHTDDevice() {
     const [apps, setApps] = useState([]);
     const [loadingApps, setLoadingApps] = useState(false);
     const [toolInfo, setToolInfo] = useState(null);
+    const [appSearch, setAppSearch] = useState('');
 
     // Action status
     const [runningAction, setRunningAction] = useState('');
@@ -99,8 +100,10 @@ export default function QHTDDevice() {
     useEffect(() => {
         if (selectedDevice?.serial) {
             handleGetApps(selectedDevice.serial);
+            setAppSearch('');
         } else {
             setApps([]);
+            setAppSearch('');
         }
     }, [selectedDevice, handleGetApps]);
 
@@ -205,6 +208,11 @@ export default function QHTDDevice() {
         }
     }, []);
 
+    const filteredApps = apps.filter(app => 
+        app.name.toLowerCase().includes(appSearch.toLowerCase()) || 
+        app.bundle_id.toLowerCase().includes(appSearch.toLowerCase())
+    );
+
     return (
         <div>
             {/* Tool Info Banner */}
@@ -248,228 +256,181 @@ export default function QHTDDevice() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 180px)', minHeight: '620px' }}>
                 
-                {/* Left side: List of USB devices */}
-                <div style={{ flex: '1 1 500px' }}>
-                    <div className="control-bar" style={{ marginTop: 0 }}>
-                        <div className="control-filters">
-                            <span style={{ fontWeight: 600 }}>
-                                📱 Thiết bị iOS USB ({devices.length})
-                            </span>
-                        </div>
-                        <div className="action-buttons">
-                            <button className="btn btn-primary" onClick={handleScan} disabled={scanning}>
-                                {scanning ? '⏳ Đang quét...' : '🔍 Quét thiết bị'}
-                            </button>
-                        </div>
+                {/* Column 1: USB Devices List (Left, 280px) */}
+                <div style={{ 
+                    width: '280px', 
+                    minWidth: '280px',
+                    background: 'var(--card-bg, rgba(255,255,255,0.01))',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxSizing: 'border-box'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>
+                            📱 Thiết bị USB ({devices.length})
+                        </span>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={handleScan} 
+                            disabled={scanning}
+                            style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}
+                        >
+                            {scanning ? '⏳' : '🔄 Quét'}
+                        </button>
                     </div>
 
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Tên thiết bị</th>
-                                    <th>Model</th>
-                                    <th>iOS</th>
-                                    <th>UDID</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {devices.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                                            {scanning ? 'Đang quét thiết bị...' : 'Chưa tìm thấy thiết bị nào. Kết nối iPhone qua USB và bấm "Quét thiết bị".'}
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    devices.map((dev, idx) => (
-                                        <tr key={dev.serial || idx} style={{
-                                            background: selectedDevice?.serial === dev.serial ? 'rgba(217, 70, 239, 0.08)' : undefined,
-                                            cursor: 'pointer'
-                                        }} onClick={() => setSelectedDevice(dev)}>
-                                            <td>{idx + 1}</td>
-                                            <td style={{ fontWeight: 600 }}>{dev.name || '—'}</td>
-                                            <td>{dev.model || '—'}</td>
-                                            <td>
-                                                <span className="badge badge-info">{dev.ios_version || '—'}</span>
-                                            </td>
-                                            <td style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>
-                                                {dev.udid ? dev.udid.substring(0, 15) + '...' : '—'}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-secondary"
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedDevice(dev); }}
-                                                    style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px' }}
-                                                >
-                                                    Chọn
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* App List (renders below table) */}
-                    {selectedDevice && (
-                        <div style={{ marginTop: '24px' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>📦 Ứng dụng đã cài ({apps.length})</span>
-                                {loadingApps && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>⏳ Đang tải...</span>}
-                            </h3>
-                            <div className="table-container">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Tên ứng dụng</th>
-                                            <th>Bundle ID</th>
-                                            <th>Phiên bản</th>
-                                            <th style={{ textAlign: 'center', width: '250px' }}>Hành động dữ liệu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {loadingApps ? (
-                                            <tr>
-                                                <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Đang quét ứng dụng...</td>
-                                            </tr>
-                                        ) : apps.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Không có ứng dụng nào được liệt kê</td>
-                                            </tr>
-                                        ) : (
-                                            apps.map((app, idx) => (
-                                                <tr key={app.bundle_id}>
-                                                    <td>{idx + 1}</td>
-                                                    <td style={{ fontWeight: 600 }}>{app.name}</td>
-                                                    <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>{app.bundle_id}</td>
-                                                    <td>{app.version}</td>
-                                                    <td style={{ display: 'flex', gap: '6px', justifyContent: 'center', border: 'none' }}>
-                                                        <button 
-                                                            className="btn btn-secondary" 
-                                                            style={{ padding: '3px 8px', fontSize: '11px', minHeight: '22px' }}
-                                                            onClick={() => handleBackupApp(selectedDevice.serial, app.bundle_id)}
-                                                            disabled={!!runningAction}
-                                                        >
-                                                            💾 Sao lưu
-                                                        </button>
-                                                        <button 
-                                                            className="btn btn-secondary" 
-                                                            style={{ padding: '3px 8px', fontSize: '11px', minHeight: '22px' }}
-                                                            onClick={() => handleRestoreApp(selectedDevice.serial, app.bundle_id)}
-                                                            disabled={!!runningAction}
-                                                        >
-                                                            🔄 Phục hồi
-                                                        </button>
-                                                        <button 
-                                                            className="btn btn-danger" 
-                                                            style={{ padding: '3px 8px', fontSize: '11px', minHeight: '22px' }}
-                                                            onClick={() => handleClearApp(selectedDevice.serial, app.bundle_id)}
-                                                            disabled={!!runningAction}
-                                                        >
-                                                            🗑 Xóa
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                    <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                        {devices.length === 0 ? (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '40px 10px', 
+                                color: 'var(--text-muted)', 
+                                fontSize: '13px',
+                                border: '1px dashed var(--border-color)',
+                                borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.01)'
+                            }}>
+                                {scanning ? 'Đang tìm kiếm...' : 'Chưa có thiết bị. Cắm iPhone qua cáp USB và bấm Quét.'}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            devices.map((dev, idx) => (
+                                <div 
+                                    key={dev.serial || idx} 
+                                    onClick={() => setSelectedDevice(dev)}
+                                    style={{
+                                        padding: '12px 14px',
+                                        borderRadius: '10px',
+                                        background: selectedDevice?.serial === dev.serial ? 'rgba(217, 70, 239, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                                        border: `1px solid ${selectedDevice?.serial === dev.serial ? 'rgba(217, 70, 239, 0.4)' : 'var(--border-color)'}`,
+                                        cursor: 'pointer',
+                                        marginBottom: '8px',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: selectedDevice?.serial === dev.serial ? '0 0 12px rgba(217, 70, 239, 0.15)' : 'none'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (selectedDevice?.serial !== dev.serial) {
+                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (selectedDevice?.serial !== dev.serial) {
+                                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                                        }
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                        <div style={{ fontWeight: 600, fontSize: '13px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
+                                            {dev.name || 'iPhone'}
+                                        </div>
+                                        <span className="badge badge-info" style={{ fontSize: '10px', padding: '2px 6px', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                                            iOS {dev.ios_version || '—'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                        <span>{dev.model || 'Unknown'}</span>
+                                        <span style={{ fontFamily: 'monospace' }}>
+                                            {dev.udid ? dev.udid.substring(0, 8) + '...' : '—'}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
 
-                {/* Right side: Selected Device Mockup */}
-                <div style={{ flex: '0 0 340px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {/* Column 2: Selected Device Control Panel (Center, 340px) */}
+                <div style={{ 
+                    width: '340px',
+                    minWidth: '340px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}>
                     {selectedDevice ? (
                         <div style={{
-                            width: '320px',
+                            width: '100%',
                             background: '#0a0f1d',
-                            border: '10px solid #1e293b',
-                            borderRadius: '36px',
-                            padding: '30px 18px 20px 18px',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '16px',
+                            padding: '24px 20px 20px 20px',
                             position: 'relative',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.6), inset 0 0 10px rgba(0,0,0,0.9)',
-                            boxSizing: 'border-box'
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flex: 1
                         }}>
-                            {/* Dynamic Island Notch */}
-                            <div style={{
-                                width: '100px',
-                                height: '22px',
-                                background: '#000',
-                                borderRadius: '15px',
-                                position: 'absolute',
-                                top: '8px',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                zIndex: 10
-                            }} />
-
-                            {/* Phone Screen Container */}
+                            {/* Phone Screen Container inside the card */}
                             <div style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                height: '400px',
+                                flex: 1,
                                 background: 'radial-gradient(circle at top, #1e1b4b 0%, #030712 100%)',
-                                borderRadius: '24px',
-                                padding: '16px',
+                                border: '1px solid rgba(255,255,255,0.05)',
+                                borderRadius: '14px',
+                                padding: '20px',
                                 boxSizing: 'border-box',
                                 overflow: 'hidden'
                             }}>
-                                <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '15px' }}>
-                                    <div style={{ fontSize: '42px', marginBottom: '8px' }}>📱</div>
-                                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
+                                <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '20px' }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '8px' }}>📱</div>
+                                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>
                                         {selectedDevice.name || 'iPhone'}
                                     </h4>
-                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                         {selectedDevice.model || 'Unknown Model'}
                                     </span>
                                 </div>
 
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#cbd5e1' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>iOS:</span>
-                                        <span style={{ fontWeight: 600, color: '#a855f7' }}>{selectedDevice.ios_version || '—'}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: '#cbd5e1' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Hệ điều hành:</span>
+                                        <span style={{ fontWeight: 600, color: '#c084fc' }}>iOS {selectedDevice.ios_version || '—'}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Serial:</span>
-                                        <span style={{ fontFamily: 'monospace' }}>{selectedDevice.serial?.substring(0, 15) || '—'}</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Mã Serial:</span>
+                                        <span style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
+                                            {selectedDevice.serial || '—'}
+                                        </span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>IP WiFi:</span>
-                                        <span>{selectedDevice.wifi_address || 'Not connected'}</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Địa chỉ IP WiFi:</span>
+                                        <span style={{ color: selectedDevice.wifi_address ? '#38bdf8' : 'var(--text-muted)' }}>
+                                            {selectedDevice.wifi_address || 'Không kết nối'}
+                                        </span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px' }}>
-                                        <span style={{ color: 'var(--text-muted)' }}>Apps:</span>
-                                        <span>{apps.length}</span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '6px' }}>
+                                        <span style={{ color: 'var(--text-muted)' }}>Số lượng Apps:</span>
+                                        <span style={{ fontWeight: 600, color: '#34d399' }}>{apps.length} ứng dụng</span>
                                     </div>
+                                </div>
 
-                                    <div style={{
-                                        marginTop: 'auto',
-                                        padding: '8px',
-                                        borderRadius: '8px',
-                                        background: 'rgba(255,255,255,0.02)',
-                                        border: '1px solid rgba(255,255,255,0.05)',
-                                        fontSize: '11px',
-                                        textAlign: 'center',
-                                        color: '#38bdf8'
-                                    }}>
-                                        ℹ️ Status: {statusText}
-                                    </div>
+                                <div style={{
+                                    marginTop: 'auto',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    background: 'rgba(255,255,255,0.02)',
+                                    border: '1px solid rgba(255,255,255,0.05)',
+                                    fontSize: '12px',
+                                    textAlign: 'center',
+                                    color: '#38bdf8'
+                                }}>
+                                    ℹ️ Trạng thái: {statusText}
                                 </div>
                             </div>
 
-                            {/* External Controls below mockup screen */}
+                            {/* Actions Group right below details */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                                 <button 
                                     className="btn btn-primary" 
-                                    style={{ width: '100%', minHeight: '36px', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}
+                                    style={{ width: '100%', minHeight: '38px', background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}
                                     onClick={() => handleActivate(selectedDevice.serial)}
                                     disabled={!!runningAction}
                                 >
@@ -477,7 +438,7 @@ export default function QHTDDevice() {
                                 </button>
                                 <button 
                                     className="btn btn-danger" 
-                                    style={{ width: '100%', minHeight: '36px' }}
+                                    style={{ width: '100%', minHeight: '38px' }}
                                     onClick={() => handleErase(selectedDevice.serial)}
                                     disabled={!!runningAction}
                                 >
@@ -487,21 +448,137 @@ export default function QHTDDevice() {
                         </div>
                     ) : (
                         <div style={{
-                            width: '320px',
-                            height: '500px',
-                            background: '#070b13',
+                            width: '100%',
+                            background: 'var(--card-bg, rgba(255,255,255,0.01))',
                             border: '1px dashed var(--border-color)',
-                            borderRadius: '36px',
+                            borderRadius: '16px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: 'var(--text-muted)',
-                            padding: '20px',
-                            textAlign: 'center'
+                            padding: '40px 20px',
+                            textAlign: 'center',
+                            flex: 1,
+                            boxSizing: 'border-box'
                         }}>
                             <span style={{ fontSize: '48px', marginBottom: '16px' }}>📱</span>
-                            <p style={{ fontSize: '13px' }}>Chọn một thiết bị từ danh sách để xem thông tin chi tiết và thao tác</p>
+                            <p style={{ fontSize: '13px', margin: 0 }}>Chọn một thiết bị từ danh sách để xem thông tin chi tiết và thao tác</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Column 3: Installed Apps Manager (Right, flex: 1) */}
+                <div style={{ 
+                    flex: 1,
+                    background: 'var(--card-bg, rgba(255,255,255,0.01))',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxSizing: 'border-box',
+                    overflow: 'hidden'
+                }}>
+                    {selectedDevice ? (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 700, fontSize: '14px', color: '#f8fafc' }}>
+                                    📦 Ứng dụng đã cài ({filteredApps.length}/{apps.length})
+                                </span>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: '0 1 300px' }}>
+                                    <input 
+                                        type="text" 
+                                        className="form-input" 
+                                        placeholder="🔍 Lọc theo tên hoặc bundle ID..." 
+                                        value={appSearch} 
+                                        onChange={(e) => setAppSearch(e.target.value)}
+                                        style={{ height: '30px', fontSize: '12px', margin: 0, padding: '4px 10px', flex: 1 }}
+                                    />
+                                    {loadingApps && <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>⏳ Loading...</span>}
+                                </div>
+                            </div>
+
+                            <div className="table-container" style={{ flex: 1, overflowY: 'auto', maxHeight: 'none', margin: 0 }}>
+                                <table style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr style={{ position: 'sticky', top: 0, background: '#080d1a', zIndex: 1 }}>
+                                            <th>#</th>
+                                            <th>Tên ứng dụng</th>
+                                            <th>Bundle ID</th>
+                                            <th>Phiên bản</th>
+                                            <th style={{ textAlign: 'center', width: '220px' }}>Thao tác dữ liệu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loadingApps ? (
+                                            <tr>
+                                                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Đang quét danh sách ứng dụng...</td>
+                                            </tr>
+                                        ) : filteredApps.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                                                    {appSearch ? 'Không tìm thấy ứng dụng phù hợp' : 'Không có ứng dụng nào được cài đặt'}
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredApps.map((app, idx) => (
+                                                <tr key={app.bundle_id}>
+                                                    <td>{idx + 1}</td>
+                                                    <td style={{ fontWeight: 600, color: '#f1f5f9' }}>{app.name}</td>
+                                                    <td style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)' }}>{app.bundle_id}</td>
+                                                    <td>
+                                                        <span style={{ fontSize: '11px', padding: '2px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                                            {app.version || '1.0'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                                                            <button 
+                                                                className="btn btn-secondary" 
+                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                onClick={() => handleBackupApp(selectedDevice.serial, app.bundle_id)}
+                                                                disabled={!!runningAction}
+                                                            >
+                                                                💾 Lưu
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-secondary" 
+                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                onClick={() => handleRestoreApp(selectedDevice.serial, app.bundle_id)}
+                                                                disabled={!!runningAction}
+                                                            >
+                                                                🔄 Nạp
+                                                            </button>
+                                                            <button 
+                                                                className="btn btn-danger" 
+                                                                style={{ padding: '2px 8px', fontSize: '10px', minHeight: '22px' }}
+                                                                onClick={() => handleClearApp(selectedDevice.serial, app.bundle_id)}
+                                                                disabled={!!runningAction}
+                                                            >
+                                                                🗑 Xóa
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--text-muted)',
+                            flex: 1,
+                            textAlign: 'center'
+                        }}>
+                            <span style={{ fontSize: '48px', marginBottom: '16px' }}>📦</span>
+                            <p style={{ fontSize: '13px', margin: 0 }}>Vui lòng chọn thiết bị ở danh sách bên trái để quản lý ứng dụng</p>
                         </div>
                     )}
                 </div>
