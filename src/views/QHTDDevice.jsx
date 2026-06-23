@@ -20,14 +20,26 @@ export default function QHTDDevice() {
 
     // Load tool info on mount
     useEffect(() => {
-        if (window.qhtdBridge) {
-            try {
-                const info = window.qhtdBridge.getToolInfo();
-                setToolInfo(JSON.parse(info));
-            } catch (e) {
-                console.error('Failed to get tool info:', e);
+        const loadInfo = () => {
+            if (window.qhtdBridge) {
+                try {
+                    const info = window.qhtdBridge.getToolInfo();
+                    setToolInfo(JSON.parse(info));
+                } catch (e) {
+                    console.error('Failed to get tool info:', e);
+                }
             }
-        }
+        };
+        loadInfo();
+        
+        window.addEventListener('qhtdBridgeReady', loadInfo);
+        const timer = setTimeout(loadInfo, 1000);
+        const timer2 = setTimeout(loadInfo, 3000);
+        return () => {
+            window.removeEventListener('qhtdBridgeReady', loadInfo);
+            clearTimeout(timer);
+            clearTimeout(timer2);
+        };
     }, []);
 
     const handleScan = useCallback(() => {

@@ -6,7 +6,26 @@ import React, { useState, useEffect, useCallback } from 'react';
  * Giao tiếp với Python qua window.qhtdBridge
  */
 export default function QHTDRouting() {
-    const isDesktop = !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
+    const [isDesktop, setIsDesktop] = useState(() => {
+        return navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
+    });
+
+    useEffect(() => {
+        const checkDesktop = () => {
+            if (navigator.userAgent.includes('QHTD-Desktop') || window.__QHTD_DESKTOP__ || window.qhtdBridge) {
+                setIsDesktop(true);
+            }
+        };
+        checkDesktop();
+        window.addEventListener('qhtdBridgeReady', checkDesktop);
+        const timer = setTimeout(checkDesktop, 1000);
+        const timer2 = setTimeout(checkDesktop, 3000);
+        return () => {
+            window.removeEventListener('qhtdBridgeReady', checkDesktop);
+            clearTimeout(timer);
+            clearTimeout(timer2);
+        };
+    }, []);
 
     // Network interfaces
     const [interfaces, setInterfaces] = useState([]);

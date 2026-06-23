@@ -26,34 +26,51 @@ export default function QHTDAutomation() {
 
     // Listen for bridge signals
     useEffect(() => {
-        if (!window.qhtdBridge) return;
+        let connected = false;
+        let handleLog = null;
+        let handleFinished = null;
 
-        const handleLog = (message, style) => {
-            setLogs(prev => [...prev, { message, style, time: new Date().toLocaleTimeString('vi-VN') }]);
-        };
-        const handleFinished = () => {
-            setIsRunning(false);
-            handleLog('✅ Kịch bản hoàn tất!', 'success');
-        };
+        const setupBridge = () => {
+            if (window.qhtdBridge && !connected) {
+                connected = true;
+                
+                handleLog = (message, style) => {
+                    setLogs(prev => [...prev, { message, style, time: new Date().toLocaleTimeString('vi-VN') }]);
+                };
+                handleFinished = () => {
+                    setIsRunning(false);
+                    handleLog('✅ Kịch bản hoàn tất!', 'success');
+                };
 
-        // Connect signals (QWebChannel pattern)
-        if (window.qhtdBridge.automationLog) {
-            window.qhtdBridge.automationLog.connect(handleLog);
-        }
-        if (window.qhtdBridge.automationFinished) {
-            window.qhtdBridge.automationFinished.connect(handleFinished);
-        }
-
-        return () => {
-            try {
                 if (window.qhtdBridge.automationLog) {
-                    window.qhtdBridge.automationLog.disconnect(handleLog);
+                    window.qhtdBridge.automationLog.connect(handleLog);
                 }
                 if (window.qhtdBridge.automationFinished) {
-                    window.qhtdBridge.automationFinished.disconnect(handleFinished);
+                    window.qhtdBridge.automationFinished.connect(handleFinished);
                 }
-            } catch (e) {
-                // Ignore disconnect errors
+            }
+        };
+
+        setupBridge();
+        window.addEventListener('qhtdBridgeReady', setupBridge);
+        const timer = setTimeout(setupBridge, 1000);
+        const timer2 = setTimeout(setupBridge, 3000);
+
+        return () => {
+            window.removeEventListener('qhtdBridgeReady', setupBridge);
+            clearTimeout(timer);
+            clearTimeout(timer2);
+            if (connected && window.qhtdBridge) {
+                try {
+                    if (window.qhtdBridge.automationLog && handleLog) {
+                        window.qhtdBridge.automationLog.disconnect(handleLog);
+                    }
+                    if (window.qhtdBridge.automationFinished && handleFinished) {
+                        window.qhtdBridge.automationFinished.disconnect(handleFinished);
+                    }
+                } catch (e) {
+                    // Ignore disconnect errors
+                }
             }
         };
     }, []);
