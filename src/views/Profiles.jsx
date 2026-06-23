@@ -25,6 +25,64 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
     const [bulkStatusVal, setBulkStatusVal] = useState('Active');
 
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [newProfile, setNewProfile] = useState({
+        profile_name: '',
+        profile_os: 'Window',
+        profile_proxy_type: 0,
+        profile_socks5_details: '',
+        profile_proxy_username: '',
+        profile_proxy_password: '',
+        profile_start_url: 'https://iphey.com',
+        profile_note: ''
+    });
+
+    const handleCreateProfile = async (e) => {
+        if (e) e.preventDefault();
+        if (!newProfile.profile_name.trim()) {
+            alert('Vui lòng nhập tên trình duyệt');
+            return;
+        }
+
+        try {
+            const resp = await apiRequest('/dashboard/api/profiles/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    profile_name: newProfile.profile_name.trim(),
+                    profile_os: newProfile.profile_os,
+                    profile_proxy_type: parseInt(newProfile.profile_proxy_type),
+                    profile_proxy_details: newProfile.profile_socks5_details.trim(),
+                    profile_socks5_details: newProfile.profile_socks5_details.trim(),
+                    profile_proxy_username: newProfile.profile_proxy_username.trim(),
+                    profile_proxy_password: newProfile.profile_proxy_password.trim(),
+                    profile_start_url: newProfile.profile_start_url.trim() || 'https://iphey.com',
+                    profile_note: newProfile.profile_note.trim()
+                })
+            });
+
+            const data = await resp.json();
+            if (resp.ok) {
+                alert('Đã tạo trình duyệt mới thành công!');
+                setCreateModalOpen(false);
+                setNewProfile({
+                    profile_name: '',
+                    profile_os: 'Window',
+                    profile_proxy_type: 0,
+                    profile_socks5_details: '',
+                    profile_proxy_username: '',
+                    profile_proxy_password: '',
+                    profile_start_url: 'https://iphey.com',
+                    profile_note: ''
+                });
+                fetchProfiles();
+            } else {
+                alert('Lỗi: ' + (data.message || JSON.stringify(data)));
+            }
+        } catch (err) {
+            alert('Lỗi kết nối hoặc hệ thống khi tạo profile.');
+        }
+    };
+
     const fetchProfiles = async (showLoading = true) => {
         if (showLoading) setLoading(true);
         let url = `/dashboard/api/profiles/?page=${page}&page_size=${pageSize}`;
@@ -239,7 +297,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                         </div>
                     )}
                 </div>
-                <div className="action-buttons">
+                <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-primary" onClick={() => setCreateModalOpen(true)}>+ Thêm mới</button>
                     <button className="btn btn-secondary" onClick={fetchProfiles}>Làm mới</button>
                     {currentUser.is_staff && (
                         <>
@@ -369,6 +428,123 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                             <button className="btn btn-secondary" onClick={() => setBulkStatusOpen(false)}>Hủy</button>
                             <button className="btn btn-primary" onClick={saveBulkStatus}>Cập nhật</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Create Profile Modal */}
+            {createModalOpen && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box" style={{ maxWidth: '500px', width: '90%' }}>
+                        <div className="modal-header">
+                            <h3>Tạo trình duyệt ẩn danh mới</h3>
+                            <button className="modal-close" onClick={() => setCreateModalOpen(false)}>&times;</button>
+                        </div>
+                        <form onSubmit={handleCreateProfile}>
+                            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '5px' }}>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Tên Trình Duyệt *</label>
+                                    <input 
+                                        type="text" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        placeholder="Nhập tên trình duyệt (ví dụ: Chrome_OS1)"
+                                        value={newProfile.profile_name}
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Hệ Điều Hành</label>
+                                    <select 
+                                        className="filter-select" 
+                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--modal-bg)', color: 'var(--text-color)' }}
+                                        value={newProfile.profile_os} 
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_os: e.target.value })}
+                                    >
+                                        <option value="Window">Windows</option>
+                                        <option value="Mac OS X">macOS</option>
+                                        <option value="Linux">Linux</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Loại Proxy</label>
+                                    <select 
+                                        className="filter-select" 
+                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--modal-bg)', color: 'var(--text-color)' }}
+                                        value={newProfile.profile_proxy_type} 
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_proxy_type: parseInt(e.target.value) })}
+                                    >
+                                        <option value={0}>Không dùng proxy (Direct)</option>
+                                        <option value={2}>Socks5 Proxy</option>
+                                    </select>
+                                </div>
+                                {newProfile.profile_proxy_type === 2 && (
+                                    <>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Chi tiết Proxy (ip:port)*</label>
+                                            <input 
+                                                type="text" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Ví dụ: 127.0.0.1:1080"
+                                                value={newProfile.profile_socks5_details}
+                                                onChange={(e) => setNewProfile({ ...newProfile, profile_socks5_details: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Tài khoản Proxy (nếu có)</label>
+                                            <input 
+                                                type="text" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Username"
+                                                value={newProfile.profile_proxy_username}
+                                                onChange={(e) => setNewProfile({ ...newProfile, profile_proxy_username: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Mật khẩu Proxy (nếu có)</label>
+                                            <input 
+                                                type="password" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Password"
+                                                value={newProfile.profile_proxy_password}
+                                                onChange={(e) => setNewProfile({ ...newProfile, profile_proxy_password: e.target.value })}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Trang Web Bắt Đầu</label>
+                                    <input 
+                                        type="url" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        placeholder="Mặc định: https://iphey.com"
+                                        value={newProfile.profile_start_url}
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_start_url: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Ghi Chú</label>
+                                    <textarea 
+                                        className="search-input" 
+                                        rows="3"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)', resize: 'vertical' }}
+                                        placeholder="Nhập ghi chú..."
+                                        value={newProfile.profile_note}
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_note: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setCreateModalOpen(false)}>Hủy</button>
+                                <button type="submit" className="btn btn-primary">Tạo Mới</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

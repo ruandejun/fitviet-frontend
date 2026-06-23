@@ -581,7 +581,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'getinfo': '✉️ Lấy Info',
         'cards': 'Quản lý Thẻ (API & Database)',
         'users': 'Quản lý Người dùng (Client)',
-        'profiles': 'MunLogin Profiles',
+        'profiles': 'Trình duyệt ẩn danh',
         'proxies': 'Tor Proxies Management',
         'emails': 'Quản lý Email & Tài khoản',
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
@@ -642,7 +642,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         {currentUser ? (
                             <>
                                 <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
-                                    <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
+                                    <span className="menu-icon">🖥️</span><span className="menu-text">Trình duyệt</span>
                                 </a>
                                 {/* QHTD Desktop-only tabs */}
                                 {isDesktopApp && (
