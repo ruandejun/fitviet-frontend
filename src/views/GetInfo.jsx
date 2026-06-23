@@ -587,9 +587,8 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
                     )
                 )}
 
-                {/* Created Acc Results details */}
                 {infoSourceType === 'created' && (
-                    createdAccUsername ? (
+                    createdAccId ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             <div className="email-get-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <div className="form-group">
