@@ -74,6 +74,10 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || 'N/A';
                     webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'N/A';
                 }
+                const loseContext = gl.getExtension('WEBGL_lose_context');
+                if (loseContext) {
+                    loseContext.loseContext();
+                }
             }
         } catch (e) {
             console.error(e);
@@ -92,7 +96,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
         };
     };
 
-    const [fingerprint] = useState(getFingerprint());
+    const [fingerprint] = useState(() => getFingerprint());
 
     const fetchIp = async () => {
         setIpInfo(prev => ({ ...prev, loading: true, error: false }));
