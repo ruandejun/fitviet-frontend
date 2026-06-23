@@ -15,6 +15,7 @@ import QHTDDevice from './QHTDDevice';
 import QHTDAutomation from './QHTDAutomation';
 import IPADowngrade from './IPADowngrade';
 import QHTDRouting from './QHTDRouting';
+import TorManager from './TorManager';
 
 // 2FA Totp helpers
 function base32ToBytes(base32) {
@@ -879,7 +880,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     {isDesktopApp && (
                         <>
                             <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
-                                {currentUser && visitedTabs.has('proxies') && <Proxies currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('proxies', p)} />}
+                                {currentUser && visitedTabs.has('proxies') && <TorManager />}
                             </div>
                             <div style={{ display: currentTab === 'ipa-downgrade' ? 'block' : 'none' }}>
                                 {visitedTabs.has('ipa-downgrade') && <IPADowngrade />}
