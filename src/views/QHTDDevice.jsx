@@ -20,10 +20,10 @@ export default function QHTDDevice() {
 
     // Load tool info on mount
     useEffect(() => {
-        const loadInfo = () => {
+        const loadInfo = async () => {
             if (window.qhtdBridge) {
                 try {
-                    const info = window.qhtdBridge.getToolInfo();
+                    const info = await window.qhtdBridge.getToolInfo();
                     setToolInfo(JSON.parse(info));
                 } catch (e) {
                     console.error('Failed to get tool info:', e);
@@ -42,7 +42,7 @@ export default function QHTDDevice() {
         };
     }, []);
 
-    const handleScan = useCallback(() => {
+    const handleScan = useCallback(async () => {
         if (!window.qhtdBridge) {
             setError('Bridge chưa sẵn sàng. Vui lòng khởi động lại ứng dụng.');
             return;
@@ -55,7 +55,7 @@ export default function QHTDDevice() {
         setStatusText('Đang quét USB...');
 
         try {
-            const result = window.qhtdBridge.scanDevices();
+            const result = await window.qhtdBridge.scanDevices();
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 setError(parsed.error);
@@ -77,12 +77,12 @@ export default function QHTDDevice() {
         }
     }, []);
 
-    const handleGetApps = useCallback((serial) => {
+    const handleGetApps = useCallback(async (serial) => {
         if (!window.qhtdBridge || !serial) return;
         setLoadingApps(true);
         setError('');
         try {
-            const result = window.qhtdBridge.getDeviceApps(serial);
+            const result = await window.qhtdBridge.getDeviceApps(serial);
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 setError(parsed.error);
@@ -102,15 +102,15 @@ export default function QHTDDevice() {
         } else {
             setApps([]);
         }
-    }, [selectedDevice]);
+    }, [selectedDevice, handleGetApps]);
 
-    const handleActivate = useCallback((serial) => {
+    const handleActivate = useCallback(async (serial) => {
         if (!window.qhtdBridge || !serial) return;
         if (!window.confirm("Bạn có chắc muốn Kích hoạt thiết bị này không?")) return;
         setRunningAction('activating');
         setStatusText('⏳ Đang kích hoạt thiết bị...');
         try {
-            const res = window.qhtdBridge.activateDevice(serial);
+            const res = await window.qhtdBridge.activateDevice(serial);
             const parsed = JSON.parse(res);
             if (parsed.success) {
                 setStatusText('✅ Kích hoạt thành công!');
@@ -127,13 +127,13 @@ export default function QHTDDevice() {
         }
     }, []);
 
-    const handleErase = useCallback((serial) => {
+    const handleErase = useCallback(async (serial) => {
         if (!window.qhtdBridge || !serial) return;
         if (!window.confirm("CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn XÓA SẠCH thiết bị này không? Toàn bộ dữ liệu sẽ bị xóa vĩnh viễn!")) return;
         setRunningAction('erasing');
         setStatusText('⏳ Đang xóa thiết bị...');
         try {
-            const res = window.qhtdBridge.eraseDevice(serial);
+            const res = await window.qhtdBridge.eraseDevice(serial);
             const parsed = JSON.parse(res);
             if (parsed.success) {
                 setStatusText('✅ Đã xóa sạch thiết bị thành công!');
@@ -150,11 +150,11 @@ export default function QHTDDevice() {
         }
     }, []);
 
-    const handleBackupApp = useCallback((serial, bundleId) => {
+    const handleBackupApp = useCallback(async (serial, bundleId) => {
         if (!window.qhtdBridge || !serial || !bundleId) return;
         setRunningAction(`backup-${bundleId}`);
         try {
-            const res = window.qhtdBridge.backupAppData(serial, bundleId);
+            const res = await window.qhtdBridge.backupAppData(serial, bundleId);
             const parsed = JSON.parse(res);
             if (parsed.success) {
                 alert(`✅ Đã backup App Data cho: ${bundleId}\nLưu tại: ${parsed.path || ''}`);
@@ -168,11 +168,11 @@ export default function QHTDDevice() {
         }
     }, []);
 
-    const handleRestoreApp = useCallback((serial, bundleId) => {
+    const handleRestoreApp = useCallback(async (serial, bundleId) => {
         if (!window.qhtdBridge || !serial || !bundleId) return;
         setRunningAction(`restore-${bundleId}`);
         try {
-            const res = window.qhtdBridge.restoreAppData(serial, bundleId);
+            const res = await window.qhtdBridge.restoreAppData(serial, bundleId);
             const parsed = JSON.parse(res);
             if (parsed.success) {
                 alert(`✅ Đã restore App Data cho: ${bundleId}`);
@@ -186,12 +186,12 @@ export default function QHTDDevice() {
         }
     }, []);
 
-    const handleClearApp = useCallback((serial, bundleId) => {
+    const handleClearApp = useCallback(async (serial, bundleId) => {
         if (!window.qhtdBridge || !serial || !bundleId) return;
         if (!window.confirm(`Bạn có chắc muốn xóa sạch dữ liệu (Clear App Data) của ${bundleId}?`)) return;
         setRunningAction(`clear-${bundleId}`);
         try {
-            const res = window.qhtdBridge.clearAppData(serial, bundleId);
+            const res = await window.qhtdBridge.clearAppData(serial, bundleId);
             const parsed = JSON.parse(res);
             if (parsed.success) {
                 alert(`✅ Đã xóa sạch dữ liệu cho: ${bundleId}`);

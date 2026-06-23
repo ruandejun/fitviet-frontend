@@ -53,7 +53,7 @@ export default function IPADowngrade() {
         setLoggingIn(true);
         setAuthError('');
         try {
-            const result = window.qhtdBridge.loginAppleID(email, password, twoFaCode);
+            const result = await window.qhtdBridge.loginAppleID(email, password, twoFaCode);
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 if (parsed.needs_2fa) {
@@ -79,7 +79,7 @@ export default function IPADowngrade() {
         setAppInfo(null);
         setVersions([]);
         try {
-            const result = window.qhtdBridge.lookupApp(appQuery.trim());
+            const result = await window.qhtdBridge.lookupApp(appQuery.trim());
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 setAuthError(parsed.error);
@@ -97,13 +97,13 @@ export default function IPADowngrade() {
         }
     }, [appQuery, isDesktop]);
 
-    const handleDownload = useCallback(() => {
+    const handleDownload = useCallback(async () => {
         if (!isDesktop || !window.qhtdBridge || !selectedVersion) return;
         setDownloading(true);
         setDownloadProgress(0);
         setDownloadResult('');
         try {
-            const result = window.qhtdBridge.downloadIPA(appInfo?.appId || appInfo?.bundleId || '', selectedVersion);
+            const result = await window.qhtdBridge.downloadIPA(appInfo?.appId || appInfo?.bundleId || '', selectedVersion);
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 setDownloadResult('❌ ' + parsed.error);

@@ -58,7 +58,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     const handleRunProfile = async (id) => {
         if (window.qhtdBridge && typeof window.qhtdBridge.runBrowserProfile === 'function') {
             try {
-                const res = window.qhtdBridge.runBrowserProfile(id);
+                const res = await window.qhtdBridge.runBrowserProfile(id);
                 const parsed = JSON.parse(res);
                 if (parsed.success) {
                     fetchProfiles(false);
@@ -90,7 +90,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     const handleStopProfile = async (id) => {
         if (window.qhtdBridge && typeof window.qhtdBridge.stopBrowserProfile === 'function') {
             try {
-                const res = window.qhtdBridge.stopBrowserProfile(id);
+                const res = await window.qhtdBridge.stopBrowserProfile(id);
                 const parsed = JSON.parse(res);
                 if (parsed.success) {
                     fetchProfiles(false);

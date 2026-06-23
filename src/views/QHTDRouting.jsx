@@ -48,12 +48,12 @@ export default function QHTDRouting() {
     const [devices, setDevices] = useState([]);
     const [loadingDevices, setLoadingDevices] = useState(false);
 
-    const fetchInterfaces = useCallback(() => {
+    const fetchInterfaces = useCallback(async () => {
         if (!isDesktop || !window.qhtdBridge) return;
         setLoadingInterfaces(true);
         setError('');
         try {
-            const res = window.qhtdBridge.getNetworkInterfaces();
+            const res = await window.qhtdBridge.getNetworkInterfaces();
             const parsed = JSON.parse(res);
             if (parsed.error) {
                 setError(parsed.error);
@@ -70,11 +70,11 @@ export default function QHTDRouting() {
         }
     }, [isDesktop]);
 
-    const fetchDHCPLeases = useCallback(() => {
+    const fetchDHCPLeases = useCallback(async () => {
         if (!isDesktop || !window.qhtdBridge) return;
         setLoadingDevices(true);
         try {
-            const res = window.qhtdBridge.getDHCPLeases();
+            const res = await window.qhtdBridge.getDHCPLeases();
             const parsed = JSON.parse(res);
             if (!parsed.error && Array.isArray(parsed)) {
                 setDevices(parsed);
@@ -101,7 +101,7 @@ export default function QHTDRouting() {
         return () => clearInterval(interval);
     }, [isDesktop, routerActive, fetchDHCPLeases]);
 
-    const handleStartRouter = useCallback(() => {
+    const handleStartRouter = useCallback(async () => {
         if (!isDesktop || !window.qhtdBridge) return;
         setError('');
         try {
@@ -112,7 +112,7 @@ export default function QHTDRouting() {
                 subnet_mask: subnetMask,
                 dns: dnsServer
             };
-            const res = window.qhtdBridge.startRouter(JSON.stringify(config));
+            const res = await window.qhtdBridge.startRouter(JSON.stringify(config));
             const parsed = JSON.parse(res);
             if (parsed.error) {
                 setError(parsed.error);
@@ -126,11 +126,11 @@ export default function QHTDRouting() {
         }
     }, [selectedInterface, dhcpStart, dhcpEnd, subnetMask, dnsServer, isDesktop]);
 
-    const handleStopRouter = useCallback(() => {
+    const handleStopRouter = useCallback(async () => {
         if (!isDesktop || !window.qhtdBridge) return;
         setError('');
         try {
-            const res = window.qhtdBridge.stopRouter();
+            const res = await window.qhtdBridge.stopRouter();
             const parsed = JSON.parse(res);
             if (parsed.error) {
                 setError(parsed.error);

@@ -75,7 +75,7 @@ export default function QHTDAutomation() {
         };
     }, []);
 
-    const handleStart = useCallback(() => {
+    const handleStart = useCallback(async () => {
         if (!window.qhtdBridge) return;
         setIsRunning(true);
         setLogs([]);
@@ -83,12 +83,12 @@ export default function QHTDAutomation() {
             script_type: scriptType,
             commands: customScript,
         });
-        window.qhtdBridge.runAutomation(config);
+        await window.qhtdBridge.runAutomation(config);
     }, [scriptType, customScript]);
 
-    const handleStop = useCallback(() => {
+    const handleStop = useCallback(async () => {
         if (!window.qhtdBridge) return;
-        window.qhtdBridge.stopAutomation();
+        await window.qhtdBridge.stopAutomation();
         setIsRunning(false);
     }, []);
 
@@ -96,7 +96,7 @@ export default function QHTDAutomation() {
         if (!window.qhtdBridge || !searchQuery.trim()) return;
         setSearching(true);
         try {
-            const result = window.qhtdBridge.searchAppStore(searchQuery.trim(), 'VN', '10');
+            const result = await window.qhtdBridge.searchAppStore(searchQuery.trim(), 'VN', '10');
             const parsed = JSON.parse(result);
             if (parsed.error) {
                 setLogs(prev => [...prev, { message: `❌ ${parsed.error}`, style: 'error', time: new Date().toLocaleTimeString('vi-VN') }]);
