@@ -977,27 +977,16 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
                             <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
                         </a>
+                        <a className="menu-item" onClick={() => { setShowEmailGetModal(true); setSidebarVisible(false); }}>
+                            <span className="menu-icon">✉️</span><span className="menu-text">Lấy Info</span>
+                        </a>
                         {currentUser ? (
                             <>
-                                <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
-                                    <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
-                                </a>
-                                {currentUser.is_staff && (
-                                    <a className={`menu-item ${currentTab === 'users' ? 'active' : ''}`} onClick={() => handleSwitchTab('users')}>
-                                        <span className="menu-icon">👥</span><span className="menu-text">Quản lý User</span>
-                                    </a>
-                                )}
                                 <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
                                     <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
                                 </a>
                                 <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
                                     <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
-                                </a>
-                                <a className={`menu-item ${currentTab === 'emails' ? 'active' : ''}`} onClick={() => handleSwitchTab('emails')}>
-                                    <span className="menu-icon">✉️</span><span className="menu-text">Quản lý Email</span>
-                                </a>
-                                <a className={`menu-item ${currentTab === 'accounts' ? 'active' : ''}`} onClick={() => handleSwitchTab('accounts')}>
-                                    <span className="menu-icon">🔑</span><span className="menu-text">Tài khoản đã tạo</span>
                                 </a>
                                 {currentUser.is_staff && (
                                     <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
@@ -1015,13 +1004,24 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                         )}
                                     </span>
                                 </a>
+                                <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
+                                    <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
+                                </a>
+                                {currentUser.is_staff && (
+                                    <a className={`menu-item ${currentTab === 'users' ? 'active' : ''}`} onClick={() => handleSwitchTab('users')}>
+                                        <span className="menu-icon">👥</span><span className="menu-text">Quản lý User</span>
+                                    </a>
+                                )}
+                                <a className={`menu-item ${currentTab === 'emails' ? 'active' : ''}`} onClick={() => handleSwitchTab('emails')}>
+                                    <span className="menu-icon">✉️</span><span className="menu-text">Quản lý Email</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'accounts' ? 'active' : ''}`} onClick={() => handleSwitchTab('accounts')}>
+                                    <span className="menu-icon">🔑</span><span className="menu-text">Tài khoản đã tạo</span>
+                                </a>
                             </>
                         ) : null}
                         <a className={`menu-item ${currentTab === 'notes' ? 'active' : ''}`} onClick={() => handleSwitchTab('notes')}>
                             <span className="menu-icon">📝</span><span className="menu-text">Ghi chú nhanh</span>
-                        </a>
-                        <a className="menu-item" onClick={() => { setShowEmailGetModal(true); setSidebarVisible(false); }}>
-                            <span className="menu-icon">✉️</span><span className="menu-text">Lấy Info</span>
                         </a>
                         <a className="menu-item" onClick={() => { setShowAddressModal(true); handleGenerateAddress(); setSidebarVisible(false); }}>
                             <span className="menu-icon">🇺🇸</span><span className="menu-text">USA Địa chỉ</span>
