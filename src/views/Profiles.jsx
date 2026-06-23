@@ -155,7 +155,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
         fetchProfiles(true);
         const interval = setInterval(() => {
             fetchProfiles(false);
-        }, 3000);
+        }, 1000);
         return () => clearInterval(interval);
     }, [page, pageSize]);
 
