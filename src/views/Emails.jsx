@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api';
 import Pagination from '../components/Pagination';
 import SearchableSelect from '../components/SearchableSelect';
+import Accounts from './Accounts';
 
 const isMicrosoftEmail = (email) => {
     if (!email) return false;
@@ -36,6 +37,8 @@ const getEmailStatusLabel = (status) => {
 };
 
 export default function Emails({ currentUser, page, onPageChange }) {
+    const [subTab, setSubTab] = useState('email'); // 'email', 'account', 'bulk_read'
+    const [accountPage, setAccountPage] = useState(1);
     const [emails, setEmails] = useState([]);
     const [loading, setLoading] = useState(true);
     const [count, setCount] = useState(0);
@@ -145,7 +148,6 @@ export default function Emails({ currentUser, page, onPageChange }) {
     const [activeMailIndex, setActiveMailIndex] = useState(null);
 
     // Bulk Mailbox Reader Modal
-    const [bulkReadOpen, setBulkReadOpen] = useState(false);
     const [bulkMailInput, setBulkMailInput] = useState('');
     const [bulkAccountsStatus, setBulkAccountsStatus] = useState({}); // email -> status string
     const [bulkAccountsColor, setBulkAccountsColor] = useState({}); // email -> success/danger/accent
@@ -681,7 +683,7 @@ export default function Emails({ currentUser, page, onPageChange }) {
         setBulkEmailsList([]);
         setBulkActiveEmailsList([]);
         setActiveBulkMail(null);
-        setBulkReadOpen(true);
+        setSubTab('bulk_read');
     };
 
     const runBulkMailboxRead = async () => {
@@ -874,7 +876,34 @@ export default function Emails({ currentUser, page, onPageChange }) {
 
     return (
         <div>
-            <div className="control-bar">
+            {/* Sub Tabs */}
+            <div className="card-tabs-container" style={{ marginBottom: '20px' }}>
+                <div 
+                    className={`card-tab-item ${subTab === 'email' ? 'active' : ''}`}
+                    onClick={() => setSubTab('email')}
+                >
+                    <span>📧</span>
+                    <span>Email</span>
+                </div>
+                <div 
+                    className={`card-tab-item ${subTab === 'account' ? 'active' : ''}`}
+                    onClick={() => setSubTab('account')}
+                >
+                    <span>🔑</span>
+                    <span>Tài khoản</span>
+                </div>
+                <div 
+                    className={`card-tab-item ${subTab === 'bulk_read' ? 'active' : ''}`}
+                    onClick={() => setSubTab('bulk_read')}
+                >
+                    <span>⚡</span>
+                    <span>Đọc mail số lượng lớn</span>
+                </div>
+            </div>
+
+            {subTab === 'email' && (
+                <>
+                    <div className="control-bar">
                 <div className="control-filters">
                     <div className="search-box">
                         <input 
@@ -1468,141 +1497,140 @@ export default function Emails({ currentUser, page, onPageChange }) {
                 </div>
             )}
 
-            {/* 7. Bulk Read Mail Modal */}
-            {bulkReadOpen && (
-                <div className="modal-overlay" style={{ display: 'flex' }}>
-                    <div className="modal-box modal-large" style={{ maxWidth: '1000px', width: '95%' }}>
-                        <div className="modal-header">
-                            <h3>Đọc Mail Số Lượng Lớn (Microsoft Graph API & IMAP)</h3>
-                            <button className="modal-close" onClick={() => setBulkReadOpen(false)}>&times;</button>
+                </>
+            )}
+
+            {subTab === 'account' && (
+                <Accounts currentUser={currentUser} page={accountPage} onPageChange={setAccountPage} />
+            )}
+
+            {subTab === 'bulk_read' && (
+                <div className="bulk-read-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ margin: 0 }}>⚡ Đọc Mail Số Lượng Lớn (Microsoft Graph API & IMAP)</h3>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                        <label className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                            Nhập danh sách tài khoản (định dạng: <code>email|password</code> hoặc <code>email|password|token</code>, mỗi dòng 1 tài khoản):
+                        </label>
+                        <textarea 
+                            className="form-textarea" 
+                            rows="6" 
+                            placeholder="Ví dụ:&#10;katherine7wn4lfpoling@hotmail.com|On7wzi108LoO|M.C509_...|9e5f94bc-e8a4-4e73-b8be-63364c29d753" 
+                            style={{ width: '100%', fontFamily: 'monospace', fontSize: '13px', resize: 'vertical' }}
+                            value={bulkMailInput}
+                            onChange={(e) => setBulkMailInput(e.target.value)}
+                        ></textarea>
+                    </div>
+
+                    <div style={{ marginBottom: '16px', background: 'var(--input-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
+                        <h4 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Trạng thái kết nối các tài khoản:</span>
+                            <span style={{ color: 'var(--accent)' }}>{bulkStatusSummary}</span>
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
+                            {Object.keys(bulkAccountsStatus).map((email, idx) => (
+                                <div key={idx} style={{ background: 'var(--input-bg)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ fontWeight: 500 }}>{email}</span>: 
+                                    <span style={{ color: bulkAccountsColor[email] }}>{bulkAccountsStatus[email]}</span>
+                                </div>
+                            ))}
                         </div>
-                        <div className="modal-body" style={{ maxHeight: '85vh', overflowY: 'auto', padding: '20px' }}>
-                            <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                                    Nhập danh sách tài khoản (định dạng: <code>email|password</code> hoặc <code>email|password|token</code>, mỗi dòng 1 tài khoản):
-                                </label>
-                                <textarea 
-                                    className="form-textarea" 
-                                    rows="6" 
-                                    placeholder="Ví dụ:&#10;katherine7wn4lfpoling@hotmail.com|On7wzi108LoO|M.C509_...|9e5f94bc-e8a4-4e73-b8be-63364c29d753" 
-                                    style={{ width: '100%', fontFamily: 'monospace', fontSize: '13px', resize: 'vertical' }}
-                                    value={bulkMailInput}
-                                    onChange={(e) => setBulkMailInput(e.target.value)}
-                                ></textarea>
-                            </div>
+                    </div>
 
-                            <div style={{ marginBottom: '16px', background: 'var(--input-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px' }}>
-                                <h4 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>Trạng thái kết nối các tài khoản:</span>
-                                    <span style={{ color: 'var(--accent)' }}>{bulkStatusSummary}</span>
-                                </h4>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
-                                    {Object.keys(bulkAccountsStatus).map((email, idx) => (
-                                        <div key={idx} style={{ background: 'var(--input-bg)', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <span style={{ fontWeight: 500 }}>{email}</span>: 
-                                            <span style={{ color: bulkAccountsColor[email] }}>{bulkAccountsStatus[email]}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div className="search-box" style={{ flex: 1 }}>
+                            <input 
+                                type="text" 
+                                className="search-input" 
+                                placeholder="Tìm kiếm OTP, mã code hoặc nội dung thư..." 
+                                style={{ width: '100%' }} 
+                                value={bulkSearchQuery}
+                                onChange={(e) => handleFilterBulkMails(e.target.value)}
+                            />
+                        </div>
+                        <button className="btn btn-primary" onClick={runBulkMailboxRead} style={{ padding: '8px 16px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                            ⚡ Đọc mail
+                        </button>
+                    </div>
 
-                            <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center' }}>
-                                <div className="search-box" style={{ flex: 1 }}>
-                                    <input 
-                                        type="text" 
-                                        className="search-input" 
-                                        placeholder="Tìm kiếm OTP, mã code hoặc nội dung thư..." 
-                                        style={{ width: '100%' }} 
-                                        value={bulkSearchQuery}
-                                        onChange={(e) => handleFilterBulkMails(e.target.value)}
-                                    />
-                                </div>
-                                <button className="btn btn-primary" onClick={runBulkMailboxRead} style={{ padding: '8px 16px', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                                    ⚡ Đọc mail
-                                </button>
+                    <div className="bulk-mail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        {/* Left List: Message list */}
+                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                            <div style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', fontSize: '13px' }}>
+                                Danh sách thư nhận được
                             </div>
-
-                            <div className="bulk-mail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                                {/* Left List: Message list */}
-                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                    <div style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', fontSize: '13px' }}>
-                                        Danh sách thư nhận được
-                                    </div>
-                                    <div style={{ flex: 1, overflowY: 'auto', maxHeight: '400px' }}>
-                                        <table style={{ margin: 0, width: '100%' }}>
-                                            <tbody>
-                                                {bulkActiveEmailsList.length === 0 ? (
-                                                    <tr>
-                                                        <td style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
-                                                            Hộp thư trống hoặc chưa có thư nào.
+                            <div style={{ flex: 1, overflowY: 'auto', maxHeight: '450px' }}>
+                                <table style={{ margin: 0, width: '100%' }}>
+                                    <tbody>
+                                        {bulkActiveEmailsList.length === 0 ? (
+                                            <tr>
+                                                <td style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                                                    Hộp thư trống hoặc chưa có thư nào.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            bulkActiveEmailsList.map((mail, index) => {
+                                                const fromClean = mail.from.split('<')[0].replace(/"/g, '').trim() || mail.from;
+                                                const isActive = activeBulkMail === mail;
+                                                
+                                                return (
+                                                    <tr 
+                                                        key={index} 
+                                                        style={{ cursor: 'pointer', background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent', borderBottom: '1px solid var(--border-color)' }}
+                                                        onClick={() => setActiveBulkMail(mail)}
+                                                    >
+                                                        <td style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                                                <span style={{ fontWeight: 600, color: 'var(--accent)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mail.sourceEmail}</span>
+                                                                <span>{mail.date}</span>
+                                                            </div>
+                                                            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-color)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                {fromClean} &bull; {mail.subject}
+                                                            </div>
+                                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', maxHeight: '32px', overflow: 'hidden' }}>
+                                                                {formatSnippet(mail.snippet)}
+                                                            </div>
                                                         </td>
                                                     </tr>
-                                                ) : (
-                                                    bulkActiveEmailsList.map((mail, index) => {
-                                                        const fromClean = mail.from.split('<')[0].replace(/"/g, '').trim() || mail.from;
-                                                        const isActive = activeBulkMail === mail;
-                                                        
-                                                        return (
-                                                            <tr 
-                                                                key={index} 
-                                                                style={{ cursor: 'pointer', background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent', borderBottom: '1px solid var(--border-color)' }}
-                                                                onClick={() => setActiveBulkMail(mail)}
-                                                            >
-                                                                <td style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
-                                                                        <span style={{ fontWeight: 600, color: 'var(--accent)', maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mail.sourceEmail}</span>
-                                                                        <span>{mail.date}</span>
-                                                                    </div>
-                                                                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-color)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                        {fromClean} &bull; {mail.subject}
-                                                                    </div>
-                                                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', maxHeight: '32px', overflow: 'hidden' }}>
-                                                                        {formatSnippet(mail.snippet)}
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* Right Detail Box: Full body content */}
-                                <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '14px' }}>
-                                    <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent)' }}>
-                                        {activeBulkMail ? activeBulkMail.subject : 'Chọn thư để xem chi tiết'}
-                                    </h4>
-                                    {activeBulkMail && (
-                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                                            <div><strong>Tài khoản nhận:</strong> {activeBulkMail.sourceEmail}</div>
-                                            <div><strong>Người gửi:</strong> {activeBulkMail.from}</div>
-                                            <div><strong>Thời gian nhận:</strong> {activeBulkMail.date}</div>
-                                        </div>
-                                    )}
-                                    <div style={{ flex: 1, minHeight: '300px', maxHeight: '400px', overflowY: 'auto', fontSize: '13px', lineHeight: 1.6 }}>
-                                        {activeBulkMail ? (
-                                            activeBulkMail.body && (activeBulkMail.body.includes('<html') || activeBulkMail.body.includes('<body') || activeBulkMail.body.includes('<div') || activeBulkMail.body.includes('<table')) ? (
-                                                <iframe 
-                                                    title="Bulk Mail Detail"
-                                                    srcDoc={activeBulkMail.body}
-                                                    style={{ width: '100%', height: '360px', border: 'none', borderRadius: '6px', background: '#ffffff' }}
-                                                />
-                                            ) : (
-                                                <pre style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                                    {activeBulkMail.body || activeBulkMail.snippet}
-                                                </pre>
-                                            )
-                                        ) : (
-                                            'Chọn một thư từ danh sách bên trái để mở rộng xem toàn bộ mã OTP hoặc link kích hoạt.'
+                                                );
+                                            })
                                         )}
-                                    </div>
-                                </div>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setBulkReadOpen(false)}>Đóng</button>
+
+                        {/* Right Detail Box: Full body content */}
+                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--input-bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '14px' }}>
+                            <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', color: 'var(--accent)' }}>
+                                {activeBulkMail ? activeBulkMail.subject : 'Chọn thư để xem chi tiết'}
+                            </h4>
+                            {activeBulkMail && (
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                                    <div><strong>Tài khoản nhận:</strong> {activeBulkMail.sourceEmail}</div>
+                                    <div><strong>Người gửi:</strong> {activeBulkMail.from}</div>
+                                    <div><strong>Thời gian nhận:</strong> {activeBulkMail.date}</div>
+                                </div>
+                            )}
+                            <div style={{ flex: 1, minHeight: '350px', maxHeight: '450px', overflowY: 'auto', fontSize: '13px', lineHeight: 1.6 }}>
+                                {activeBulkMail ? (
+                                    activeBulkMail.body && (activeBulkMail.body.includes('<html') || activeBulkMail.body.includes('<body') || activeBulkMail.body.includes('<div') || activeBulkMail.body.includes('<table')) ? (
+                                        <iframe 
+                                            title="Bulk Mail Detail"
+                                            srcDoc={activeBulkMail.body}
+                                            style={{ width: '100%', height: '400px', border: 'none', borderRadius: '6px', background: '#ffffff' }}
+                                        />
+                                    ) : (
+                                        <pre style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                            {activeBulkMail.body || activeBulkMail.snippet}
+                                        </pre>
+                                    )
+                                ) : (
+                                    'Chọn một thư từ danh sách bên trái để mở rộng xem toàn bộ mã OTP hoặc link kích hoạt.'
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

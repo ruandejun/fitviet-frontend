@@ -6,7 +6,6 @@ import Users from './Users';
 import Profiles from './Profiles';
 import Proxies from './Proxies';
 import Emails from './Emails';
-import Accounts from './Accounts';
 import HWIDs from './HWIDs';
 import Notifications from './Notifications';
 import GetInfo from './GetInfo';
@@ -552,8 +551,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'users': 'Quản lý Người dùng (Client)',
         'profiles': 'MunLogin Profiles',
         'proxies': 'Tor Proxies Management',
-        'emails': 'Email Database Management',
-        'accounts': 'Tài khoản MunLogin đã tạo',
+        'emails': 'Quản lý Email & Tài khoản',
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
         'notifications': 'Thông báo của tôi',
         'notes': 'Ghi chú'
@@ -593,9 +591,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                 )}
                                 <a className={`menu-item ${currentTab === 'emails' ? 'active' : ''}`} onClick={() => handleSwitchTab('emails')}>
                                     <span className="menu-icon">✉️</span><span className="menu-text">Quản lý Email</span>
-                                </a>
-                                <a className={`menu-item ${currentTab === 'accounts' ? 'active' : ''}`} onClick={() => handleSwitchTab('accounts')}>
-                                    <span className="menu-icon">🔑</span><span className="menu-text">Tài khoản đã tạo</span>
                                 </a>
                             </>
                         ) : null}
@@ -845,9 +840,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     </div>
                     <div style={{ display: currentTab === 'emails' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
-                    </div>
-                    <div style={{ display: currentTab === 'accounts' ? 'block' : 'none' }}>
-                        {currentUser && visitedTabs.has('accounts') && <Accounts currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('accounts', p)} />}
                     </div>
                     {currentUser?.is_staff && (
                         <div style={{ display: currentTab === 'hwids' ? 'block' : 'none' }}>
