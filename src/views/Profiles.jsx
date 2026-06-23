@@ -33,6 +33,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
         profile_socks5_details: '',
         profile_proxy_username: '',
         profile_proxy_password: '',
+        profile_vendor: 'Google Inc. (ATI Technologies Inc.)',
+        profile_renderer: 'ANGLE (Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0)',
         profile_start_url: 'https://iphey.com',
         profile_note: ''
     });
@@ -55,6 +57,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                     profile_socks5_details: newProfile.profile_socks5_details.trim(),
                     profile_proxy_username: newProfile.profile_proxy_username.trim(),
                     profile_proxy_password: newProfile.profile_proxy_password.trim(),
+                    profile_vendor: newProfile.profile_vendor.trim(),
+                    profile_renderer: newProfile.profile_renderer.trim(),
                     profile_start_url: newProfile.profile_start_url.trim() || 'https://iphey.com',
                     profile_note: newProfile.profile_note.trim()
                 })
@@ -71,6 +75,8 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                     profile_socks5_details: '',
                     profile_proxy_username: '',
                     profile_proxy_password: '',
+                    profile_vendor: 'Google Inc. (ATI Technologies Inc.)',
+                    profile_renderer: 'ANGLE (Intel(R) HD Graphics 4000 Direct3D11 vs_5_0 ps_5_0)',
                     profile_start_url: 'https://iphey.com',
                     profile_note: ''
                 });
@@ -517,6 +523,28 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                                         </div>
                                     </>
                                 )}
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Vendor</label>
+                                    <input 
+                                        type="text" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        placeholder="Ví dụ: Google Inc. (Intel)"
+                                        value={newProfile.profile_vendor}
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_vendor: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Renderer</label>
+                                    <input 
+                                        type="text" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        placeholder="Ví dụ: ANGLE (Intel(R) HD Graphics 4000)"
+                                        value={newProfile.profile_renderer}
+                                        onChange={(e) => setNewProfile({ ...newProfile, profile_renderer: e.target.value })}
+                                    />
+                                </div>
                                 <div className="form-group" style={{ marginBottom: '15px' }}>
                                     <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Trang Web Bắt Đầu</label>
                                     <input 
