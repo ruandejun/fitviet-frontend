@@ -678,36 +678,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             </>
                         ) : null}
                     </div>
-                <div className="sidebar-footer" style={{ padding: '15px' }}>
-                    {currentUser ? (
-                        <>
-                            <div className="user-info menu-text" onClick={() => { setShowUserInfoModal(true); setSidebarVisible(false); }} style={{ cursor: 'pointer' }}>
-                                <span className="user-name">{currentUser.username}</span>
-                                <span className="user-role">{currentUser.is_staff ? 'Quản trị viên' : 'Khách hàng'}</span>
-                            </div>
-                            <button className="logout-btn" onClick={onLogout} title="Đăng xuất" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span className="menu-icon">🚪</span><span className="menu-text">Thoát</span>
-                            </button>
-                        </>
-                    ) : (
-                        <button 
-                            onClick={() => { setAuthModalScreen('login'); setShowAuthModal(true); setSidebarVisible(false); }} 
-                            className="menu-item" 
-                            style={{ 
-                                width: '100%', 
-                                justifyContent: 'center', 
-                                border: '1px dashed var(--border-color)', 
-                                gap: '8px', 
-                                padding: '10px', 
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                color: 'var(--text-color)'
-                            }}
-                        >
-                            <span>🔑</span><span className="menu-text">Đăng nhập</span>
-                        </button>
-                    )}
-                </div>
             </div>
 
             {/* Main Content */}
