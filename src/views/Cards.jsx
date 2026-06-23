@@ -452,7 +452,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
 
     const tabOptions = [
         { label: 'Tất cả', value: 'Tất cả', icon: '💳' },
-        { label: 'Chưa sử dụng', value: 'Chưa sử dụng', icon: '⚪' },
+        { label: 'Chưa sử dụng', value: 'Chưa sử dụng,Đang sử dụng', icon: '⚪' },
         { label: 'Thẻ sống', value: 'Thẻ sống', icon: '🟢' },
         { label: 'Thẻ chết', value: 'Thẻ lỗi,Thẻ chết,Sub lỗi', icon: '🔴' },
         { label: 'Sub OK', value: 'Sub OK', icon: '✅' },
