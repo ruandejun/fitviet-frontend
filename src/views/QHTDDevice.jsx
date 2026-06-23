@@ -68,6 +68,142 @@ export default function QHTDDevice() {
     const [dopamineInstalling, setDopamineInstalling] = useState(false);
     const [dopamineServerUrl, setDopamineServerUrl] = useState('');
 
+    // Mock bridge helper for testing layout/flows in standard browsers
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('desktop') === 'true' && !window.qhtdBridge) {
+            class MockQtSignal {
+                constructor() {
+                    this.listeners = [];
+                }
+                connect(fn) {
+                    this.listeners.push(fn);
+                }
+                disconnect(fn) {
+                    this.listeners = this.listeners.filter(l => l !== fn);
+                }
+                emit(...args) {
+                    this.listeners.forEach(fn => {
+                        try { fn(...args); } catch (e) { console.error(e); }
+                    });
+                }
+            }
+
+            const automationLog = new MockQtSignal();
+            const automationFinished = new MockQtSignal();
+            const wdaSetupLog = new MockQtSignal();
+            const wdaSetupFinished = new MockQtSignal();
+            const dopamineLog = new MockQtSignal();
+            const dopamineServerUrl = new MockQtSignal();
+            const dopamineFinished = new MockQtSignal();
+
+            window.qhtdBridge = {
+                automationLog,
+                automationFinished,
+                wdaSetupLog,
+                wdaSetupFinished,
+                dopamineLog,
+                dopamineServerUrl,
+                dopamineFinished,
+
+                getToolInfo: async () => {
+                    return JSON.stringify({
+                        version: "1.2.3",
+                        os: "win32",
+                        pymobiledevice3: true,
+                        mun_anti_browser: true
+                    });
+                },
+                scanDevices: async () => {
+                    return JSON.stringify([
+                        {
+                            name: "My Test iPhone",
+                            model: "iPhone 11 Pro",
+                            serial: "ABCDE12345",
+                            udid: "00008030-00123456789ABCDE",
+                            ios_version: "15.4.1",
+                            wifi_address: "192.168.2.55"
+                        }
+                    ]);
+                },
+                getDeviceApps: async (serial) => {
+                    return JSON.stringify([
+                        {name: "Facebook", bundle_id: "com.facebook.Facebook", version: "411.0"},
+                        {name: "TikTok", bundle_id: "com.zhiliaoapp.musically", version: "29.3.0"},
+                        {name: "Safari", bundle_id: "com.apple.mobilesafari", version: "15.0"}
+                    ]);
+                },
+                activateDevice: async (serial) => {
+                    return JSON.stringify({success: true});
+                },
+                eraseDevice: async (serial) => {
+                    return JSON.stringify({success: true});
+                },
+                backupAppData: async (serial, bundleId) => {
+                    return JSON.stringify({success: true, path: "/root/storagon/backup/" + bundleId + ".zip"});
+                },
+                restoreAppData: async (serial, bundleId) => {
+                    return JSON.stringify({success: true});
+                },
+                clearAppData: async (serial, bundleId) => {
+                    return JSON.stringify({success: true});
+                },
+                checkWDAStatus: async (serial) => {
+                    return JSON.stringify({status: "stopped", message: "WebDriverAgent is not running"});
+                },
+                startWDASetup: (serial) => {
+                    wdaSetupLog.emit("Bắt đầu thiết lập WebDriverAgent...", "action");
+                    setTimeout(() => wdaSetupLog.emit("Đang cài đặt ipa WDA qua pymobiledevice3...", ""), 400);
+                    setTimeout(() => wdaSetupLog.emit("Đang khởi chạy dịch vụ test...", ""), 800);
+                    setTimeout(() => {
+                        wdaSetupFinished.emit(true, "Thiết lập WebDriverAgent thành công!");
+                    }, 1500);
+                },
+                stopWDASetup: () => {
+                    wdaSetupFinished.emit(false, "Người dùng dừng thiết lập.");
+                },
+                startDopamineInstall: (serial) => {
+                    dopamineLog.emit("Bắt đầu tải Dopamine IPA...", "action");
+                    setTimeout(() => dopamineLog.emit("Đang mở server cài đặt cục bộ...", ""), 500);
+                    setTimeout(() => {
+                        dopamineServerUrl.emit("http://192.168.2.55:8889/dopamine-install");
+                        dopamineFinished.emit(true, "Mở link tải thành công");
+                    }, 1000);
+                },
+                stopDopamineInstall: () => {
+                    dopamineFinished.emit(false, "Đã dừng.");
+                },
+                runAutomation: (config) => {
+                    automationLog.emit("▶ Khởi chạy kịch bản tự động...", "action");
+                    setTimeout(() => automationLog.emit("wait 2: Chờ 2 giây...", ""), 500);
+                    setTimeout(() => automationLog.emit("tap 180 320: Nhấn tọa độ (180, 320)...", "action"), 1000);
+                    setTimeout(() => automationLog.emit("type test text: Nhập chữ 'test text'...", ""), 1500);
+                    setTimeout(() => {
+                        automationFinished.emit();
+                    }, 2000);
+                },
+                stopAutomation: () => {
+                    automationLog.emit("⏹ Dừng kịch bản tự động.", "error");
+                    automationFinished.emit();
+                },
+                searchAppStore: async (text, country, limit) => {
+                    return JSON.stringify([
+                        {trackId: 1, trackName: "Facebook", bundleId: "com.facebook.Facebook"},
+                        {trackId: 2, trackName: "TikTok", bundleId: "com.zhiliaoapp.musically"},
+                        {trackId: 3, trackName: "Safari", bundleId: "com.apple.mobilesafari"}
+                    ]);
+                },
+                openUrl: (url) => {
+                    window.open(url, '_blank');
+                }
+            };
+
+            // Notify ready
+            window.dispatchEvent(new Event('qhtdBridgeReady'));
+            console.log('[Mock Bridge] Simulated QHTD Desktop bridge initialized successfully.');
+        }
+    }, []);
+
     // Setup QWebChannel Signals connection
     useEffect(() => {
         let connected = false;
