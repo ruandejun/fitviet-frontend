@@ -77,14 +77,35 @@ export default function TorManager() {
 
     const handleTorStatus = useCallback((jsonStr) => {
         try {
-            const list = JSON.parse(jsonStr);
-            if (Array.isArray(list)) {
-                setProxies(list.map(p => ({
-                    socksPort: p.socks_port,
-                    controlPort: p.control_port,
-                    status: p.status,
-                    ip: p.ip || '—'
-                })));
+            const runningList = JSON.parse(jsonStr);
+            if (Array.isArray(runningList)) {
+                setProxies(prev => {
+                    if (prev.length === 0) {
+                        return runningList.map(p => ({
+                            socksPort: p.socks_port,
+                            controlPort: p.control_port,
+                            status: p.status,
+                            ip: p.ip || '—'
+                        }));
+                    }
+                    return prev.map(existing => {
+                        const match = runningList.find(p => p.socks_port === existing.socksPort);
+                        if (match) {
+                            return {
+                                ...existing,
+                                status: match.status,
+                                ip: match.ip || '—'
+                            };
+                        } else {
+                            // If it's missing from the backend list, it's stopped/Off
+                            return {
+                                ...existing,
+                                status: 'Off',
+                                ip: 'Đã dừng'
+                            };
+                        }
+                    });
+                });
             }
         } catch (e) {
             console.error("Failed to parse tor status update:", e);
@@ -181,6 +202,37 @@ export default function TorManager() {
                 idx === index ? { ...p, ip: 'Đổi IP thất bại' } : p
             ));
         }
+    };
+
+    const handleStopSingle = async (socksPort, index) => {
+        if (!window.qhtdBridge) return;
+        
+        // Update row to Loading state
+        setProxies(prev => prev.map((p, idx) => 
+            idx === index ? { ...p, status: 'Loading', ip: 'Đang dừng...' } : p
+        ));
+        
+        await window.qhtdBridge.stopTorProxy(socksPort);
+        
+        // Update state to Off
+        setProxies(prev => prev.map((p, idx) => 
+            idx === index ? { ...p, status: 'Off', ip: 'Đã dừng' } : p
+        ));
+    };
+
+    const handleStartSingle = async (socksPort, controlPort, index) => {
+        if (!window.qhtdBridge) return;
+        if (!torInstalled) {
+            alert("Vui lòng cài đặt Tor Expert Bundle trước!");
+            return;
+        }
+        
+        // Update row to Loading state
+        setProxies(prev => prev.map((p, idx) => 
+            idx === index ? { ...p, status: 'Loading', ip: 'Đang khởi động...' } : p
+        ));
+        
+        await window.qhtdBridge.startTorProxy(socksPort, controlPort, selectedCountry);
     };
 
     const handleCopyProxy = (port) => {
@@ -475,6 +527,16 @@ export default function TorManager() {
                     border-color: rgba(16, 185, 129, 0.3);
                     color: #a7f3d0;
                 }
+                .btn-icon.start:hover {
+                    background: rgba(16, 185, 129, 0.12);
+                    border-color: rgba(16, 185, 129, 0.3);
+                    color: #10b981;
+                }
+                .btn-icon.stop:hover {
+                    background: rgba(239, 68, 68, 0.12);
+                    border-color: rgba(239, 68, 68, 0.3);
+                    color: #ef4444;
+                }
             `}</style>
 
             <div className="tor-header">
@@ -631,6 +693,23 @@ export default function TorManager() {
                                     </td>
                                     <td>
                                         <div className="action-row">
+                                            {p.status === 'Off' ? (
+                                                <button 
+                                                    className="btn-icon start" 
+                                                    onClick={() => handleStartSingle(p.socksPort, p.controlPort, index)} 
+                                                    title="Khởi động Proxy này"
+                                                >
+                                                    ▶
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    className="btn-icon stop" 
+                                                    onClick={() => handleStopSingle(p.socksPort, index)} 
+                                                    title="Dừng Proxy này"
+                                                >
+                                                    ⏹
+                                                </button>
+                                            )}
                                             <button 
                                                 className="btn-icon rotate" 
                                                 onClick={() => handleRotateIp(p.controlPort, index)} 
