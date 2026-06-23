@@ -36,6 +36,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
     // Filters
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState('Tất cả');
+    const [subStatus, setSubStatus] = useState('');
     const [owner, setOwner] = useState('all');
     const [clients, setClients] = useState([]);
 
@@ -121,7 +122,17 @@ export default function Cards({ currentUser, page, onPageChange }) {
         setLoading(true);
         let url = `/dashboard/api/cards/?page=${page}&page_size=${pageSize}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
-        if (status && status !== 'Tất cả') url += `&status=${encodeURIComponent(status)}`;
+        
+        let queryStatus = '';
+        if (subStatus) {
+            queryStatus = subStatus;
+        } else if (status && status !== 'Tất cả') {
+            queryStatus = status;
+        }
+        if (queryStatus) {
+            url += `&status=${encodeURIComponent(queryStatus)}`;
+        }
+
         if (owner && owner !== 'all') url += `&owner=${owner}`;
 
         try {
@@ -153,7 +164,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
 
     useEffect(() => {
         fetchCards();
-    }, [page, pageSize, status, owner]);
+    }, [page, pageSize, status, owner, subStatus]);
 
     // Handle search input with a slight debounce or direct trigger
     useEffect(() => {
@@ -467,7 +478,7 @@ export default function Cards({ currentUser, page, onPageChange }) {
                     <div 
                         key={opt.value}
                         className={`card-tab-item ${status === opt.value ? 'active' : ''}`}
-                        onClick={() => { setStatus(opt.value); onPageChange(1); }}
+                        onClick={() => { setStatus(opt.value); setSubStatus(''); onPageChange(1); }}
                     >
                         <span>{opt.icon}</span>
                         <span>{opt.label}</span>
@@ -500,6 +511,40 @@ export default function Cards({ currentUser, page, onPageChange }) {
                                 { label: 'Chưa chỉ định', value: 'unassigned' }
                             ]}
                         />
+                    )}
+                    {(status === 'Tất cả' || status === 'Chưa sử dụng,Đang sử dụng' || status === 'Thẻ lỗi,Thẻ chết,Sub lỗi') && (
+                        <select 
+                            className="filter-select" 
+                            value={subStatus} 
+                            onChange={(e) => { setSubStatus(e.target.value); onPageChange(1); }}
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            {status === 'Tất cả' && (
+                                <>
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                    <option value="Thẻ sống">Thẻ sống</option>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ tốt">Thẻ tốt</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub OK">Sub OK</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </>
+                            )}
+                            {status === 'Chưa sử dụng,Đang sử dụng' && (
+                                <>
+                                    <option value="Chưa sử dụng">Chưa sử dụng</option>
+                                    <option value="Đang sử dụng">Đang sử dụng</option>
+                                </>
+                            )}
+                            {status === 'Thẻ lỗi,Thẻ chết,Sub lỗi' && (
+                                <>
+                                    <option value="Thẻ chết">Thẻ chết</option>
+                                    <option value="Thẻ lỗi">Thẻ lỗi</option>
+                                    <option value="Sub lỗi">Sub lỗi</option>
+                                </>
+                            )}
+                        </select>
                     )}
                     <select className="filter-select" value={pageSize} onChange={(e) => { setPageSize(parseInt(e.target.value)); onPageChange(1); }}>
                         <option value={20}>20 dòng</option>

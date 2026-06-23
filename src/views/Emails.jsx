@@ -970,7 +970,6 @@ export default function Emails({ currentUser, page, onPageChange }) {
                     )}
                     <button className="btn btn-danger" onClick={deleteSelectedEmails} disabled={selectedIds.length === 0}>Xóa</button>
                     <button className="btn btn-warning" onClick={() => setBulkStatusOpen(true)} disabled={selectedIds.length === 0}>Đổi trạng thái</button>
-                    <button className="btn btn-warning" onClick={handleOpenBulkRead}>Đọc mail số lượng lớn</button>
                     <button className="btn btn-secondary" onClick={handleOpenGraphConfig}>Cấu hình Graph API</button>
                 </div>
             </div>
