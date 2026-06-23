@@ -6,7 +6,7 @@ import React, { useState, useCallback } from 'react';
  * Giao tiếp với Python qua window.qhtdBridge
  */
 export default function IPADowngrade() {
-    const isDesktop = !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
+    const isDesktop = navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
 
     // Auth state
     const [email, setEmail] = useState('');
