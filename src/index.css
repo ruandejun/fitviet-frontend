@@ -2170,3 +2170,43 @@
         }
 
 
+
+        /* Card tabs styles */
+        .card-tabs-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1.5px solid var(--border-color);
+            padding-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-tab-item {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            border: 1px solid transparent;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-tab-item:hover {
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .card-tab-item.active {
+            color: #ffffff;
+            background: var(--active-bg);
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+

@@ -450,8 +450,31 @@ export default function Cards({ currentUser, page, onPageChange }) {
     const prevDisabled = page <= 1;
     const nextDisabled = page * pageSize >= count;
 
+    const tabOptions = [
+        { label: 'Tất cả', value: 'Tất cả', icon: '💳' },
+        { label: 'Chưa sử dụng', value: 'Chưa sử dụng', icon: '⚪' },
+        { label: 'Thẻ sống', value: 'Thẻ sống', icon: '🟢' },
+        { label: 'Thẻ chết', value: 'Thẻ lỗi,Thẻ chết,Sub lỗi', icon: '🔴' },
+        { label: 'Sub OK', value: 'Sub OK', icon: '✅' },
+        { label: 'Thẻ tốt', value: 'Thẻ tốt', icon: '🔥' }
+    ];
+
     return (
         <div>
+            {/* Card Status Tabs */}
+            <div className="card-tabs-container">
+                {tabOptions.map(opt => (
+                    <div 
+                        key={opt.value}
+                        className={`card-tab-item ${status === opt.value ? 'active' : ''}`}
+                        onClick={() => { setStatus(opt.value); onPageChange(1); }}
+                    >
+                        <span>{opt.icon}</span>
+                        <span>{opt.label}</span>
+                    </div>
+                ))}
+            </div>
+
             <div className="control-bar">
                 <div className="control-filters">
                     <div className="search-box">
@@ -463,17 +486,6 @@ export default function Cards({ currentUser, page, onPageChange }) {
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                    <select className={`filter-select ${getCardStatusBadgeClass(status)}`} value={status} onChange={(e) => setStatus(e.target.value)}>
-                        <option className="badge-unused" value="Chưa sử dụng">Chưa sử dụng</option>
-                        <option className="badge-active" value="Đang sử dụng">Đang sử dụng</option>
-                        <option className="badge-dead" value="Thẻ chết">Thẻ chết</option>
-                        <option className="badge-live" value="Thẻ sống">Thẻ sống</option>
-                        <option className="badge-good" value="Thẻ tốt">Thẻ tốt</option>
-                        <option className="badge-error" value="Thẻ lỗi">Thẻ lỗi</option>
-                        <option className="badge-sub-ok" value="Sub OK">Sub OK</option>
-                        <option className="badge-sub-error" value="Sub lỗi">Sub lỗi</option>
-                        <option value="Tất cả">Tất cả</option>
-                    </select>
                     {currentUser.is_staff && (
                         <SearchableSelect
                             currentUser={currentUser}
