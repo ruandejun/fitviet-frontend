@@ -982,28 +982,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         </a>
                         {currentUser ? (
                             <>
-                                <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
-                                    <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
-                                </a>
-                                <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
-                                    <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
-                                </a>
-                                {currentUser.is_staff && (
-                                    <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
-                                        <span className="menu-icon">🖱️</span><span className="menu-text">HWID Manager</span>
-                                    </a>
-                                )}
-                                <a className={`menu-item ${currentTab === 'notifications' ? 'active' : ''}`} onClick={() => handleSwitchTab('notifications')}>
-                                    <span className="menu-icon">🔔</span>
-                                    <span className="menu-text">
-                                        Thông báo 
-                                        {unreadNotifCount > 0 && (
-                                            <span className="badge-unread-count" style={{ display: 'inline-block', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', marginLeft: '10px', fontWeight: 700 }}>
-                                                {unreadNotifCount}
-                                            </span>
-                                        )}
-                                    </span>
-                                </a>
                                 <a className={`menu-item ${currentTab === 'cards' ? 'active' : ''}`} onClick={() => handleSwitchTab('cards')}>
                                     <span className="menu-icon">💳</span><span className="menu-text">Quản lý Thẻ</span>
                                 </a>
@@ -1029,6 +1007,32 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                         <a className="menu-item" onClick={() => { openTwoFaModal(); setSidebarVisible(false); }}>
                             <span className="menu-icon">🔑</span><span className="menu-text">Trình tạo 2FA</span>
                         </a>
+                        {currentUser ? (
+                            <>
+                                <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
+                                    <span className="menu-icon">🖥️</span><span className="menu-text">Profiles</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
+                                    <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
+                                </a>
+                                {currentUser.is_staff && (
+                                    <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
+                                        <span className="menu-icon">🖱️</span><span className="menu-text">HWID Manager</span>
+                                    </a>
+                                )}
+                                <a className={`menu-item ${currentTab === 'notifications' ? 'active' : ''}`} onClick={() => handleSwitchTab('notifications')}>
+                                    <span className="menu-icon">🔔</span>
+                                    <span className="menu-text">
+                                        Thông báo 
+                                        {unreadNotifCount > 0 && (
+                                            <span className="badge-unread-count" style={{ display: 'inline-block', background: 'var(--danger)', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', marginLeft: '10px', fontWeight: 700 }}>
+                                                {unreadNotifCount}
+                                            </span>
+                                        )}
+                                    </span>
+                                </a>
+                            </>
+                        ) : null}
                     </div>
                 <div className="sidebar-footer" style={{ padding: '15px' }}>
                     {currentUser ? (
