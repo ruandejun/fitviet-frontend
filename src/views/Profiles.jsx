@@ -19,13 +19,14 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     const [pageSize, setPageSize] = useState(10);
     const [search, setSearch] = useState('');
     const [selectedIds, setSelectedIds] = useState([]);
+    const [agentStatus, setAgentStatus] = useState(null);
     
     // Modals
     const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
     const [bulkStatusVal, setBulkStatusVal] = useState('Active');
 
-    const fetchProfiles = async () => {
-        setLoading(true);
+    const fetchProfiles = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         let url = `/dashboard/api/profiles/?page=${page}&page_size=${pageSize}`;
         if (search) url += `&search=${encodeURIComponent(search)}`;
 
@@ -35,17 +36,88 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                 const data = await resp.json();
                 setProfiles(data.results || data);
                 setCount(data.count || (data.results || data).length);
+                if (data.agent_status) {
+                    setAgentStatus(data.agent_status);
+                }
             }
         } catch (err) {
             console.error("Error loading profiles:", err);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchProfiles();
+        fetchProfiles(true);
+        const interval = setInterval(() => {
+            fetchProfiles(false);
+        }, 3000);
+        return () => clearInterval(interval);
     }, [page, pageSize]);
+
+    const handleRunProfile = async (id) => {
+        if (window.qhtdBridge && typeof window.qhtdBridge.runBrowserProfile === 'function') {
+            try {
+                const res = window.qhtdBridge.runBrowserProfile(id);
+                const parsed = JSON.parse(res);
+                if (parsed.success) {
+                    fetchProfiles(false);
+                    return;
+                } else if (parsed.error) {
+                    alert('Lỗi local bridge: ' + parsed.error);
+                    return;
+                }
+            } catch (e) {
+                console.error("Local run profile failed, falling back to API", e);
+            }
+        }
+        try {
+            const resp = await apiRequest(`/dashboard/api/profiles/${id}/run/`, {
+                method: 'POST'
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                // Instantly refresh profiles state
+                fetchProfiles(false);
+            } else {
+                alert('Lỗi: ' + (data.message || 'Không thể gửi lệnh.'));
+            }
+        } catch (err) {
+            alert('Lỗi kết nối hoặc hệ thống.');
+        }
+    };
+
+    const handleStopProfile = async (id) => {
+        if (window.qhtdBridge && typeof window.qhtdBridge.stopBrowserProfile === 'function') {
+            try {
+                const res = window.qhtdBridge.stopBrowserProfile(id);
+                const parsed = JSON.parse(res);
+                if (parsed.success) {
+                    fetchProfiles(false);
+                    return;
+                } else if (parsed.error) {
+                    alert('Lỗi local bridge: ' + parsed.error);
+                    return;
+                }
+            } catch (e) {
+                console.error("Local stop profile failed, falling back to API", e);
+            }
+        }
+        try {
+            const resp = await apiRequest(`/dashboard/api/profiles/${id}/stop/`, {
+                method: 'POST'
+            });
+            const data = await resp.json();
+            if (resp.ok) {
+                // Instantly refresh profiles state
+                fetchProfiles(false);
+            } else {
+                alert('Lỗi: ' + (data.message || 'Không thể dừng trình duyệt.'));
+            }
+        } catch (err) {
+            alert('Lỗi kết nối hoặc hệ thống.');
+        }
+    };
 
     // Handle search input with debounce
     useEffect(() => {
@@ -126,7 +198,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     return (
         <div>
             <div className="control-bar">
-                <div className="control-filters">
+                <div className="control-filters" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                     <div className="search-box">
                         <input 
                             type="text" 
@@ -142,6 +214,30 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                         <option value={50}>50 dòng</option>
                         <option value={100}>100 dòng</option>
                     </select>
+
+                    {agentStatus && (
+                        <div className={`agent-status-badge ${agentStatus.online ? 'online' : 'offline'}`} style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            backgroundColor: agentStatus.online ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                            color: agentStatus.online ? '#10b981' : '#ef4444',
+                            border: `1px solid ${agentStatus.online ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
+                        }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: agentStatus.online ? '#10b981' : '#ef4444',
+                                boxShadow: agentStatus.online ? '0 0 8px #10b981' : 'none'
+                            }}></span>
+                            Agent: {agentStatus.online ? `Đang hoạt động (${agentStatus.hwid.substring(0, 8)}...)` : 'Chưa kết nối (MunLogin)'}
+                        </div>
+                    )}
                 </div>
                 <div className="action-buttons">
                     <button className="btn btn-secondary" onClick={fetchProfiles}>Làm mới</button>
@@ -172,6 +268,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                             <th>Proxy / Port</th>
                             <th>Socks5 Details</th>
                             <th>Original Name</th>
+                            <th style={{ textAlign: 'center' }}>Hành động</th>
                             <th>Trạng thái</th>
                             <th>Ngày tạo</th>
                         </tr>
@@ -207,6 +304,26 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                                         <td>{p.profile_proxy_type || 'Direct'} / {p.profile_proxy_details || '-'}</td>
                                         <td style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{p.profile_socks5_details || '-'}</td>
                                         <td>{p.profile_original_name || '-'}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            {p.is_running ? (
+                                                <button 
+                                                    className="btn btn-danger" 
+                                                    onClick={() => handleStopProfile(p.id)}
+                                                    style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px', lineHeight: '1' }}
+                                                >
+                                                    🛑 Dừng
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    className="btn btn-success" 
+                                                    onClick={() => handleRunProfile(p.id)}
+                                                    disabled={(!agentStatus || !agentStatus.online) && !window.qhtdBridge}
+                                                    style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px', lineHeight: '1' }}
+                                                >
+                                                    ▶ Chạy
+                                                </button>
+                                            )}
+                                        </td>
                                         <td style={{ textAlign: 'center' }}>
                                             <span className={`badge ${p.profile_status === 'Active' ? 'badge-success' : 'badge-unused'}`}>
                                                 {p.profile_status || 'Active'}

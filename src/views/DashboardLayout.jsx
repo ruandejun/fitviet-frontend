@@ -10,6 +10,12 @@ import HWIDs from './HWIDs';
 import Notifications from './Notifications';
 import GetInfo from './GetInfo';
 
+// QHTD Desktop-only components (only rendered when running inside desktop app)
+import QHTDDevice from './QHTDDevice';
+import QHTDAutomation from './QHTDAutomation';
+import IPADowngrade from './IPADowngrade';
+import QHTDRouting from './QHTDRouting';
+
 // 2FA Totp helpers
 function base32ToBytes(base32) {
     const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -159,6 +165,22 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
 
     // Sidebar mobile visibility
     const [sidebarVisible, setSidebarVisible] = useState(false);
+
+    // QHTD Desktop detection via QWebChannel bridge
+    const [isDesktopApp, setIsDesktopApp] = useState(false);
+    useEffect(() => {
+        // Check immediately and also with a small delay (bridge may load async)
+        const checkDesktop = () => {
+            if (window.__QHTD_DESKTOP__ || window.qhtdBridge) {
+                setIsDesktopApp(true);
+                console.log('[c69.us] QHTD Desktop bridge detected');
+            }
+        };
+        checkDesktop();
+        const timer = setTimeout(checkDesktop, 1000);
+        const timer2 = setTimeout(checkDesktop, 3000);
+        return () => { clearTimeout(timer); clearTimeout(timer2); };
+    }, []);
 
     // Toast state
     const [toastMessage, setToastMessage] = useState('');
@@ -554,7 +576,11 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'emails': 'Quản lý Email & Tài khoản',
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
         'notifications': 'Thông báo của tôi',
-        'notes': 'Ghi chú'
+        'notes': 'Ghi chú',
+        'qhtd-device': '📱 Thiết bị iOS — QHTD Desktop',
+        'qhtd-auto': '🤖 Tự Động — QHTD Desktop',
+        'ipa-downgrade': '📲 IPA Downgrade',
+        'qhtd-routing': '🌐 Định tuyến mạng',
     };
 
     return (
@@ -611,6 +637,26 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                 <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
                                     <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
                                 </a>
+                                <a className={`menu-item ${currentTab === 'ipa-downgrade' ? 'active' : ''}`} onClick={() => handleSwitchTab('ipa-downgrade')}>
+                                    <span className="menu-icon">📲</span><span className="menu-text">IPA Downgrade</span>
+                                </a>
+                                {/* QHTD Desktop-only tabs */}
+                                {isDesktopApp && (
+                                    <>
+                                        <div style={{ padding: '8px 16px', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '8px', fontWeight: 700 }}>
+                                            <span className="menu-text">⚡ QHTD Desktop</span>
+                                        </div>
+                                        <a className={`menu-item ${currentTab === 'qhtd-device' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-device')}>
+                                            <span className="menu-icon">📱</span><span className="menu-text">Thiết bị iOS</span>
+                                        </a>
+                                        <a className={`menu-item ${currentTab === 'qhtd-auto' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-auto')}>
+                                            <span className="menu-icon">🤖</span><span className="menu-text">Tự Động</span>
+                                        </a>
+                                        <a className={`menu-item ${currentTab === 'qhtd-routing' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-routing')}>
+                                            <span className="menu-icon">🌐</span><span className="menu-text">Định tuyến</span>
+                                        </a>
+                                    </>
+                                )}
                                 {currentUser.is_staff && (
                                     <a className={`menu-item ${currentTab === 'hwids' ? 'active' : ''}`} onClick={() => handleSwitchTab('hwids')}>
                                         <span className="menu-icon">🖱️</span><span className="menu-text">HWID Manager</span>
@@ -860,6 +906,23 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             />
                         )}
                     </div>
+                    {/* QHTD Desktop-only views */}
+                    <div style={{ display: currentTab === 'ipa-downgrade' ? 'block' : 'none' }}>
+                        {visitedTabs.has('ipa-downgrade') && <IPADowngrade />}
+                    </div>
+                    {isDesktopApp && (
+                        <>
+                            <div style={{ display: currentTab === 'qhtd-device' ? 'block' : 'none' }}>
+                                {visitedTabs.has('qhtd-device') && <QHTDDevice />}
+                            </div>
+                            <div style={{ display: currentTab === 'qhtd-auto' ? 'block' : 'none' }}>
+                                {visitedTabs.has('qhtd-auto') && <QHTDAutomation />}
+                            </div>
+                            <div style={{ display: currentTab === 'qhtd-routing' ? 'block' : 'none' }}>
+                                {visitedTabs.has('qhtd-routing') && <QHTDRouting />}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
