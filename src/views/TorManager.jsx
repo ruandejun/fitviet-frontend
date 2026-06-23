@@ -8,6 +8,7 @@ export default function TorManager() {
     const [downloadPercent, setDownloadPercent] = useState(0);
     const [proxyCount, setProxyCount] = useState(3);
     const [startPort, setStartPort] = useState(9050);
+    const [selectedCountry, setSelectedCountry] = useState("");
     const [proxies, setProxies] = useState([]);
     
     // Check if running inside desktop PyQt6 application
@@ -156,7 +157,7 @@ export default function TorManager() {
         for (let i = 0; i < count; i++) {
             const sPort = start + (i * 2);
             const cPort = sPort + 1;
-            await window.qhtdBridge.startTorProxy(sPort, cPort);
+            await window.qhtdBridge.startTorProxy(sPort, cPort, selectedCountry);
         }
     };
 
@@ -535,7 +536,7 @@ export default function TorManager() {
             <div className="tor-control-panel">
                 <div className="tor-control-box">
                     <h3 style={{ margin: '0 0 16px 0', fontSize: '15px' }}>⚙️ Cấu hình Proxy</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                         <div className="tor-input-group">
                             <label>Số lượng cổng proxy</label>
                             <input 
@@ -557,6 +558,24 @@ export default function TorManager() {
                                 value={startPort} 
                                 onChange={(e) => setStartPort(e.target.value)}
                             />
+                        </div>
+                        <div className="tor-input-group">
+                            <label>Quốc gia (Exit Nodes)</label>
+                            <select 
+                                className="tor-input" 
+                                value={selectedCountry} 
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                style={{ appearance: 'none', WebkitAppearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '16px', paddingRight: '30px' }}
+                            >
+                                <option value="">Auto (Ngẫu nhiên)</option>
+                                <option value="US">Mỹ (United States)</option>
+                                <option value="SG">Singapore</option>
+                                <option value="DE">Đức (Germany)</option>
+                                <option value="GB">Anh (United Kingdom)</option>
+                                <option value="FR">Pháp (France)</option>
+                                <option value="JP">Nhật Bản (Japan)</option>
+                                <option value="KR">Hàn Quốc (South Korea)</option>
+                            </select>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
