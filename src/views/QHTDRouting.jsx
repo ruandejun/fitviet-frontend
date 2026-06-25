@@ -306,6 +306,28 @@ export default function QHTDRouting() {
         }
     };
 
+    const handleSelectRow = (mac, checked) => {
+        setSelectedDeviceMacs(prev => {
+            const next = new Set(prev);
+            if (checked) {
+                next.add(mac);
+            } else {
+                next.delete(mac);
+            }
+            return next;
+        });
+    };
+
+    const handleSelectAll = (e) => {
+        const checked = e.target.checked;
+        if (checked) {
+            const allMacs = devices.map(d => d.mac).filter(Boolean);
+            setSelectedDeviceMacs(new Set(allMacs));
+        } else {
+            setSelectedDeviceMacs(new Set());
+        }
+    };
+
     const handleRemoveDevice = async (mac) => {
         if (!confirm(`Xóa thiết bị có MAC: ${mac}?`)) return;
         try {
