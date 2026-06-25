@@ -10,6 +10,37 @@ export default function QHTDRouting() {
         return navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
     });
 
+    const localFetch = async (url, options = {}) => {
+        if (typeof url === 'string' && url.startsWith('http://127.0.0.1:8000') && isDesktop && window.qhtdBridge && typeof window.qhtdBridge.apiProxyGet === 'function') {
+            const path = url.replace('http://127.0.0.1:8000', '');
+            try {
+                if (options.method === 'POST') {
+                    const body = options.body || '{}';
+                    const res = await window.qhtdBridge.apiProxyPost(path, body);
+                    const parsed = JSON.parse(res);
+                    if (parsed.error) throw new Error(parsed.error);
+                    return {
+                        ok: true,
+                        json: async () => parsed
+                    };
+                } else {
+                    const res = await window.qhtdBridge.apiProxyGet(path);
+                    const parsed = JSON.parse(res);
+                    if (parsed.error) throw new Error(parsed.error);
+                    return {
+                        ok: true,
+                        json: async () => parsed
+                    };
+                }
+            } catch (err) {
+                console.error("Bridge proxy error for " + path + ":", err);
+                return window.fetch(url, options);
+            }
+        }
+        return window.fetch(url, options);
+    };
+    const fetch = localFetch;
+
     useEffect(() => {
         const checkDesktop = () => {
             if (navigator.userAgent.includes('QHTD-Desktop') || window.__QHTD_DESKTOP__ || window.qhtdBridge) {
