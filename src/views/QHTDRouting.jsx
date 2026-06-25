@@ -86,6 +86,46 @@ export default function QHTDRouting() {
         }
     }, [isDesktop]);
 
+    const handleReloadDevices = useCallback(async () => {
+        if (!isDesktop || !window.qhtdBridge) return;
+        setLoadingDevices(true);
+        try {
+            const res = window.qhtdBridge.refreshDHCPLeases 
+                ? await window.qhtdBridge.refreshDHCPLeases()
+                : await window.qhtdBridge.getDHCPLeases();
+            const parsed = JSON.parse(res);
+            if (!parsed.error && Array.isArray(parsed)) {
+                setDevices(parsed);
+            }
+        } catch (e) {
+            console.error('Failed to refresh leases:', e);
+        } finally {
+            setLoadingDevices(false);
+        }
+    }, [isDesktop]);
+
+    // Check if router is active on mount
+    useEffect(() => {
+        const checkRouterActive = async () => {
+            if (!isDesktop || !window.qhtdBridge) return;
+            try {
+                if (window.qhtdBridge.isRouterActive) {
+                    const active = await window.qhtdBridge.isRouterActive();
+                    if (active) {
+                        setRouterActive(true);
+                        setSingboxActive(true);
+                        setDhcpActive(true);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to check router status:", e);
+            }
+        };
+        if (isDesktop) {
+            checkRouterActive();
+        }
+    }, [isDesktop]);
+
     // Load interfaces on mount
     useEffect(() => {
         if (isDesktop) {
@@ -157,6 +197,8 @@ export default function QHTDRouting() {
             </div>
         );
     }
+
+    const connectedDevices = devices.filter(dev => dev.status === 'Online');
 
     return (
         <div>
@@ -295,7 +337,17 @@ export default function QHTDRouting() {
                         padding: '20px',
                     }}>
                         <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>🔗 Thiết bị đang kết nối ({devices.length})</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span>🔗 Thiết bị đang kết nối ({connectedDevices.length})</span>
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={handleReloadDevices} 
+                                    disabled={loadingDevices} 
+                                    style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px' }}
+                                >
+                                    🔄 Quét lại
+                                </button>
+                            </div>
                             {loadingDevices && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>⏳ Đang tải...</span>}
                         </h3>
                         <div className="table-container" style={{ margin: 0, maxHeight: '250px', overflowY: 'auto' }}>
@@ -309,14 +361,14 @@ export default function QHTDRouting() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {devices.length === 0 ? (
+                                    {connectedDevices.length === 0 ? (
                                         <tr>
                                             <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
                                                 {routerActive ? 'Chưa có thiết bị nào kết nối LAN.' : 'Vui lòng khởi chạy Router để quét thiết bị.'}
                                             </td>
                                         </tr>
                                     ) : (
-                                        devices.map((dev, idx) => (
+                                        connectedDevices.map((dev, idx) => (
                                             <tr key={dev.mac || idx}>
                                                 <td style={{ fontWeight: 600, color: '#06b6d4' }}>{dev.ip}</td>
                                                 <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{dev.mac}</td>
