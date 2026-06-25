@@ -41,6 +41,9 @@ export default function QHTDRouting() {
     const [lanGatewayIp, setLanGatewayIp] = useState('192.168.10.1');
     const [autoRotateMinutes, setAutoRotateMinutes] = useState(0);
 
+    // Config Panel toggle
+    const [showConfig, setShowConfig] = useState(false);
+
     // Statuses
     const [routerActive, setRouterActive] = useState(false);
     const [singboxActive, setSingboxActive] = useState(false);
@@ -484,26 +487,137 @@ export default function QHTDRouting() {
 
     return (
         <div style={{ paddingBottom: '40px' }}>
-            {/* Box 1: Unified config and statuses */}
+            {/* Box 1: Compact Unified Header (Optimized Space) */}
             <div style={{
                 background: 'var(--card-bg, rgba(255,255,255,0.02))',
                 border: '1px solid var(--border-color)',
                 borderRadius: '12px',
-                padding: '20px',
-                marginBottom: '20px'
+                padding: '12px 20px',
+                marginBottom: '16px'
             }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-                    <span>⚙️ Cấu hình định tuyến & Trạng thái dịch vụ</span>
-                    <button className="btn btn-secondary" onClick={fetchInterfaces} disabled={loadingInterfaces} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px' }}>
-                        🔄 Làm mới card
-                    </button>
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    {/* Left: Quick Actions & Toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                        {routerActive ? (
+                            <button className="btn btn-danger" onClick={handleStopRouter} style={{ minHeight: '34px', padding: '0 16px', fontSize: '13px', fontWeight: 600 }}>
+                                ⏹ Dừng Định Tuyến
+                            </button>
+                        ) : (
+                            <button className="btn btn-primary" onClick={handleStartRouter} style={{ minHeight: '34px', padding: '0 16px', fontSize: '13px', fontWeight: 600, background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
+                                ▶ Khởi Chạy Định Tuyến
+                            </button>
+                        )}
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>LAN:</span>
+                            <select 
+                                className="filter-select" 
+                                style={{ minHeight: '30px', padding: '2px 8px', fontSize: '12px', width: '160px' }} 
+                                value={selectedInterface} 
+                                onChange={(e) => setSelectedInterface(e.target.value)} 
+                                disabled={routerActive}
+                            >
+                                {interfaces.map((iface) => (
+                                    <option key={iface.name} value={iface.name}>
+                                        {iface.friendly_name || iface.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <button 
+                            className="btn btn-secondary" 
+                            style={{ minHeight: '30px', padding: '4px 10px', fontSize: '12px' }}
+                            onClick={() => setShowConfig(!showConfig)}
+                        >
+                            {showConfig ? '🔼 Ẩn Cấu hình' : '⚙️ Cấu hình DHCP/DNS'}
+                        </button>
+                        
+                        <button 
+                            className="btn btn-secondary" 
+                            style={{ minHeight: '30px', padding: '4px 8px', fontSize: '12px' }}
+                            onClick={fetchInterfaces} 
+                            disabled={loadingInterfaces}
+                        >
+                            🔄 Làm mới
+                        </button>
+                    </div>
+
+                    {/* Right: Tiny Status Dots */}
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                            <span style={{
+                                width: '8px', height: '8px', borderRadius: '50%',
+                                background: routerActive ? '#10b981' : '#ef4444',
+                                display: 'inline-block',
+                                boxShadow: routerActive ? '0 0 6px #10b981' : 'none'
+                            }}></span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Router</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                            <span style={{
+                                width: '8px', height: '8px', borderRadius: '50%',
+                                background: dhcpActive ? '#10b981' : '#ef4444',
+                                display: 'inline-block',
+                                boxShadow: dhcpActive ? '0 0 6px #10b981' : 'none'
+                            }}></span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>DHCP</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                            <span style={{
+                                width: '8px', height: '8px', borderRadius: '50%',
+                                background: singboxActive ? '#10b981' : '#ef4444',
+                                display: 'inline-block',
+                                boxShadow: singboxActive ? '0 0 6px #10b981' : 'none'
+                            }}></span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Proxy</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                            <span style={{
+                                width: '8px', height: '8px', borderRadius: '50%',
+                                background: localApiOnline ? '#06b6d4' : '#ef4444',
+                                display: 'inline-block',
+                                boxShadow: localApiOnline ? '0 0 6px #06b6d4' : 'none'
+                            }}></span>
+                            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>API Local</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Advanced Config Section */}
+                {showConfig && (
+                    <div style={{ 
+                        marginTop: '12px', 
+                        paddingTop: '12px', 
+                        borderTop: '1px solid var(--border-color)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '12px'
+                    }}>
+                        <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>DHCP Bắt đầu</label>
+                            <input type="text" className="form-input" style={{ fontSize: '12px', minHeight: '28px' }} value={dhcpStart} onChange={(e) => setDhcpStart(e.target.value)} disabled={routerActive} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>DHCP Kết thúc</label>
+                            <input type="text" className="form-input" style={{ fontSize: '12px', minHeight: '28px' }} value={dhcpEnd} onChange={(e) => setDhcpEnd(e.target.value)} disabled={routerActive} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>Subnet Mask</label>
+                            <input type="text" className="form-input" style={{ fontSize: '12px', minHeight: '28px' }} value={subnetMask} onChange={(e) => setSubnetMask(e.target.value)} disabled={routerActive} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label" style={{ fontSize: '11px', marginBottom: '4px' }}>DNS Server</label>
+                            <input type="text" className="form-input" style={{ fontSize: '12px', minHeight: '28px' }} value={dnsServer} onChange={(e) => setDnsServer(e.target.value)} disabled={routerActive} />
+                        </div>
+                    </div>
+                )}
 
                 {error && (
                     <div style={{
-                        padding: '10px 14px',
-                        marginBottom: '16px',
-                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        marginTop: '10px',
+                        borderRadius: '6px',
                         background: 'rgba(239, 68, 68, 0.1)',
                         border: '1px solid rgba(239, 68, 68, 0.25)',
                         color: '#fca5a5',
@@ -512,175 +626,64 @@ export default function QHTDRouting() {
                         ⚠️ {error}
                     </div>
                 )}
-
-                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                    {/* Left: Input Form */}
-                    <div style={{ flex: '2 1 500px', minWidth: '320px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div className="form-group">
-                            <label className="form-label">Chọn card mạng chia sẻ (LAN)</label>
-                            <select className="filter-select" style={{ width: '100%' }} value={selectedInterface} onChange={(e) => setSelectedInterface(e.target.value)} disabled={routerActive}>
-                                {interfaces.map((iface) => (
-                                    <option key={iface.name} value={iface.name}>
-                                        {iface.friendly_name || iface.name} ({iface.ip || 'No IP'})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            <div className="form-group" style={{ flex: '1 1 200px' }}>
-                                <label className="form-label">DHCP Bắt đầu</label>
-                                <input type="text" className="form-input" value={dhcpStart} onChange={(e) => setDhcpStart(e.target.value)} disabled={routerActive} />
-                            </div>
-                            <div className="form-group" style={{ flex: '1 1 200px' }}>
-                                <label className="form-label">DHCP Kết thúc</label>
-                                <input type="text" className="form-input" value={dhcpEnd} onChange={(e) => setDhcpEnd(e.target.value)} disabled={routerActive} />
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            <div className="form-group" style={{ flex: '1 1 200px' }}>
-                                <label className="form-label">Subnet Mask</label>
-                                <input type="text" className="form-input" value={subnetMask} onChange={(e) => setSubnetMask(e.target.value)} disabled={routerActive} />
-                            </div>
-                            <div className="form-group" style={{ flex: '1 1 200px' }}>
-                                <label className="form-label">DNS Server</label>
-                                <input type="text" className="form-input" value={dnsServer} onChange={(e) => setDnsServer(e.target.value)} disabled={routerActive} />
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: '8px' }}>
-                            {routerActive ? (
-                                <button className="btn btn-danger" onClick={handleStopRouter} style={{ width: '100%', minHeight: '40px', fontWeight: 600 }}>
-                                    ⏹ Dừng Định Tuyến (Stop Router)
-                                </button>
-                            ) : (
-                                <button className="btn btn-primary" onClick={handleStartRouter} style={{ width: '100%', minHeight: '40px', fontWeight: 600, background: 'linear-gradient(135deg, #a855f7, #ec4899)' }}>
-                                    ▶ Khởi Chạy Định Tuyến (Start Router)
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Right: Service Status Info */}
-                    <div style={{ flex: '1 1 250px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            🛡️ Trạng thái dịch vụ
-                        </h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div style={{
-                                padding: '12px',
-                                borderRadius: '10px',
-                                background: routerActive ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255,255,255,0.02)',
-                                border: `1px solid ${routerActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-color)'}`,
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                            }}>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>ROUTER ROUTING</div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: routerActive ? '#10b981' : '#ef4444' }}>
-                                    {routerActive ? '● ĐANG CHẠY' : '○ ĐÃ DỪNG'}
-                                </div>
-                            </div>
-
-                            <div style={{
-                                padding: '12px',
-                                borderRadius: '10px',
-                                background: dhcpActive ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255,255,255,0.02)',
-                                border: `1px solid ${dhcpActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-color)'}`,
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                            }}>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>DHCP SERVER</div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: dhcpActive ? '#10b981' : '#ef4444' }}>
-                                    {dhcpActive ? '● ONLINE' : '○ OFFLINE'}
-                                </div>
-                            </div>
-
-                            <div style={{
-                                padding: '12px',
-                                borderRadius: '10px',
-                                background: singboxActive ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255,255,255,0.02)',
-                                border: `1px solid ${singboxActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--border-color)'}`,
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                            }}>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>SING-BOX PROXY</div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: singboxActive ? '#10b981' : '#ef4444' }}>
-                                    {singboxActive ? '● CHẠY PROXY' : '○ TRỰC TIẾP'}
-                                </div>
-                            </div>
-
-                            <div style={{
-                                padding: '12px',
-                                borderRadius: '10px',
-                                background: localApiOnline ? 'rgba(6, 182, 212, 0.06)' : 'rgba(239, 68, 68, 0.06)',
-                                border: `1px solid ${localApiOnline ? 'rgba(6, 182, 212, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                            }}>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>API LOCAL (PORT 8000)</div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: localApiOnline ? '#06b6d4' : '#ef4444' }}>
-                                    {localApiOnline ? '● ĐÃ KẾT NỐI' : '○ MẤT KẾT NỐI'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Sub navigation tabs */}
             <div style={{
                 display: 'flex',
-                gap: '10px',
-                marginBottom: '20px',
+                gap: '6px',
+                marginBottom: '16px',
                 borderBottom: '1px solid var(--border-color)',
-                paddingBottom: '10px'
+                paddingBottom: '8px'
             }}>
                 <button 
                     style={{
-                        padding: '10px 16px',
+                        padding: '8px 14px',
                         borderRadius: '8px',
                         border: 'none',
                         background: subTab === 'devices' ? 'var(--active-bg, rgba(0, 242, 254, 0.08))' : 'transparent',
                         color: subTab === 'devices' ? 'var(--accent, #00f2fe)' : 'var(--text-muted, #94a3b8)',
                         fontWeight: 600,
                         cursor: 'pointer',
-                        transition: 'all 0.3s'
+                        transition: 'all 0.3s',
+                        fontSize: '13.5px'
                     }}
                     onClick={() => setSubTab('devices')}
                 >
                     🔗 Thiết bị ({devices.length})
                 </button>
-                {localApiOnline && (
-                    <>
-                        <button 
-                            style={{
-                                padding: '10px 16px',
-                                borderRadius: '8px',
-                                border: 'none',
-                                background: subTab === 'proxies' ? 'var(--active-bg, rgba(0, 242, 254, 0.08))' : 'transparent',
-                                color: subTab === 'proxies' ? 'var(--accent, #00f2fe)' : 'var(--text-muted, #94a3b8)',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.3s'
-                            }}
-                            onClick={() => setSubTab('proxies')}
-                        >
-                            🌐 Danh sách Proxy ({activeProxies.length})
-                        </button>
-                        <button 
-                            style={{
-                                padding: '10px 16px',
-                                borderRadius: '8px',
-                                border: 'none',
-                                background: subTab === 'bypass' ? 'var(--active-bg, rgba(0, 242, 254, 0.08))' : 'transparent',
-                                color: subTab === 'bypass' ? 'var(--accent, #00f2fe)' : 'var(--text-muted, #94a3b8)',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                transition: 'all 0.3s'
-                            }}
-                            onClick={() => setSubTab('bypass')}
-                        >
-                            🛡️ Bypass CIDRs
-                        </button>
-                    </>
-                )}
+                <button 
+                    style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: subTab === 'proxies' ? 'var(--active-bg, rgba(0, 242, 254, 0.08))' : 'transparent',
+                        color: subTab === 'proxies' ? 'var(--accent, #00f2fe)' : 'var(--text-muted, #94a3b8)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s',
+                        fontSize: '13.5px'
+                    }}
+                    onClick={() => setSubTab('proxies')}
+                >
+                    🌐 Danh sách Proxy ({activeProxies.length})
+                </button>
+                <button 
+                    style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: subTab === 'bypass' ? 'var(--active-bg, rgba(0, 242, 254, 0.08))' : 'transparent',
+                        color: subTab === 'bypass' ? 'var(--accent, #00f2fe)' : 'var(--text-muted, #94a3b8)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s',
+                        fontSize: '13.5px'
+                    }}
+                    onClick={() => setSubTab('bypass')}
+                >
+                    🛡️ Bypass CIDRs
+                </button>
             </div>
 
             {/* TAB CONTENT: Connected Devices */}
@@ -693,8 +696,8 @@ export default function QHTDRouting() {
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: 600 }}>🔗 Thiết bị đang kết nối</h3>
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: 600 }}>🔗 Thiết bị đang kết nối</h3>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                                 (Tổng: <strong style={{ color: 'var(--accent)' }}>{devices.length}</strong> | 
                                 Online: <strong style={{ color: '#10b981' }}>{onlineDevicesCount}</strong> | 
                                 Offline: <strong style={{ color: '#ef4444' }}>{offlineDevicesCount}</strong> | 
@@ -707,7 +710,7 @@ export default function QHTDRouting() {
                             <input 
                                 type="text" 
                                 className="form-input" 
-                                style={{ width: '100%', paddingLeft: '32px' }} 
+                                style={{ width: '100%', paddingLeft: '32px', minHeight: '30px', fontSize: '13px' }} 
                                 placeholder="Tìm kiếm IP, MAC, Tên..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -719,7 +722,7 @@ export default function QHTDRouting() {
                     {/* Action buttons bar */}
                     {localApiOnline && (
                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                            <button className="btn btn-secondary" onClick={fetchLocalStatus} style={{ padding: '6px 12px', fontSize: '13px' }}>
+                            <button className="btn btn-secondary" onClick={fetchLocalStatus} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
                                 🔄 Quét lại
                             </button>
                             <button 
@@ -733,14 +736,14 @@ export default function QHTDRouting() {
                                     setBulkAssignRawText('');
                                     setShowBulkAssignModal(true);
                                 }} 
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                                style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}
                             >
                                 🔗 Gán Proxy Hàng Loạt
                             </button>
                             <button 
                                 className="btn btn-danger" 
                                 onClick={handleBulkResetDirect} 
-                                style={{ padding: '6px 12px', fontSize: '13px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                                style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
                                 disabled={selectedDeviceMacs.size === 0}
                             >
                                 🚫 Reset Direct
@@ -748,14 +751,14 @@ export default function QHTDRouting() {
                             <button 
                                 className="btn btn-secondary" 
                                 onClick={handleRemoveOfflineDevices} 
-                                style={{ padding: '6px 12px', fontSize: '13px', marginLeft: 'auto' }}
+                                style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px', marginLeft: 'auto' }}
                             >
                                 🗑️ Xóa Offline
                             </button>
                         </div>
                     )}
 
-                    <div className="table-container" style={{ margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
+                    <div className="table-container" style={{ margin: 0, maxHeight: '420px', overflowY: 'auto' }}>
                         <table>
                             <thead>
                                 <tr>
@@ -886,147 +889,167 @@ export default function QHTDRouting() {
             )}
 
             {/* TAB CONTENT: Proxies */}
-            {subTab === 'proxies' && localApiOnline && (
+            {subTab === 'proxies' && (
                 <div style={{
                     background: 'var(--card-bg, rgba(255,255,255,0.02))',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '20px',
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600 }}>🌐 Danh sách Proxy</h3>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button className="btn btn-primary" onClick={() => setShowAddProxyModal(true)} style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                ➕ Thêm Proxy
-                            </button>
-                            <button className="btn btn-secondary" onClick={() => setShowBulkImportModal(true)} style={{ padding: '6px 12px', fontSize: '13px' }}>
-                                📥 Import Hàng Loạt
-                            </button>
-                            <button 
-                                className="btn btn-secondary" 
-                                onClick={handleCheckProxiesStatus} 
-                                disabled={checkingProxies}
-                                style={{ padding: '6px 12px', fontSize: '13px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
-                            >
-                                {checkingProxies ? '⏳ Đang kiểm tra...' : '⚡ Check Live/Die'}
-                            </button>
+                    {!localApiOnline ? (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                            <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>⚠️</span>
+                            <strong>Chưa kết nối tới API cục bộ</strong>
+                            <p style={{ fontSize: '12px', marginTop: '6px' }}>Vui lòng bấm nút <strong>Khởi chạy định tuyến</strong> ở trên để khởi động dịch vụ và quản lý Proxy.</p>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 600 }}>🌐 Danh sách Proxy</h3>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button className="btn btn-primary" onClick={() => setShowAddProxyModal(true)} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
+                                        ➕ Thêm Proxy
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={() => setShowBulkImportModal(true)} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
+                                        📥 Import Hàng Loạt
+                                    </button>
+                                    <button 
+                                        className="btn btn-secondary" 
+                                        onClick={handleCheckProxiesStatus} 
+                                        disabled={checkingProxies}
+                                        style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+                                    >
+                                        {checkingProxies ? '⏳ Đang kiểm tra...' : '⚡ Check Live/Die'}
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="table-container" style={{ margin: 0, maxHeight: '400px', overflowY: 'auto' }}>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Proxy ID</th>
-                                    <th>Giao thức</th>
-                                    <th>Host:Port</th>
-                                    <th>Tài khoản</th>
-                                    <th>Trạng thái</th>
-                                    <th>Độ trễ (Latency)</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {activeProxies.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-                                            Chưa có proxy nào. Hãy nhấp "Thêm Proxy" để bắt đầu.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    activeProxies.map((p) => (
-                                        <tr key={p.id}>
-                                            <td style={{ fontWeight: 600 }}>{p.id}</td>
-                                            <td>
-                                                <span style={{
-                                                    padding: '2px 6px',
-                                                    borderRadius: '6px',
-                                                    fontSize: '11px',
-                                                    background: 'rgba(0, 242, 254, 0.08)',
-                                                    color: 'var(--accent)',
-                                                    fontWeight: 600
-                                                }}>
-                                                    {String(p.type).toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span style={{ cursor: 'pointer', fontFamily: 'monospace' }} onClick={() => copyToClipboard(`${p.host}:${p.port}`)}>
-                                                    {p.host}:{p.port}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {p.username ? (
-                                                    <span style={{ fontSize: '12px' }}>{p.username}:*****</span>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Không có</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span style={{
-                                                    padding: '3px 8px',
-                                                    borderRadius: '12px',
-                                                    fontSize: '11px',
-                                                    fontWeight: 600,
-                                                    background: p.status === 'Live' ? 'rgba(16, 185, 129, 0.1)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
-                                                    color: p.status === 'Live' ? '#10b981' : p.status === 'Die' ? '#ef4444' : 'var(--text-muted)',
-                                                    border: `1px solid ${p.status === 'Live' ? 'rgba(16, 185, 129, 0.2)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.2)' : 'var(--border-color)'}`
-                                                }}>
-                                                    ● {p.status || 'Chưa kiểm tra'}
-                                                </span>
-                                            </td>
-                                            <td style={{ fontFamily: 'monospace' }}>
-                                                {p.latency > 0 ? (
-                                                    <strong style={{ color: p.latency < 500 ? '#10b981' : '#f59e0b' }}>{p.latency} ms</strong>
-                                                ) : (
-                                                    <span style={{ color: 'var(--text-muted)' }}>—</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <button 
-                                                    className="btn btn-danger" 
-                                                    style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
-                                                    onClick={() => handleRemoveProxy(p.id)}
-                                                    title="Xóa proxy"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </td>
+                            <div className="table-container" style={{ margin: 0, maxHeight: '420px', overflowY: 'auto' }}>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Proxy ID</th>
+                                            <th>Giao thức</th>
+                                            <th>Host:Port</th>
+                                            <th>Tài khoản</th>
+                                            <th>Trạng thái</th>
+                                            <th>Độ trễ (Latency)</th>
+                                            <th>Thao tác</th>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </thead>
+                                    <tbody>
+                                        {activeProxies.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                                                    Chưa có proxy nào. Hãy nhấp "Thêm Proxy" để bắt đầu.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            activeProxies.map((p) => (
+                                                <tr key={p.id}>
+                                                    <td style={{ fontWeight: 600 }}>{p.id}</td>
+                                                    <td>
+                                                        <span style={{
+                                                            padding: '2px 6px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '11px',
+                                                            background: 'rgba(0, 242, 254, 0.08)',
+                                                            color: 'var(--accent)',
+                                                            fontWeight: 600
+                                                        }}>
+                                                            {String(p.type).toUpperCase()}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span style={{ cursor: 'pointer', fontFamily: 'monospace' }} onClick={() => copyToClipboard(`${p.host}:${p.port}`)}>
+                                                            {p.host}:{p.port}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {p.username ? (
+                                                            <span style={{ fontSize: '12px' }}>{p.username}:*****</span>
+                                                        ) : (
+                                                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Không có</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <span style={{
+                                                            padding: '3px 8px',
+                                                            borderRadius: '12px',
+                                                            fontSize: '11px',
+                                                            fontWeight: 600,
+                                                            background: p.status === 'Live' ? 'rgba(16, 185, 129, 0.1)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
+                                                            color: p.status === 'Live' ? '#10b981' : p.status === 'Die' ? '#ef4444' : 'var(--text-muted)',
+                                                            border: `1px solid ${p.status === 'Live' ? 'rgba(16, 185, 129, 0.2)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.2)' : 'var(--border-color)'}`
+                                                        }}>
+                                                            ● {p.status || 'Chưa kiểm tra'}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ fontFamily: 'monospace' }}>
+                                                        {p.latency > 0 ? (
+                                                            <strong style={{ color: p.latency < 500 ? '#10b981' : '#f59e0b' }}>{p.latency} ms</strong>
+                                                        ) : (
+                                                            <span style={{ color: 'var(--text-muted)' }}>—</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            className="btn btn-danger" 
+                                                            style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
+                                                            onClick={() => handleRemoveProxy(p.id)}
+                                                            title="Xóa proxy"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
 
             {/* TAB CONTENT: Bypass CIDRs */}
-            {subTab === 'bypass' && localApiOnline && (
+            {subTab === 'bypass' && (
                 <div style={{
                     background: 'var(--card-bg, rgba(255,255,255,0.02))',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '20px',
                 }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>🛡️ Bypass (Không đi qua Proxy)</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-                        Các dải IP (CIDR) bên dưới sẽ được định tuyến trực tiếp đi thẳng mạng nhà mạng (Direct), hoàn toàn bỏ qua Sing-Box proxy tunnel.
-                    </p>
-                    
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                        <textarea 
-                            className="form-input" 
-                            rows="10" 
-                            style={{ width: '100%', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6', resize: 'vertical' }}
-                            placeholder={"10.0.0.0/8\n172.16.0.0/12\n192.168.0.0/16"}
-                            value={bypassInputText}
-                            onChange={(e) => setBypassInputText(e.target.value)}
-                        />
-                    </div>
-                    
-                    <button className="btn btn-primary" onClick={handleUpdateBypass} style={{ minHeight: '38px', padding: '0 20px', fontWeight: 600 }}>
-                        💾 Cập nhật danh sách Bypass
-                    </button>
+                    {!localApiOnline ? (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                            <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>⚠️</span>
+                            <strong>Chưa kết nối tới API cục bộ</strong>
+                            <p style={{ fontSize: '12px', marginTop: '6px' }}>Vui lòng bấm nút <strong>Khởi chạy định tuyến</strong> ở trên để khởi động dịch vụ và cấu hình Bypass.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>🛡️ Bypass (Không đi qua Proxy)</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
+                                Các dải IP (CIDR) bên dưới sẽ được định tuyến trực tiếp đi thẳng mạng nhà mạng (Direct), hoàn toàn bỏ qua Sing-Box proxy tunnel.
+                            </p>
+                            
+                            <div className="form-group" style={{ marginBottom: '16px' }}>
+                                <textarea 
+                                    className="form-input" 
+                                    rows="10" 
+                                    style={{ width: '100%', fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.6', resize: 'vertical' }}
+                                    placeholder={"10.0.0.0/8\n172.16.0.0/12\n192.168.0.0/16"}
+                                    value={bypassInputText}
+                                    onChange={(e) => setBypassInputText(e.target.value)}
+                                />
+                            </div>
+                            
+                            <button className="btn btn-primary" onClick={handleUpdateBypass} style={{ minHeight: '38px', padding: '0 20px', fontWeight: 600 }}>
+                                💾 Cập nhật danh sách Bypass
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
 
