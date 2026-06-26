@@ -33,8 +33,14 @@ export default function QHTDRouting() {
                     };
                 }
             } catch (err) {
-                console.error("Bridge proxy error for " + path + ":", err);
-                return window.fetch(url, options);
+                const errMsg = err.message || "";
+                if (errMsg.includes("closed") || errMsg.includes("offline") || errMsg.includes("10061") || errMsg.includes("actively refused")) {
+                    console.log("Bridge proxy: " + path + " is offline");
+                } else {
+                    console.warn("Bridge proxy error for " + path + ":", err);
+                }
+                // Do NOT fallback to window.fetch for 127.0.0.1:8000 because it will fail with CORS / connection refused and cause lag!
+                throw err;
             }
         }
         return window.fetch(url, options);
@@ -146,6 +152,28 @@ export default function QHTDRouting() {
     const fetchLocalStatus = useCallback(async () => {
         if (!isDesktop) return;
         
+        // Fast-path: check if router is active via bridge first to avoid useless HTTP requests
+        if (window.qhtdBridge && typeof window.qhtdBridge.isRouterActive === 'function') {
+            try {
+                const active = await window.qhtdBridge.isRouterActive();
+                setRouterActive(active);
+                if (!active) {
+                    setLocalApiOnline(false);
+                    setDhcpActive(false);
+                    setSingboxActive(false);
+                    // Fallback to bridge DHCP leases offline
+                    const res = await window.qhtdBridge.getDHCPLeases();
+                    const parsed = JSON.parse(res);
+                    if (!parsed.error && Array.isArray(parsed)) {
+                        setDevices(parsed);
+                    }
+                    return; // Avoid checking /status completely
+                }
+            } catch (bridgeErr) {
+                console.error('Bridge status query failed:', bridgeErr);
+            }
+        }
+
         try {
             const res = await fetch('http://127.0.0.1:8000/status');
             if (!res.ok) throw new Error('API server offline');
