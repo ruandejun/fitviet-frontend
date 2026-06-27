@@ -116,13 +116,6 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
         setInfoSourceType(type);
         setModalStatusSelect('');
         setInfoSearchText('');
-        // Clear results
-        setEmailGetId('');
-        setEmailGetAddress('');
-        setCreatedAccId('');
-        setCreatedAccUsername('');
-        setEmailGetEmailsList(null);
-        setCreatedAccEmailsList(null);
         if (type === 'address' && tabAddressData.name === '—') {
             handleGenerateTabAddress();
         }
