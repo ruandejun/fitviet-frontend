@@ -14,6 +14,8 @@ export function getCookie(name) {
     return cookieValue;
 }
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://c69.us';
+
 // Global fetch wrapper with automatic CSRF token injection
 export async function apiRequest(url, options = {}) {
     const headers = {
@@ -29,7 +31,9 @@ export async function apiRequest(url, options = {}) {
         }
     }
 
-    const response = await fetch(url, {
+    const finalUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
+
+    const response = await fetch(finalUrl, {
         ...options,
         headers,
     });

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import IPADowngrade from './IPADowngrade';
+import QHTDAutomation from './QHTDAutomation';
 
 const APP_GRADIENTS = [
     'linear-gradient(135deg, #ec4899, #8b5cf6)',
@@ -47,6 +49,9 @@ export default function QHTDDevice() {
 
     // Sub-Tabs selection state
     const [activeSubTab, setActiveSubTab] = useState('apps');
+
+    // Main-Tabs selection state
+    const [activeMainTab, setActiveMainTab] = useState('devices');
 
     // Automation States
     const [scriptText, setScriptText] = useState('wait 2\ntap 180 320\nwait 1\ntype test text\nwait 2');
@@ -1188,7 +1193,65 @@ export default function QHTDDevice() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 150px)', minHeight: '580px', boxSizing: 'border-box' }}>
+            {/* Main Tabs Navigation */}
+            <div style={{
+                display: 'flex',
+                borderBottom: '1px solid var(--border-color)',
+                marginBottom: '16px',
+                gap: '8px'
+            }}>
+                <button
+                    onClick={() => setActiveMainTab('devices')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeMainTab === 'devices' ? 'rgba(0, 242, 254, 0.08)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeMainTab === 'devices' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeMainTab === 'devices' ? 'var(--accent)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '13.5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                    }}
+                >
+                    📱 Thiết bị iOS
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('downgrade')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeMainTab === 'downgrade' ? 'rgba(0, 242, 254, 0.08)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeMainTab === 'downgrade' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeMainTab === 'downgrade' ? 'var(--accent)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '13.5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                    }}
+                >
+                    📲 Hạ cấp IPA
+                </button>
+                <button
+                    onClick={() => setActiveMainTab('automation')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeMainTab === 'automation' ? 'rgba(0, 242, 254, 0.08)' : 'transparent',
+                        border: 'none',
+                        borderBottom: activeMainTab === 'automation' ? '2px solid var(--accent)' : '2px solid transparent',
+                        color: activeMainTab === 'automation' ? 'var(--accent)' : 'var(--text-muted)',
+                        fontWeight: 700,
+                        fontSize: '13.5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                    }}
+                >
+                    🤖 Tự Động Hóa
+                </button>
+            </div>
+
+            {activeMainTab === 'devices' && (
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 210px)', minHeight: '520px', boxSizing: 'border-box' }}>
                 
                 {/* Column 1: USB Devices List (Left, 280px) */}
                 <div style={{ 
@@ -1503,6 +1566,19 @@ export default function QHTDDevice() {
                 </div>
 
             </div>
+            )}
+
+            {activeMainTab === 'downgrade' && (
+                <div style={{ height: 'calc(100vh - 210px)', overflowY: 'auto', paddingRight: '4px' }}>
+                    <IPADowngrade />
+                </div>
+            )}
+
+            {activeMainTab === 'automation' && (
+                <div style={{ height: 'calc(100vh - 210px)', overflowY: 'auto', paddingRight: '4px' }}>
+                    <QHTDAutomation />
+                </div>
+            )}
         </div>
     );
 }

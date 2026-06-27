@@ -7,46 +7,26 @@ import React, { useState, useEffect, useCallback } from 'react';
  */
 export default function QHTDRouting() {
     const [isDesktop, setIsDesktop] = useState(() => {
-        return navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge);
+        const hn = window.location.hostname;
+        const isLocal = hn === '127.0.0.1' || hn === 'localhost' || hn.startsWith('192.168.') || hn.startsWith('10.') || hn.startsWith('172.');
+        return navigator.userAgent.includes('QHTD-Desktop') || !!(window.__QHTD_DESKTOP__ || window.qhtdBridge) || isLocal;
     });
 
     const localFetch = async (url, options = {}) => {
-        if (typeof url === 'string' && url.startsWith('http://127.0.0.1:8000') && isDesktop && window.qhtdBridge && typeof window.qhtdBridge.apiProxyGet === 'function') {
+        const hn = window.location.hostname;
+        const isLocalNetwork = hn === '127.0.0.1' || hn === 'localhost' || hn.startsWith('192.168.') || hn.startsWith('10.') || hn.startsWith('172.');
+        let fetchUrl = url;
+
+        if (typeof url === 'string' && url.startsWith('http://127.0.0.1:8000')) {
             const path = url.replace('http://127.0.0.1:8000', '');
-            try {
-                if (options.method === 'POST') {
-                    const body = options.body || '{}';
-                    const res = await window.qhtdBridge.apiProxyPost(path, body);
-                    const parsed = JSON.parse(res);
-                    if (parsed.error) throw new Error(parsed.error);
-                    return {
-                        ok: true,
-                        json: async () => parsed
-                    };
-                } else {
-                    const res = await window.qhtdBridge.apiProxyGet(path);
-                    const parsed = JSON.parse(res);
-                    if (parsed.error) throw new Error(parsed.error);
-                    return {
-                        ok: true,
-                        json: async () => parsed
-                    };
-                }
-            } catch (err) {
-                const errMsg = err.message || "";
-                if (errMsg.includes("closed") || errMsg.includes("offline") || errMsg.includes("10061") || errMsg.includes("actively refused")) {
-                    console.log("Bridge proxy: " + path + " is offline");
-                } else {
-                    console.warn("Bridge proxy error for " + path + ":", err);
-                }
-                // Do NOT fallback to window.fetch for 127.0.0.1:8000 because it will fail with CORS / connection refused and cause lag!
-                throw err;
+            if (isLocalNetwork) {
+                // Remove hardcoded base URL when running locally
+                fetchUrl = path;
             }
         }
-        return window.fetch(url, options);
+        return window.fetch(fetchUrl, options);
     };
     const fetch = localFetch;
-
     useEffect(() => {
         const checkDesktop = () => {
             if (navigator.userAgent.includes('QHTD-Desktop') || window.__QHTD_DESKTOP__ || window.qhtdBridge) {

@@ -66,6 +66,63 @@ export default function Profiles({ currentUser, page, onPageChange }) {
     const [bulkStatusVal, setBulkStatusVal] = useState('Active');
 
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editProfile, setEditProfile] = useState(null);
+
+    const openEditModal = (p) => {
+        setEditProfile({
+            id: p.id,
+            profile_name: p.profile_name || '',
+            profile_os: p.profile_os || 'Window',
+            profile_proxy_type: p.profile_proxy_type || 0,
+            profile_socks5_details: p.profile_socks5_details || p.profile_proxy_details || '',
+            profile_proxy_username: p.profile_proxy_username || '',
+            profile_proxy_password: p.profile_proxy_password || '',
+            profile_vendor: p.profile_vendor || '',
+            profile_renderer: p.profile_renderer || '',
+            profile_start_url: p.profile_start_url || 'https://iphey.com',
+            profile_note: p.profile_note || ''
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleEditProfileSubmit = async (e) => {
+        if (e) e.preventDefault();
+        if (!editProfile.profile_name.trim()) {
+            alert('Vui lòng nhập tên trình duyệt');
+            return;
+        }
+
+        try {
+            const resp = await apiRequest(`/dashboard/api/profiles/${editProfile.id}/`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    profile_name: editProfile.profile_name.trim(),
+                    profile_os: editProfile.profile_os,
+                    profile_proxy_type: parseInt(editProfile.profile_proxy_type),
+                    profile_proxy_details: editProfile.profile_socks5_details.trim(),
+                    profile_socks5_details: editProfile.profile_socks5_details.trim(),
+                    profile_proxy_username: editProfile.profile_proxy_username.trim(),
+                    profile_proxy_password: editProfile.profile_proxy_password.trim(),
+                    profile_vendor: editProfile.profile_vendor.trim(),
+                    profile_renderer: editProfile.profile_renderer.trim(),
+                    profile_start_url: editProfile.profile_start_url.trim() || 'https://iphey.com',
+                    profile_note: editProfile.profile_note.trim()
+                })
+            });
+
+            const data = await resp.json();
+            if (resp.ok) {
+                alert('Đã cập nhật trình duyệt thành công!');
+                setEditModalOpen(false);
+                fetchProfiles();
+            } else {
+                alert('Lỗi: ' + (data.message || JSON.stringify(data)));
+            }
+        } catch (err) {
+            alert('Lỗi kết nối hoặc hệ thống khi cập nhật profile.');
+        }
+    };
     const [newProfile, setNewProfile] = useState({
         profile_name: '',
         profile_os: 'Window',
@@ -409,7 +466,7 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                                         <td>{p.profile_proxy_type || 'Direct'} / {p.profile_proxy_details || '-'}</td>
                                         <td style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{p.profile_socks5_details || '-'}</td>
                                         <td>{p.profile_original_name || '-'}</td>
-                                        <td style={{ textAlign: 'center' }}>
+                                        <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
                                             {p.is_running ? (
                                                 <button 
                                                     className="btn btn-danger" 
@@ -428,6 +485,13 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                                                     ▶ Chạy
                                                 </button>
                                             )}
+                                            <button 
+                                                className="btn btn-secondary" 
+                                                onClick={() => openEditModal(p)}
+                                                style={{ padding: '4px 10px', fontSize: '12px', minHeight: '26px', lineHeight: '1', backgroundColor: '#334155' }}
+                                            >
+                                                ⚙️ Sửa
+                                            </button>
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
                                             <span className={`badge ${p.profile_status === 'Active' ? 'badge-success' : 'badge-unused'}`}>
@@ -622,6 +686,155 @@ export default function Profiles({ currentUser, page, onPageChange }) {
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setCreateModalOpen(false)}>Hủy</button>
                                 <button type="submit" className="btn btn-primary">Tạo Mới</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Profile Modal */}
+            {editModalOpen && editProfile && (
+                <div className="modal-overlay" style={{ display: 'flex' }}>
+                    <div className="modal-box" style={{ maxWidth: '500px', width: '90%' }}>
+                        <div className="modal-header">
+                            <h3>Chỉnh sửa trình duyệt (ID: {editProfile.id})</h3>
+                            <button className="modal-close" onClick={() => setEditModalOpen(false)}>&times;</button>
+                        </div>
+                        <form onSubmit={handleEditProfileSubmit}>
+                            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '5px' }}>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Tên Trình Duyệt *</label>
+                                    <input 
+                                        type="text" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        value={editProfile.profile_name}
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Hệ Điều Hành</label>
+                                    <select 
+                                        className="filter-select" 
+                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--modal-bg)', color: 'var(--text-color)' }}
+                                        value={editProfile.profile_os} 
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_os: e.target.value })}
+                                    >
+                                        <option value="Window">Windows</option>
+                                        <option value="Mac OS X">macOS</option>
+                                        <option value="Linux">Linux</option>
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Loại Proxy</label>
+                                    <select 
+                                        className="filter-select" 
+                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--modal-bg)', color: 'var(--text-color)' }}
+                                        value={editProfile.profile_proxy_type} 
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_proxy_type: parseInt(e.target.value) })}
+                                    >
+                                        <option value={0}>Không dùng proxy (Direct)</option>
+                                        <option value={2}>Socks5 Proxy</option>
+                                    </select>
+                                </div>
+                                {editProfile.profile_proxy_type === 2 && (
+                                    <>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Chi tiết Proxy (ip:port)*</label>
+                                            <input 
+                                                type="text" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Ví dụ: 127.0.0.1:1080"
+                                                value={editProfile.profile_socks5_details}
+                                                onChange={(e) => setEditProfile({ ...editProfile, profile_socks5_details: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Tài khoản Proxy (nếu có)</label>
+                                            <input 
+                                                type="text" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Username"
+                                                value={editProfile.profile_proxy_username}
+                                                onChange={(e) => setEditProfile({ ...editProfile, profile_proxy_username: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                                            <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Mật khẩu Proxy (nếu có)</label>
+                                            <input 
+                                                type="password" 
+                                                className="search-input" 
+                                                style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                                placeholder="Password"
+                                                value={editProfile.profile_proxy_password}
+                                                onChange={(e) => setEditProfile({ ...editProfile, profile_proxy_password: e.target.value })}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Vendor</label>
+                                    <select 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: '#1d1b26', color: 'var(--text-color)' }}
+                                        value={editProfile.profile_vendor}
+                                        onChange={(e) => {
+                                            const newVendor = e.target.value;
+                                            setEditProfile({ 
+                                                ...editProfile, 
+                                                profile_vendor: newVendor,
+                                                profile_renderer: "" 
+                                            });
+                                        }}
+                                    >
+                                        {Object.keys(WebGLOptions).map(v => (
+                                            <option key={v} value={v}>{WebGLOptions[v].label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>WebGL Renderer</label>
+                                    <select 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: '#1d1b26', color: 'var(--text-color)' }}
+                                        value={editProfile.profile_renderer}
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_renderer: e.target.value })}
+                                    >
+                                        {(WebGLOptions[editProfile.profile_vendor] || WebGLOptions[""]).renderers.map(r => (
+                                            <option key={r.value} value={r.value}>{r.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Trang Web Bắt Đầu</label>
+                                    <input 
+                                        type="url" 
+                                        className="search-input" 
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)' }}
+                                        placeholder="Mặc định: https://iphey.com"
+                                        value={editProfile.profile_start_url}
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_start_url: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group" style={{ marginBottom: '15px' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '5px', fontWeight: 600 }}>Ghi Chú</label>
+                                    <textarea 
+                                        className="search-input" 
+                                        rows="3"
+                                        style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-color)', resize: 'vertical' }}
+                                        placeholder="Nhập ghi chú..."
+                                        value={editProfile.profile_note}
+                                        onChange={(e) => setEditProfile({ ...editProfile, profile_note: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setEditModalOpen(false)}>Hủy</button>
+                                <button type="submit" className="btn btn-primary">Lưu Thay Đổi</button>
                             </div>
                         </form>
                     </div>

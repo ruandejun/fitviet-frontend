@@ -3,42 +3,114 @@ import { apiRequest } from '../api';
 import { US_ADDRESSES, US_FIRST_NAMES, US_LAST_NAMES, US_STATE_NAMES, randItem, generateUSPhone } from './usAddressData';
 
 export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, readMailboxClientSide }) {
+    useEffect(() => {
+        console.log("=== GetInfo mounted ===");
+        return () => console.log("=== GetInfo unmounted ===");
+    }, []);
+
     // Email Getter states
-    const [infoSourceType, setInfoSourceType] = useState('uncreated'); // uncreated, created, address
-    const [emailSelectType, setEmailSelectType] = useState('Apple');
-    const [infoSearchText, setInfoSearchText] = useState('');
+    const [infoSourceType, setInfoSourceType] = useState(() => sessionStorage.getItem('getinfo_infoSourceType') || 'uncreated'); // uncreated, created, address
+    const [emailSelectType, setEmailSelectType] = useState(() => sessionStorage.getItem('getinfo_emailSelectType') || 'Apple');
+    const [infoSearchText, setInfoSearchText] = useState(() => sessionStorage.getItem('getinfo_infoSearchText') || '');
     const [emailGetLoader, setEmailGetLoader] = useState(false);
 
     // Uncreated Account states
-    const [emailGetId, setEmailGetId] = useState('');
-    const [emailGetAddress, setEmailGetAddress] = useState('');
-    const [emailGetPassword, setEmailGetPassword] = useState('');
-    const [emailGetAccPassword, setEmailGetAccPassword] = useState('');
-    const [emailGetAcc2Fa, setEmailGetAcc2Fa] = useState('');
-    const [emailGetAcc2FaOtpDisplay, setEmailGetAcc2FaOtpDisplay] = useState('');
-    const [emailGetOtpDisplay, setEmailGetOtpDisplay] = useState('');
+    const [emailGetId, setEmailGetId] = useState(() => sessionStorage.getItem('getinfo_emailGetId') || '');
+    const [emailGetAddress, setEmailGetAddress] = useState(() => sessionStorage.getItem('getinfo_emailGetAddress') || '');
+    const [emailGetPassword, setEmailGetPassword] = useState(() => sessionStorage.getItem('getinfo_emailGetPassword') || '');
+    const [emailGetAccPassword, setEmailGetAccPassword] = useState(() => sessionStorage.getItem('getinfo_emailGetAccPassword') || '');
+    const [emailGetAcc2Fa, setEmailGetAcc2Fa] = useState(() => sessionStorage.getItem('getinfo_emailGetAcc2Fa') || '');
+    const [emailGetAcc2FaOtpDisplay, setEmailGetAcc2FaOtpDisplay] = useState(() => sessionStorage.getItem('getinfo_emailGetAcc2FaOtpDisplay') || '');
+    const [emailGetOtpDisplay, setEmailGetOtpDisplay] = useState(() => sessionStorage.getItem('getinfo_emailGetOtpDisplay') || '');
     const [emailGetMailContent, setEmailGetMailContent] = useState('Không có dữ liệu thư.');
+    const [emailGetEmailsList, setEmailGetEmailsList] = useState(() => {
+        const saved = sessionStorage.getItem('getinfo_emailGetEmailsList');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     // Created Account states
-    const [createdAccId, setCreatedAccId] = useState('');
-    const [createdAccUsername, setCreatedAccUsername] = useState('');
-    const [createdAccEmail, setCreatedAccEmail] = useState('');
-    const [createdAccPassword, setCreatedAccPassword] = useState('');
-    const [createdAcc2Fa, setCreatedAcc2Fa] = useState('');
-    const [createdAccOtpDisplayBadge, setCreatedAccOtpDisplayBadge] = useState('');
-    const [createdAccOtpDisplay, setCreatedAccOtpDisplay] = useState('');
+    const [createdAccId, setCreatedAccId] = useState(() => sessionStorage.getItem('getinfo_createdAccId') || '');
+    const [createdAccUsername, setCreatedAccUsername] = useState(() => sessionStorage.getItem('getinfo_createdAccUsername') || '');
+    const [createdAccEmail, setCreatedAccEmail] = useState(() => sessionStorage.getItem('getinfo_createdAccEmail') || '');
+    const [createdAccPassword, setCreatedAccPassword] = useState(() => sessionStorage.getItem('getinfo_createdAccPassword') || '');
+    const [createdAcc2Fa, setCreatedAcc2Fa] = useState(() => sessionStorage.getItem('getinfo_createdAcc2Fa') || '');
+    const [createdAccOtpDisplayBadge, setCreatedAccOtpDisplayBadge] = useState(() => sessionStorage.getItem('getinfo_createdAccOtpDisplayBadge') || '');
+    const [createdAccOtpDisplay, setCreatedAccOtpDisplay] = useState(() => sessionStorage.getItem('getinfo_createdAccOtpDisplay') || '');
     const [createdAccMailContent, setCreatedAccMailContent] = useState('Không có dữ liệu thư.');
     const [createdAccMailLoader, setCreatedAccMailLoader] = useState(false);
-    const [createdAccEmailId, setCreatedAccEmailId] = useState('');
-    const [showCreatedAccInbox, setShowCreatedAccInbox] = useState(false);
+    const [createdAccEmailId, setCreatedAccEmailId] = useState(() => sessionStorage.getItem('getinfo_createdAccEmailId') || '');
+    const [showCreatedAccInbox, setShowCreatedAccInbox] = useState(() => {
+        const saved = sessionStorage.getItem('getinfo_showCreatedAccInbox');
+        return saved ? JSON.parse(saved) : false;
+    });
+    const [createdAccEmailsList, setCreatedAccEmailsList] = useState(() => {
+        const saved = sessionStorage.getItem('getinfo_createdAccEmailsList');
+        return saved ? JSON.parse(saved) : null;
+    });
 
     // USA Address states
-    const [tabAddressData, setTabAddressData] = useState({ name: '—', address: '—', city: '—', state: '—', zip: '—', phone: '—' });
+    const [tabAddressData, setTabAddressData] = useState(() => {
+        const saved = sessionStorage.getItem('getinfo_tabAddressData');
+        return saved ? JSON.parse(saved) : { name: '—', address: '—', city: '—', state: '—', zip: '—', phone: '—' };
+    });
     const [copiedTabField, setCopiedTabField] = useState(null);
 
     // Status Selector states
     const [modalStatusSelect, setModalStatusSelect] = useState('');
     const [statusSelectDisabled, setStatusSelectDisabled] = useState(false);
+
+    // Auto-save all state changes to sessionStorage
+    useEffect(() => {
+        sessionStorage.setItem('getinfo_infoSourceType', infoSourceType);
+        sessionStorage.setItem('getinfo_emailSelectType', emailSelectType);
+        sessionStorage.setItem('getinfo_infoSearchText', infoSearchText);
+        sessionStorage.setItem('getinfo_emailGetId', emailGetId);
+        sessionStorage.setItem('getinfo_emailGetAddress', emailGetAddress);
+        sessionStorage.setItem('getinfo_emailGetPassword', emailGetPassword);
+        sessionStorage.setItem('getinfo_emailGetAccPassword', emailGetAccPassword);
+        sessionStorage.setItem('getinfo_emailGetAcc2Fa', emailGetAcc2Fa);
+        sessionStorage.setItem('getinfo_emailGetAcc2FaOtpDisplay', emailGetAcc2FaOtpDisplay);
+        sessionStorage.setItem('getinfo_emailGetOtpDisplay', emailGetOtpDisplay);
+        sessionStorage.setItem('getinfo_emailGetEmailsList', emailGetEmailsList ? JSON.stringify(emailGetEmailsList) : '');
+
+        sessionStorage.setItem('getinfo_createdAccId', createdAccId);
+        sessionStorage.setItem('getinfo_createdAccUsername', createdAccUsername);
+        sessionStorage.setItem('getinfo_createdAccEmail', createdAccEmail);
+        sessionStorage.setItem('getinfo_createdAccPassword', createdAccPassword);
+        sessionStorage.setItem('getinfo_createdAcc2Fa', createdAcc2Fa);
+        sessionStorage.setItem('getinfo_createdAccOtpDisplayBadge', createdAccOtpDisplayBadge);
+        sessionStorage.setItem('getinfo_createdAccOtpDisplay', createdAccOtpDisplay);
+        sessionStorage.setItem('getinfo_createdAccEmailId', createdAccEmailId);
+        sessionStorage.setItem('getinfo_showCreatedAccInbox', JSON.stringify(showCreatedAccInbox));
+        sessionStorage.setItem('getinfo_createdAccEmailsList', createdAccEmailsList ? JSON.stringify(createdAccEmailsList) : '');
+        sessionStorage.setItem('getinfo_tabAddressData', JSON.stringify(tabAddressData));
+    }, [
+        infoSourceType, emailSelectType, infoSearchText, emailGetId, emailGetAddress,
+        emailGetPassword, emailGetAccPassword, emailGetAcc2Fa, emailGetAcc2FaOtpDisplay,
+        emailGetOtpDisplay, emailGetEmailsList, createdAccId, createdAccUsername,
+        createdAccEmail, createdAccPassword, createdAcc2Fa, createdAccOtpDisplayBadge,
+        createdAccOtpDisplay, createdAccEmailId, showCreatedAccInbox, createdAccEmailsList,
+        tabAddressData
+    ]);
+
+    // Auto-restore mailbox UIs when list states change
+    useEffect(() => {
+        if (emailGetEmailsList) {
+            renderMailboxSection(emailGetEmailsList, 'unused');
+        } else {
+            setEmailGetMailContent('Không có dữ liệu thư.');
+            setEmailGetOtpDisplay('');
+        }
+    }, [emailGetEmailsList]);
+
+    useEffect(() => {
+        if (createdAccEmailsList) {
+            renderMailboxSection(createdAccEmailsList, 'created');
+        } else {
+            setCreatedAccMailContent('Không có dữ liệu thư.');
+            setCreatedAccOtpDisplay('');
+        }
+    }, [createdAccEmailsList]);
 
     const handleInfoSourceChange = (type) => {
         setInfoSourceType(type);
@@ -49,6 +121,8 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
         setEmailGetAddress('');
         setCreatedAccId('');
         setCreatedAccUsername('');
+        setEmailGetEmailsList(null);
+        setCreatedAccEmailsList(null);
         if (type === 'address' && tabAddressData.name === '—') {
             handleGenerateTabAddress();
         }
@@ -90,7 +164,7 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
                     setEmailGetMailContent('Đang kết nối Outlook...');
                     setTimeout(() => reloadEmailGetMailbox(emailData.id), 100);
                 } else {
-                    renderMailboxSection(data.emails, 'unused');
+                    setEmailGetEmailsList(data.emails);
                 }
             } else {
                 triggerToast(data.message || 'Không tìm thấy email khả dụng.');
@@ -108,7 +182,7 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
         try {
             const data = await readMailboxClientSide(id);
             if (data.success) {
-                renderMailboxSection(data.emails, 'unused');
+                setEmailGetEmailsList(data.emails);
                 triggerToast('Đã tải lại hộp thư thành công!');
             } else {
                 triggerToast(data.message || 'Lỗi khi đọc hộp thư.');
@@ -178,7 +252,7 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
         try {
             const data = await readMailboxClientSide(id);
             if (data.success) {
-                renderMailboxSection(data.emails, 'created');
+                setCreatedAccEmailsList(data.emails);
             } else {
                 triggerToast(data.message || 'Không thể đọc hộp thư.');
             }
@@ -542,7 +616,11 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
                                         <label className="form-label" style={{ fontWeight: '600' }}>Mật khẩu tạo Acc</label>
                                         <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                                             <input type="text" className="form-input" placeholder="Mật khẩu tạo..." value={emailGetAccPassword} onChange={(e) => setEmailGetAccPassword(e.target.value)} style={{ height: '36px', fontSize: '13px', flex: 1, minWidth: 0 }} />
-                                            <button className="btn btn-secondary" onClick={() => setEmailGetAccPassword('Zxcv@123')} style={{ padding: '0 10px', height: '36px' }}>🔒</button>
+                                            <button className="btn btn-secondary" onClick={() => {
+                                                const pass = 'Zxcv@123';
+                                                setEmailGetAccPassword(pass);
+                                                navigator.clipboard.writeText(pass).then(() => triggerToast('Đã tạo và copy mật khẩu: Zxcv@123'));
+                                            }} style={{ padding: '0 10px', height: '36px' }}>🔒</button>
                                         </div>
                                     </div>
                                     <div className="form-group">
@@ -570,7 +648,7 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
                             <div style={{ marginTop: '10px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <label className="form-label" style={{ margin: 0, fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        Hộp thư đến {emailGetOtpDisplay && <span style={{ background: 'var(--otp-bg)', border: '1px solid var(--otp-border)', color: 'var(--otp-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '13px' }}>OTP: {emailGetOtpDisplay}</span>}
+                                        Hộp thư đến {emailGetOtpDisplay && <span style={{ background: 'var(--otp-bg)', border: '1px solid var(--otp-border)', color: 'var(--otp-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer' }} onClick={() => { navigator.clipboard.writeText(emailGetOtpDisplay).then(() => triggerToast(`Đã copy OTP: ${emailGetOtpDisplay}`)); }}>OTP: {emailGetOtpDisplay}</span>}
                                     </label>
                                     <button className="btn btn-primary" onClick={() => reloadEmailGetMailbox(emailGetId)} disabled={emailGetLoader} style={{ padding: '4px 12px', fontSize: '12px', height: '28px' }}>🔄 Tải lại</button>
                                 </div>
@@ -637,7 +715,7 @@ export default function GetInfo({ currentUser, triggerToast, isMicrosoftEmail, r
                                 <div style={{ marginTop: '10px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                         <label className="form-label" style={{ margin: 0, fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            Hộp thư đến {createdAccOtpDisplay && <span style={{ background: 'var(--otp-bg)', border: '1px solid var(--otp-border)', color: 'var(--otp-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '13px' }}>OTP: {createdAccOtpDisplay}</span>}
+                                            Hộp thư đến {createdAccOtpDisplay && <span style={{ background: 'var(--otp-bg)', border: '1px solid var(--otp-border)', color: 'var(--otp-text)', padding: '2px 8px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer' }} onClick={() => { navigator.clipboard.writeText(createdAccOtpDisplay).then(() => triggerToast(`Đã copy OTP: ${createdAccOtpDisplay}`)); }}>OTP: {createdAccOtpDisplay}</span>}
                                         </label>
                                         <button className="btn btn-primary" onClick={() => reloadCreatedAccMailbox(createdAccEmailId)} disabled={createdAccMailLoader} style={{ padding: '4px 12px', fontSize: '12px', height: '28px' }}>🔄 Tải lại</button>
                                     </div>

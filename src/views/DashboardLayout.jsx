@@ -12,8 +12,6 @@ import GetInfo from './GetInfo';
 
 // QHTD Desktop-only components (only rendered when running inside desktop app)
 import QHTDDevice from './QHTDDevice';
-import QHTDAutomation from './QHTDAutomation';
-import IPADowngrade from './IPADowngrade';
 import QHTDRouting from './QHTDRouting';
 import TorManager from './TorManager';
 
@@ -170,20 +168,26 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
     // QHTD Desktop detection via User-Agent or QWebChannel bridge
     const [isDesktopApp, setIsDesktopApp] = useState(() => {
         const params = new URLSearchParams(window.location.search);
+        const hn = window.location.hostname;
+        const isLocal = hn === '127.0.0.1' || hn === 'localhost' || hn.startsWith('192.168.') || hn.startsWith('10.') || hn.startsWith('172.');
         return navigator.userAgent.includes('QHTD-Desktop') || 
                !!(window.__QHTD_DESKTOP__ || window.qhtdBridge) ||
-               params.get('desktop') === 'true';
+               params.get('desktop') === 'true' ||
+               isLocal;
     });
     useEffect(() => {
         // Check immediately and also with a small delay (bridge may load async)
         const checkDesktop = () => {
             const params = new URLSearchParams(window.location.search);
+            const hn = window.location.hostname;
+            const isLocal = hn === '127.0.0.1' || hn === 'localhost' || hn.startsWith('192.168.') || hn.startsWith('10.') || hn.startsWith('172.');
             if (navigator.userAgent.includes('QHTD-Desktop') || 
                 window.__QHTD_DESKTOP__ || 
                 window.qhtdBridge ||
-                params.get('desktop') === 'true') {
+                params.get('desktop') === 'true' ||
+                isLocal) {
                 setIsDesktopApp(true);
-                console.log('[c69.us] QHTD Desktop bridge detected');
+                if (!isLocal) console.log('[c69.us] QHTD Desktop bridge detected');
             }
         };
         checkDesktop();
@@ -588,8 +592,6 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'notifications': 'Thông báo của tôi',
         'notes': 'Ghi chú',
         'qhtd-device': '📱 Thiết bị iOS — QHTD Desktop',
-        'qhtd-auto': '🤖 Tự Động — QHTD Desktop',
-        'ipa-downgrade': '📲 IPA Downgrade',
         'qhtd-routing': '🌐 Định tuyến mạng',
     };
 
@@ -653,14 +655,8 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                         <a className={`menu-item ${currentTab === 'proxies' ? 'active' : ''}`} onClick={() => handleSwitchTab('proxies')}>
                                             <span className="menu-icon">🌐</span><span className="menu-text">Tor Proxies</span>
                                         </a>
-                                        <a className={`menu-item ${currentTab === 'ipa-downgrade' ? 'active' : ''}`} onClick={() => handleSwitchTab('ipa-downgrade')}>
-                                            <span className="menu-icon">📲</span><span className="menu-text">IPA Downgrade</span>
-                                        </a>
                                         <a className={`menu-item ${currentTab === 'qhtd-device' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-device')}>
                                             <span className="menu-icon">📱</span><span className="menu-text">Thiết bị iOS</span>
-                                        </a>
-                                        <a className={`menu-item ${currentTab === 'qhtd-auto' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-auto')}>
-                                            <span className="menu-icon">🤖</span><span className="menu-text">Tự Động</span>
                                         </a>
                                         <a className={`menu-item ${currentTab === 'qhtd-routing' ? 'active' : ''}`} onClick={() => handleSwitchTab('qhtd-routing')}>
                                             <span className="menu-icon">🌐</span><span className="menu-text">Định tuyến</span>
@@ -889,14 +885,8 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             <div style={{ display: currentTab === 'proxies' ? 'block' : 'none' }}>
                                 {currentUser && visitedTabs.has('proxies') && <TorManager />}
                             </div>
-                            <div style={{ display: currentTab === 'ipa-downgrade' ? 'block' : 'none' }}>
-                                {visitedTabs.has('ipa-downgrade') && <IPADowngrade />}
-                            </div>
                             <div style={{ display: currentTab === 'qhtd-device' ? 'block' : 'none' }}>
                                 {visitedTabs.has('qhtd-device') && <QHTDDevice />}
-                            </div>
-                            <div style={{ display: currentTab === 'qhtd-auto' ? 'block' : 'none' }}>
-                                {visitedTabs.has('qhtd-auto') && <QHTDAutomation />}
                             </div>
                             <div style={{ display: currentTab === 'qhtd-routing' ? 'block' : 'none' }}>
                                 {visitedTabs.has('qhtd-routing') && <QHTDRouting />}
