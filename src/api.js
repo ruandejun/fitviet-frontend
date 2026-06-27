@@ -34,6 +34,7 @@ export async function apiRequest(url, options = {}) {
     const finalUrl = url.startsWith('/') ? `${API_BASE_URL}${url}` : url;
 
     const response = await fetch(finalUrl, {
+        credentials: 'include',
         ...options,
         headers,
     });
