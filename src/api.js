@@ -14,7 +14,7 @@ export function getCookie(name) {
     return cookieValue;
 }
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://c69.us';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
 // Global fetch wrapper with automatic CSRF token injection
 export async function apiRequest(url, options = {}) {
