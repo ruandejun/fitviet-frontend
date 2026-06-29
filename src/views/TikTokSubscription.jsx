@@ -11,6 +11,8 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     const [loginStep, setLoginStep] = useState('credentials'); // 'credentials', '2fa', 'success'
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginForm, setLoginForm] = useState({ apple_id: '', password: '', proxy: '' });
+    const [loginMethod, setLoginMethod] = useState('srp'); // 'srp', 'token'
+    const [importToken, setImportToken] = useState('');
     const [loginSessionId, setLoginSessionId] = useState('');
     const [code2FA, setCode2FA] = useState('');
     const [loginMessage, setLoginMessage] = useState('');
@@ -118,6 +120,45 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         }
     };
     
+    const handleImportTokenSubmit = async () => {
+        if (!loginForm.apple_id || !importToken) {
+            setLoginMessage('⚠️ Vui lòng nhập đầy đủ Apple ID và Token/Cookie!');
+            return;
+        }
+        setLoginLoading(true);
+        setLoginMessage('');
+        
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/import-token/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    apple_id: loginForm.apple_id,
+                    token: importToken,
+                    proxy: loginForm.proxy || undefined,
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                setLoginStep('success');
+                setLoginMessage('✅ Import Token thành công!');
+                addLog('✅ Token for ' + loginForm.apple_id + ' imported successfully!');
+                fetchAccounts();
+                setTimeout(() => {
+                    setShowLoginModal(false);
+                    resetLoginForm();
+                    if (triggerToast) triggerToast('🎉 Apple Token đã lưu thành công!');
+                }, 1500);
+            } else {
+                setLoginMessage('❌ ' + (data.message || 'Import thất bại'));
+            }
+        } catch (e) {
+            setLoginMessage('❌ Lỗi: ' + e.message);
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+    
     const handleVerify2FA = async () => {
         if (!code2FA || code2FA.length !== 6) {
             setLoginMessage('⚠️ Mã 2FA phải đúng 6 chữ số!');
@@ -158,6 +199,8 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     
     const resetLoginForm = () => {
         setLoginForm({ apple_id: '', password: '', proxy: '' });
+        setLoginMethod('srp');
+        setImportToken('');
         setLoginStep('credentials');
         setCode2FA('');
         setLoginMessage('');
@@ -770,9 +813,32 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 })}
                             </div>
                             
-                            {/* Step 1: Credentials */}
+                            {/* Step 1: Credentials or Import Token */}
                             {loginStep === 'credentials' && (
                                 <div>
+                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px' }}>
+                                        <button
+                                            onClick={() => setLoginMethod('srp')}
+                                            style={{
+                                                flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+                                                background: loginMethod === 'srp' ? 'linear-gradient(135deg, #fe2c55, #ff0050)' : 'transparent',
+                                                color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+                                            }}
+                                        >
+                                            🔑 SRP Auto Login
+                                        </button>
+                                        <button
+                                            onClick={() => setLoginMethod('token')}
+                                            style={{
+                                                flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+                                                background: loginMethod === 'token' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'transparent',
+                                                color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+                                            }}
+                                        >
+                                            📥 Import Token / Browser
+                                        </button>
+                                    </div>
+
                                     <div style={{ marginBottom: '14px' }}>
                                         <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Apple ID (Email)</label>
                                         <input
@@ -784,16 +850,33 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                             autoFocus
                                         />
                                     </div>
-                                    <div style={{ marginBottom: '14px' }}>
-                                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Password</label>
-                                        <input
-                                            type="password"
-                                            placeholder="••••••••••••"
-                                            value={loginForm.password}
-                                            onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                                            style={inputStyle}
-                                        />
-                                    </div>
+
+                                    {loginMethod === 'srp' ? (
+                                        <div style={{ marginBottom: '14px' }}>
+                                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Password</label>
+                                            <input
+                                                type="password"
+                                                placeholder="••••••••••••"
+                                                value={loginForm.password}
+                                                onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                                                style={inputStyle}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div style={{ marginBottom: '14px' }}>
+                                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                                                Token / Cookie (Trích xuất từ MunLogin Browser)
+                                            </label>
+                                            <textarea
+                                                rows={3}
+                                                placeholder="Dán Token hoặc Cookie chuỗi vừa trích xuất..."
+                                                value={importToken}
+                                                onChange={e => setImportToken(e.target.value)}
+                                                style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '11px', resize: 'vertical' }}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div style={{ marginBottom: '14px' }}>
                                         <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                                             Proxy <span style={{ fontWeight: 400, opacity: 0.6 }}>(tùy chọn)</span>
@@ -892,13 +975,22 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                             <button className="btn btn-secondary" onClick={() => setShowLoginModal(false)} disabled={loginLoading}>
                                 {loginStep === 'success' ? 'Đóng' : 'Hủy'}
                             </button>
-                            {loginStep === 'credentials' && (
+                            {loginStep === 'credentials' && loginMethod === 'srp' && (
                                 <button
                                     onClick={handleLoginSubmit}
                                     disabled={loginLoading || !loginForm.apple_id || !loginForm.password}
                                     style={{ ...btnPrimary, opacity: loginLoading ? 0.7 : 1 }}
                                 >
                                     {loginLoading ? '⏳ Đang xác thực...' : '🔑 Đăng nhập Apple ID'}
+                                </button>
+                            )}
+                            {loginStep === 'credentials' && loginMethod === 'token' && (
+                                <button
+                                    onClick={handleImportTokenSubmit}
+                                    disabled={loginLoading || !loginForm.apple_id || !importToken}
+                                    style={{ ...btnPrimary, opacity: loginLoading ? 0.7 : 1, background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+                                >
+                                    {loginLoading ? '⏳ Đang lưu token...' : '📥 Import Token & Lưu Session'}
                                 </button>
                             )}
                             {loginStep === '2fa' && (
