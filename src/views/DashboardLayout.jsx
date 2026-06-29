@@ -9,6 +9,7 @@ import Emails from './Emails';
 import HWIDs from './HWIDs';
 import Notifications from './Notifications';
 import GetInfo from './GetInfo';
+import TikTokSubscription from './TikTokSubscription';
 
 // QHTD Desktop-only components (only rendered when running inside desktop app)
 import QHTDDevice from './QHTDDevice';
@@ -586,6 +587,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'cards': 'Quản lý Thẻ (API & Database)',
         'users': 'Quản lý Người dùng (Client)',
         'profiles': 'Trình duyệt ẩn danh',
+        'tiktok-sub': '🎵 TikTok Subscription & Automation',
         'proxies': 'Tor Proxies Management',
         'emails': 'Quản lý Email & Tài khoản',
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
@@ -645,6 +647,9 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                             <>
                                 <a className={`menu-item ${currentTab === 'profiles' ? 'active' : ''}`} onClick={() => handleSwitchTab('profiles')}>
                                     <span className="menu-icon">🖥️</span><span className="menu-text">Trình duyệt</span>
+                                </a>
+                                <a className={`menu-item ${currentTab === 'tiktok-sub' ? 'active' : ''}`} onClick={() => handleSwitchTab('tiktok-sub')}>
+                                    <span className="menu-icon">🎵</span><span className="menu-text">TikTok Sub</span>
                                 </a>
                                 {/* QHTD Desktop-only tabs */}
                                 {isDesktopApp && (
@@ -856,6 +861,9 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     )}
                     <div style={{ display: currentTab === 'profiles' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('profiles') && <Profiles currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('profiles', p)} />}
+                    </div>
+                    <div style={{ display: currentTab === 'tiktok-sub' ? 'block' : 'none' }}>
+                        {visitedTabs.has('tiktok-sub') && <TikTokSubscription currentUser={currentUser} triggerToast={triggerToast} />}
                     </div>
                     <div style={{ display: currentTab === 'emails' ? 'block' : 'none' }}>
                         {currentUser && visitedTabs.has('emails') && <Emails currentUser={currentUser} page={currentPage} onPageChange={(p) => handleSwitchTab('emails', p)} />}
