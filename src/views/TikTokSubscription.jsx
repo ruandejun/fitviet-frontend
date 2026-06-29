@@ -1296,16 +1296,23 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 )}
                             </div>
                             
-                            <div className="modal-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 24px' }}>
+                            <div className="modal-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 24px', display: 'flex', gap: '10px' }}>
                                 <button className="btn btn-secondary" onClick={() => setShowCardModal(false)} disabled={cardLoading}>
                                     Hủy
+                                </button>
+                                <button 
+                                    onClick={() => handleOpenMunlogin(cardSessionId, 'https://account.apple.com/account/manage/section/payment')} 
+                                    className="btn btn-secondary" 
+                                    style={{ color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}
+                                >
+                                    🌐 Mở MunLogin
                                 </button>
                                 <button
                                     onClick={handleAddCard}
                                     disabled={cardLoading || !cardForm.card_number || !cardForm.first_name}
-                                    style={{ ...btnPrimary, opacity: cardLoading ? 0.7 : 1, background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+                                    style={{ ...btnPrimary, opacity: cardLoading ? 0.7 : 1, background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', flex: 1 }}
                                 >
-                                    {cardLoading ? '⏳ Đang xử lý...' : '💳 Thêm thẻ thanh toán'}
+                                    {cardLoading ? '⏳ Đang xử lý...' : '💳 Thêm thẻ tự động'}
                                 </button>
                         </div>
                     </div>
