@@ -221,6 +221,23 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         }
     };
 
+    const handleDeleteAccount = async (sessionId, appleId) => {
+        if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản Apple ID ${appleId || ''}?`)) return;
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/delete-account/', {
+                method: 'POST',
+                body: JSON.stringify({ session_id: sessionId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (triggerToast) triggerToast('🗑️ Đã xóa tài khoản!');
+                fetchAccounts();
+            } else {
+                alert('❌ Lỗi xóa: ' + data.message);
+            }
+        } catch (e) { alert('❌ Lỗi: ' + e.message); }
+    };
+
     // ── Payment Card Flow ──
     const openCardModal = async (sessionId) => {
         setCardSessionId(sessionId);
@@ -564,31 +581,53 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                         🕐 Kết nối lúc: {acc.created_at}
                                     </div>
 
-                                    {acc.authenticated && (
-                                        <div style={{ display: 'flex', gap: '6px', marginTop: '12px', flexWrap: 'wrap' }}>
-                                            <button 
-                                                onClick={() => handleOpenMunlogin(acc.apple_id, 'https://account.apple.com/account/manage/section/payment')}
-                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}
-                                            >
-                                                🚀 Mở MunLogin
-                                            </button>
+                                    <div style={{ display: 'flex', gap: '6px', marginTop: '12px', flexWrap: 'wrap' }}>
+                                        {!acc.authenticated && (
                                             <button 
                                                 onClick={() => { 
-                                                    setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
-                                                    setActivePanel('tasks');
+                                                    setLoginSessionId(acc.session_id); 
+                                                    setLoginForm(prev => ({ ...prev, apple_id: acc.apple_id })); 
+                                                    setLoginStep('2fa'); 
+                                                    setShowLoginModal(true); 
                                                 }}
-                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px' }}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', color: '#f59e0b', borderColor: 'rgba(245,158,11,0.4)', fontWeight: 700 }}
                                             >
-                                                ⚡ Sub
+                                                🔐 Nhập 2FA
                                             </button>
-                                            <button 
-                                                onClick={() => openCardModal(acc.session_id)}
-                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(16,185,129,0.4)', color: '#10b981' }}
-                                            >
-                                                💳 Thêm thẻ
-                                            </button>
-                                        </div>
-                                    )}
+                                        )}
+                                        <button 
+                                            onClick={() => handleOpenMunlogin(acc.apple_id, 'https://account.apple.com/account/manage/section/payment')}
+                                            style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}
+                                        >
+                                            🚀 MunLogin
+                                        </button>
+                                        {acc.authenticated && (
+                                            <>
+                                                <button 
+                                                    onClick={() => { 
+                                                        setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
+                                                        setActivePanel('tasks');
+                                                    }}
+                                                    style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px' }}
+                                                >
+                                                    ⚡ Sub
+                                                </button>
+                                                <button 
+                                                    onClick={() => openCardModal(acc.session_id)}
+                                                    style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(16,185,129,0.4)', color: '#10b981' }}
+                                                >
+                                                    💳 Thêm thẻ
+                                                </button>
+                                            </>
+                                        )}
+                                        <button 
+                                            onClick={() => handleDeleteAccount(acc.session_id, acc.apple_id)}
+                                            style={{ ...btnSecondary, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(239,68,68,0.4)', color: '#ef4444' }}
+                                            title="Xóa tài khoản"
+                                        >
+                                            🗑️ Xóa
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
