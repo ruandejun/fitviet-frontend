@@ -27,6 +27,18 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     const [taskHistory, setTaskHistory] = useState([]);
     const [taskLogs, setTaskLogs] = useState([]);
     
+    // ── Payment Card Modal State ──
+    const [showCardModal, setShowCardModal] = useState(false);
+    const [cardLoading, setCardLoading] = useState(false);
+    const [cardSessionId, setCardSessionId] = useState('');
+    const [cardForm, setCardForm] = useState({
+        card_number: '', expiry_month: '', expiry_year: '',
+        cvv: '', first_name: '', last_name: '',
+        address_line1: '', city: '', zip_code: '', country_code: 'VN', phone: ''
+    });
+    const [cardMessage, setCardMessage] = useState('');
+    const [accountPaymentInfo, setAccountPaymentInfo] = useState(null);
+    
     // ── Active Tab ──
     const [activePanel, setActivePanel] = useState('accounts'); // 'accounts', 'tasks', 'history'
     
@@ -150,6 +162,73 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         setCode2FA('');
         setLoginMessage('');
         setLoginSessionId('');
+    };
+
+    // ── Payment Card Flow ──
+    const openCardModal = async (sessionId) => {
+        setCardSessionId(sessionId);
+        setCardForm({ card_number: '', expiry_month: '', expiry_year: '', cvv: '', first_name: '', last_name: '', address_line1: '', city: '', zip_code: '', country_code: 'VN', phone: '' });
+        setCardMessage('');
+        setAccountPaymentInfo(null);
+        setShowCardModal(true);
+        
+        // Fetch current payment info
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/account-info/', {
+                method: 'POST', body: JSON.stringify({ session_id: sessionId })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAccountPaymentInfo(data);
+            }
+        } catch (e) { console.error('Account info error:', e); }
+    };
+    
+    const handleAddCard = async () => {
+        if (!cardForm.card_number || !cardForm.expiry_month || !cardForm.expiry_year || !cardForm.cvv || !cardForm.first_name || !cardForm.last_name) {
+            setCardMessage('⚠️ Vui lòng nhập đầy đủ thông tin thẻ!');
+            return;
+        }
+        setCardLoading(true);
+        setCardMessage('');
+        addLog(`💳 Đang thêm thẻ ****${cardForm.card_number.replace(/\s/g, '').slice(-4)} vào Apple Account...`);
+        
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/add-payment/', {
+                method: 'POST',
+                body: JSON.stringify({ session_id: cardSessionId, ...cardForm })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                setCardMessage(`✅ ${data.message}`);
+                addLog(`✅ Thêm thẻ ${data.card_type} ****${data.last_four} thành công!`);
+                if (triggerToast) triggerToast(`🎉 Thêm thẻ ${data.card_type} ****${data.last_four} thành công!`);
+                setTimeout(() => setShowCardModal(false), 2000);
+            } else {
+                setCardMessage(`❌ ${data.message}`);
+                addLog(`❌ Thêm thẻ thất bại: ${data.message}`);
+            }
+        } catch (e) {
+            setCardMessage(`❌ Lỗi: ${e.message}`);
+        } finally {
+            setCardLoading(false);
+        }
+    };
+    
+    const detectCardType = (num) => {
+        const n = num.replace(/\s/g, '');
+        if (n.startsWith('4')) return { type: 'Visa', color: '#1a1f71', icon: '💳' };
+        if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return { type: 'MasterCard', color: '#eb001b', icon: '🔴' };
+        if (/^3[47]/.test(n)) return { type: 'Amex', color: '#006fcf', icon: '💎' };
+        if (/^62/.test(n)) return { type: 'UnionPay', color: '#e21836', icon: '🏦' };
+        if (/^35/.test(n)) return { type: 'JCB', color: '#0e4c96', icon: '🗾' };
+        return { type: '', color: '#666', icon: '💳' };
+    };
+    
+    const formatCardNumber = (val) => {
+        const nums = val.replace(/\D/g, '').slice(0, 16);
+        return nums.replace(/(\d{4})(?=\d)/g, '$1 ');
     };
 
     // ── TikTok Username Lookup ──
@@ -430,15 +509,23 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                     </div>
                                     
                                     {acc.authenticated && (
-                                        <button 
-                                            onClick={() => { 
-                                                setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
-                                                setActivePanel('tasks');
-                                            }}
-                                            style={{ ...btnSecondary, width: '100%', marginTop: '12px', fontSize: '12px' }}
-                                        >
-                                            ⚡ Dùng account này để Subscribe
-                                        </button>
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                            <button 
+                                                onClick={() => { 
+                                                    setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
+                                                    setActivePanel('tasks');
+                                                }}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '12px' }}
+                                            >
+                                                ⚡ Subscribe
+                                            </button>
+                                            <button 
+                                                onClick={() => openCardModal(acc.session_id)}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '12px', borderColor: 'rgba(59,130,246,0.4)', color: '#3b82f6' }}
+                                            >
+                                                💳 Thêm thẻ
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -823,6 +910,200 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                     {loginLoading ? '⏳ Đang xác minh...' : '✅ Xác nhận 2FA'}
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ══════ PAYMENT CARD MODAL ══════ */}
+            {showCardModal && (
+                <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '520px' }}>
+                        <div className="modal-content" style={{ ...modalStyle }}>
+                            {/* Header */}
+                            <div className="modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 24px' }}>
+                                <h5 className="modal-title" style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '16px' }}>
+                                    💳 Quản lý Phương thức Thanh toán
+                                </h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowCardModal(false)} />
+                            </div>
+                            
+                            <div className="modal-body" style={{ padding: '20px 24px' }}>
+                                {/* Current Payment Info */}
+                                {accountPaymentInfo && (
+                                    <div style={{
+                                        padding: '14px 16px',
+                                        borderRadius: '10px',
+                                        background: accountPaymentInfo.has_payment_method 
+                                            ? 'rgba(16, 185, 129, 0.08)' 
+                                            : 'rgba(245, 158, 11, 0.08)',
+                                        border: `1px solid ${accountPaymentInfo.has_payment_method ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`,
+                                        marginBottom: '20px',
+                                        fontSize: '13px',
+                                    }}>
+                                        <div style={{ fontWeight: 600, color: accountPaymentInfo.has_payment_method ? '#10b981' : '#f59e0b', marginBottom: '6px' }}>
+                                            {accountPaymentInfo.has_payment_method 
+                                                ? `✅ Thẻ hiện tại: ${accountPaymentInfo.payment_info?.type || ''} ****${accountPaymentInfo.payment_info?.last_four || ''}` 
+                                                : '⚠️ Chưa có phương thức thanh toán'}
+                                        </div>
+                                        {accountPaymentInfo.account && (
+                                            <div style={{ color: '#94a3b8' }}>
+                                                {accountPaymentInfo.account.email} • {accountPaymentInfo.account.country || 'N/A'}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                <div style={{ color: '#94a3b8', fontSize: '12px', marginBottom: '16px', fontWeight: 500 }}>
+                                    THÔNG TIN THẺ
+                                </div>
+                                
+                                {/* Card Number */}
+                                <div style={{ position: 'relative', marginBottom: '14px' }}>
+                                    <input 
+                                        type="text"
+                                        placeholder="Số thẻ (VD: 4242 4242 4242 4242)"
+                                        value={cardForm.card_number}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, card_number: formatCardNumber(e.target.value) }))}
+                                        maxLength={19}
+                                        style={{ ...inputStyle, paddingRight: '100px', fontFamily: 'monospace', fontSize: '15px', letterSpacing: '1px' }}
+                                    />
+                                    {cardForm.card_number.replace(/\s/g, '').length >= 1 && (() => {
+                                        const ct = detectCardType(cardForm.card_number);
+                                        return (
+                                            <span style={{
+                                                position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                                fontSize: '13px', fontWeight: 700, color: ct.color,
+                                                background: 'rgba(255,255,255,0.05)', padding: '3px 10px', borderRadius: '6px',
+                                            }}>
+                                                {ct.icon} {ct.type}
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
+                                
+                                {/* Expiry + CVV row */}
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
+                                    <input 
+                                        type="text" placeholder="MM" maxLength={2}
+                                        value={cardForm.expiry_month}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, expiry_month: e.target.value.replace(/\D/g, '').slice(0, 2) }))}
+                                        style={{ ...inputStyle, flex: 1, textAlign: 'center', fontFamily: 'monospace', fontSize: '15px' }}
+                                    />
+                                    <span style={{ color: '#475569', alignSelf: 'center', fontSize: '18px' }}>/</span>
+                                    <input 
+                                        type="text" placeholder="YY" maxLength={2}
+                                        value={cardForm.expiry_year}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, expiry_year: e.target.value.replace(/\D/g, '').slice(0, 2) }))}
+                                        style={{ ...inputStyle, flex: 1, textAlign: 'center', fontFamily: 'monospace', fontSize: '15px' }}
+                                    />
+                                    <input 
+                                        type="password" placeholder="CVV" maxLength={4}
+                                        value={cardForm.cvv}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                                        style={{ ...inputStyle, flex: 1.5, textAlign: 'center', fontFamily: 'monospace', fontSize: '15px' }}
+                                    />
+                                </div>
+                                
+                                {/* Cardholder Name */}
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '14px' }}>
+                                    <input 
+                                        type="text" placeholder="Tên (First Name)"
+                                        value={cardForm.first_name}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, first_name: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    />
+                                    <input 
+                                        type="text" placeholder="Họ (Last Name)"
+                                        value={cardForm.last_name}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, last_name: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    />
+                                </div>
+                                
+                                <div style={{ color: '#94a3b8', fontSize: '12px', marginBottom: '12px', marginTop: '20px', fontWeight: 500 }}>
+                                    ĐỊA CHỈ THANH TOÁN (tùy chọn)
+                                </div>
+                                
+                                <input 
+                                    type="text" placeholder="Địa chỉ"
+                                    value={cardForm.address_line1}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, address_line1: e.target.value }))}
+                                    style={{ ...inputStyle, marginBottom: '10px' }}
+                                />
+                                
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                    <input 
+                                        type="text" placeholder="Thành phố"
+                                        value={cardForm.city}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, city: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    />
+                                    <input 
+                                        type="text" placeholder="Mã bưu điện"
+                                        value={cardForm.zip_code}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, zip_code: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    />
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                    <select 
+                                        value={cardForm.country_code}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, country_code: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    >
+                                        <option value="VN">🇻🇳 Việt Nam</option>
+                                        <option value="US">🇺🇸 United States</option>
+                                        <option value="SG">🇸🇬 Singapore</option>
+                                        <option value="JP">🇯🇵 Japan</option>
+                                        <option value="KR">🇰🇷 South Korea</option>
+                                        <option value="TH">🇹🇭 Thailand</option>
+                                        <option value="MY">🇲🇾 Malaysia</option>
+                                        <option value="ID">🇮🇩 Indonesia</option>
+                                        <option value="PH">🇵🇭 Philippines</option>
+                                        <option value="TW">🇹🇼 Taiwan</option>
+                                        <option value="HK">🇭🇰 Hong Kong</option>
+                                        <option value="CN">🇨🇳 China</option>
+                                        <option value="GB">🇬🇧 United Kingdom</option>
+                                        <option value="AU">🇦🇺 Australia</option>
+                                    </select>
+                                    <input 
+                                        type="text" placeholder="Số điện thoại"
+                                        value={cardForm.phone}
+                                        onChange={(e) => setCardForm(prev => ({ ...prev, phone: e.target.value }))}
+                                        style={{ ...inputStyle, flex: 1 }}
+                                    />
+                                </div>
+                                
+                                {/* Message */}
+                                {cardMessage && (
+                                    <div style={{
+                                        marginTop: '14px',
+                                        padding: '10px 14px',
+                                        borderRadius: '8px',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                        background: cardMessage.includes('✅') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                        color: cardMessage.includes('✅') ? '#10b981' : '#ef4444',
+                                        border: `1px solid ${cardMessage.includes('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                    }}>
+                                        {cardMessage}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="modal-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 24px' }}>
+                                <button className="btn btn-secondary" onClick={() => setShowCardModal(false)} disabled={cardLoading}>
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleAddCard}
+                                    disabled={cardLoading || !cardForm.card_number || !cardForm.first_name}
+                                    style={{ ...btnPrimary, opacity: cardLoading ? 0.7 : 1, background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}
+                                >
+                                    {cardLoading ? '⏳ Đang xử lý...' : '💳 Thêm thẻ thanh toán'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
