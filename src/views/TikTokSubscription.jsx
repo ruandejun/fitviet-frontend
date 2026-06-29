@@ -207,6 +207,20 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         setLoginSessionId('');
     };
 
+    const handleOpenMunlogin = (profileName, targetUrl) => {
+        const url = targetUrl || 'https://account.apple.com/account/manage/section/payment';
+        if (window.munAutomationBridge && window.munAutomationBridge.openBrowserProfile) {
+            window.munAutomationBridge.openBrowserProfile(profileName || 'default', url);
+            if (triggerToast) triggerToast('🚀 Đã gửi lệnh mở MunLogin Browser!');
+        } else if (window.qhtdBridge && window.qhtdBridge.openBrowserProfile) {
+            window.qhtdBridge.openBrowserProfile(profileName || 'default', url);
+            if (triggerToast) triggerToast('🚀 Đã gửi lệnh mở MunLogin Browser!');
+        } else {
+            window.open(url, '_blank');
+            if (triggerToast) triggerToast('🌐 Đã mở trang quản lý trên Trình duyệt!');
+        }
+    };
+
     // ── Payment Card Flow ──
     const openCardModal = async (sessionId) => {
         setCardSessionId(sessionId);
@@ -544,28 +558,32 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                         🌐 Proxy: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>{acc.proxy || 'Direct'}</span>
                                     </div>
                                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                                        🔑 Token: <span style={{ color: 'var(--text-color)', fontWeight: 600, fontFamily: 'monospace' }}>
-                                            {acc.account_info?.token_preview || 'N/A'}
-                                        </span>
+                                        🔑 Token: <span style={{ color: 'var(--text-color)', fontWeight: 600, fontFamily: 'monospace' }}>{acc.account_info?.token_preview || 'Active'}</span>
                                     </div>
                                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '10px' }}>
                                         🕐 Kết nối lúc: {acc.created_at}
                                     </div>
-                                    
+
                                     {acc.authenticated && (
-                                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                        <div style={{ display: 'flex', gap: '6px', marginTop: '12px', flexWrap: 'wrap' }}>
+                                            <button 
+                                                onClick={() => handleOpenMunlogin(acc.apple_id, 'https://account.apple.com/account/manage/section/payment')}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}
+                                            >
+                                                🚀 Mở MunLogin
+                                            </button>
                                             <button 
                                                 onClick={() => { 
                                                     setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
                                                     setActivePanel('tasks');
                                                 }}
-                                                style={{ ...btnSecondary, flex: 1, fontSize: '12px' }}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px' }}
                                             >
-                                                ⚡ Subscribe
+                                                ⚡ Sub
                                             </button>
                                             <button 
                                                 onClick={() => openCardModal(acc.session_id)}
-                                                style={{ ...btnSecondary, flex: 1, fontSize: '12px', borderColor: 'rgba(59,130,246,0.4)', color: '#3b82f6' }}
+                                                style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(16,185,129,0.4)', color: '#10b981' }}
                                             >
                                                 💳 Thêm thẻ
                                             </button>
@@ -619,7 +637,10 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 🌐 Proxy: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>socks5://127.0.0.1:9050</span>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', marginTop: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                                <button style={{ ...btnSecondary, flex: 1, fontSize: '12px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}>
+                                <button 
+                                    onClick={() => handleOpenMunlogin('@tiktok_sub_farm_01', 'https://www.tiktok.com')}
+                                    style={{ ...btnSecondary, flex: 1, fontSize: '12px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}
+                                >
                                     🚀 Mở MunLogin
                                 </button>
                                 <button style={{ ...btnSecondary, flex: 1, fontSize: '12px' }}>
