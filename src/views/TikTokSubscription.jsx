@@ -438,36 +438,37 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                     </div>
                     <div>
                         <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                            TikTok Subscription Automation
+                            TikTok Subscription Automation Center
                         </h2>
                         <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-                            Đăng ký tự động TikTok LIVE Sub qua Apple ID • GrandSlam SRP-6a Auth • Anisette Server
+                            Quản lý & Nuôi độc lập tài khoản Apple ID & TikTok bằng Trình duyệt Chống phát hiện MunLogin
                         </p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Apple Accounts</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Apple ID Nuôi</div>
                         <div style={{ fontSize: '18px', fontWeight: 800, color: '#10b981' }}>{authenticatedAccounts.length}</div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tasks Done</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tasks Sub Thành Công</div>
                         <div style={{ fontSize: '18px', fontWeight: 800, color: '#3b82f6' }}>{taskHistory.filter(t => t.status === 'success').length}</div>
                     </div>
                 </div>
             </div>
 
             {/* ═══════ NAVIGATION TABS ═══════ */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', flexWrap: 'wrap' }}>
                 {[
-                    { key: 'accounts', icon: '🍎', label: `Apple Accounts (${appleAccounts.length})` },
-                    { key: 'tasks', icon: '⚡', label: 'Tạo Subscription' },
-                    { key: 'history', icon: '📜', label: `Lịch sử (${taskHistory.length})` },
+                    { key: 'accounts', icon: '🍎', label: `Quản lý Apple ID (MunLogin)` },
+                    { key: 'tiktok_accounts', icon: '🎵', label: `Quản lý TikTok (MunLogin)` },
+                    { key: 'tasks', icon: '⚡', label: 'Điều phối Auto Sub' },
+                    { key: 'history', icon: '📜', label: `Lịch sử Giao dịch (${taskHistory.length})` },
                 ].map(tab => (
                     <button key={tab.key}
                         onClick={() => setActivePanel(tab.key)}
                         style={{
-                            padding: '10px 20px',
+                            padding: '10px 18px',
                             borderRadius: '10px',
                             border: activePanel === tab.key ? 'none' : '1px solid var(--border-color)',
                             background: activePanel === tab.key ? 'linear-gradient(135deg, #fe2c55, #ff0050)' : 'rgba(255,255,255,0.03)',
@@ -574,6 +575,59 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                             ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* ═══════ PANEL: TIKTOK ACCOUNTS (MUNLOGIN) ═══════ */}
+            {activePanel === 'tiktok_accounts' && (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>
+                                🎵 Tài khoản TikTok nuôi bằng MunLogin
+                            </h3>
+                            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                Quản lý danh sách nick TikTok đi đăng ký Sub & nuôi tương tác qua MunLogin Browser
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                        <div style={{ ...cardStyle, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                                <div style={{
+                                    width: '44px', height: '44px', borderRadius: '50%',
+                                    background: 'rgba(59, 130, 246, 0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px'
+                                }}>
+                                    🎵
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 700, fontSize: '14px' }}>@tiktok_sub_farm_01</div>
+                                    <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+                                        🟢 Đã nuôi Cookie • MunLogin Profile #102
+                                    </div>
+                                </div>
+                                <span style={{ fontSize: '10px', fontWeight: 700, padding: '4px 8px', borderRadius: '20px', background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                                    Ready
+                                </span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                🛡️ Trình duyệt: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>MunLogin Agent v1.3.5</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                🌐 Proxy: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>socks5://127.0.0.1:9050</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                                <button style={{ ...btnSecondary, flex: 1, fontSize: '12px', color: '#3b82f6', borderColor: 'rgba(59,130,246,0.4)' }}>
+                                    🚀 Mở MunLogin
+                                </button>
+                                <button style={{ ...btnSecondary, flex: 1, fontSize: '12px' }}>
+                                    🔄 Kiểm tra Session
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
