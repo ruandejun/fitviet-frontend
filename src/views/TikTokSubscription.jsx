@@ -1,177 +1,298 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiRequest } from '../api';
 
 export default function TikTokSubscription({ currentUser, triggerToast }) {
-    const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('accounts'); // 'accounts', 'plans', 'history'
+    // ── Apple Accounts State ──
+    const [appleAccounts, setAppleAccounts] = useState([]);
+    const [loadingAccounts, setLoadingAccounts] = useState(false);
     
-    // Mock & State data
-    const [stats, setStats] = useState({
-        activeCount: 12,
-        expiringCount: 2,
-        totalSpent: 450.00,
-        currency: '$'
-    });
-
-    const [plans, setPlans] = useState([
-        {
-            id: 'plan_starter',
-            name: 'TikTok Starter',
-            price: 15.00,
-            period: 'tháng',
-            badge: 'Cơ bản',
-            color: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-            features: [
-                'Tự động tương tác & Follow',
-                'Quản lý 1 Tài khoản TikTok',
-                'Proxy SOCKS5 Dedicated',
-                'Hỗ trợ 24/7 qua Telegram'
-            ]
-        },
-        {
-            id: 'plan_pro',
-            name: 'TikTok Pro Automation',
-            price: 35.00,
-            period: 'tháng',
-            badge: 'Phổ biến nhất 🔥',
-            isPopular: true,
-            color: 'linear-gradient(135deg, #fe2c55, #ff0050)',
-            features: [
-                'Tự động đăng Video & Livestream Sync',
-                'Quản lý tới 5 Tài khoản TikTok',
-                'Auto Bypass Bot & Anti-Detect Cloud',
-                'Proxy IPv6 + SOCKS5 Tốc độ cao',
-                'Báo cáo phân tích Analytics nâng cao'
-            ]
-        },
-        {
-            id: 'plan_vip',
-            name: 'TikTok Enterprise VIP',
-            price: 99.00,
-            period: 'tháng',
-            badge: 'Tiết kiệm 30%',
-            color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-            features: [
-                'Không giới hạn số lượng tài khoản',
-                'Auto Reg/Farm TikTok Clone số lượng lớn',
-                'Hệ thống AI Reup Video thông minh',
-                'API Kết nối trực tiếp C69 Server & Desktop',
-                'Hỗ trợ kỹ thuật ưu tiên 1-1'
-            ]
-        }
-    ]);
-
-    const [tiktokAccounts, setTiktokAccounts] = useState([
-        { id: 1, username: '@tok_master_88', planName: 'TikTok Pro Automation', expireDate: '2026-07-25', status: 'active', autoRenew: true, avatar: '🎵', payMethod: 'Apple ID (direct)' },
-        { id: 2, username: '@fashion_store_vn', planName: 'TikTok Pro Automation', expireDate: '2026-07-02', status: 'expiring', autoRenew: true, avatar: '🛍️', payMethod: 'iPhone 12 Pro #01' },
-        { id: 3, username: '@review_game_99', planName: 'TikTok Starter', expireDate: '2026-06-30', status: 'expiring', autoRenew: false, avatar: '🎮', payMethod: 'iPhone X #02' },
-        { id: 4, username: '@dance_studio_sg', planName: 'TikTok Enterprise VIP', expireDate: '2026-08-15', status: 'active', autoRenew: true, avatar: '💃', payMethod: 'Apple ID (direct)' },
-        { id: 5, username: '@daily_vlog_hn', planName: 'TikTok Starter', expireDate: '2026-05-10', status: 'expired', autoRenew: false, avatar: '📹', payMethod: 'iPhone 11 #03' }
-    ]);
-
-    const [history, setHistory] = useState([
-        { id: 'INV-9082', date: '2026-06-25', username: '@tok_master_88', plan: 'TikTok Pro Automation', amount: '$35.00', status: 'Thành công' },
-        { id: 'INV-8812', date: '2026-06-15', username: '@dance_studio_sg', plan: 'TikTok Enterprise VIP', amount: '$99.00', status: 'Thành công' },
-        { id: 'INV-7621', date: '2026-05-25', username: '@fashion_store_vn', plan: 'TikTok Pro Automation', amount: '$35.00', status: 'Thành công' }
-    ]);
-
-    // Modal & Dual-mode state
-    const [showSubscribeModal, setShowSubscribeModal] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState(null);
-    const [targetUsername, setTargetUsername] = useState('');
-    const [authMode, setAuthMode] = useState('apple_id'); // 'apple_id' hoặc 'device'
-    
-    // Apple ID Auth state
-    const [appleId, setAppleId] = useState('');
-    const [applePassword, setApplePassword] = useState('');
-    const [requires2FA, setRequires2FA] = useState(false);
+    // ── Login Modal State ──
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [loginStep, setLoginStep] = useState('credentials'); // 'credentials', '2fa', 'success'
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginForm, setLoginForm] = useState({ apple_id: '', password: '', proxy: '' });
+    const [loginSessionId, setLoginSessionId] = useState('');
     const [code2FA, setCode2FA] = useState('');
+    const [loginMessage, setLoginMessage] = useState('');
     
-    // Device Selection state
-    const [selectedDevice, setSelectedDevice] = useState('dev_01');
-    const [availableDevices, setAvailableDevices] = useState([
-        { id: 'dev_01', name: '📱 iPhone 12 Pro #01 (Đã đăng nhập App Store)', status: 'online' },
-        { id: 'dev_02', name: '📱 iPhone 11 Pro Max #02 (Online - StoreKit OK)', status: 'online' },
-        { id: 'dev_03', name: '📱 iPhone X #03 (Farm Node #3)', status: 'online' }
-    ]);
+    // ── Subscription Task State ──
+    const [showSubModal, setShowSubModal] = useState(false);
+    const [subLoading, setSubLoading] = useState(false);
+    const [subForm, setSubForm] = useState({ session_id: '', tiktok_username: '', tier_id: '' });
+    const [tiktokUserInfo, setTiktokUserInfo] = useState(null);
+    const [lookupLoading, setLookupLoading] = useState(false);
+    const [subTiers, setSubTiers] = useState([]);
+    
+    // ── Task History State ──
+    const [taskHistory, setTaskHistory] = useState([]);
+    const [taskLogs, setTaskLogs] = useState([]);
+    
+    // ── Active Tab ──
+    const [activePanel, setActivePanel] = useState('accounts'); // 'accounts', 'tasks', 'history'
+    
+    const lookupTimeout = useRef(null);
 
-    const handleToggleAutoRenew = (id) => {
-        setTiktokAccounts(prev => prev.map(acc => {
-            if (acc.id === id) {
-                const updated = !acc.autoRenew;
-                if (triggerToast) triggerToast(`Đã ${updated ? 'bật' : 'tắt'} tự động gia hạn cho ${acc.username}`);
-                return { ...acc, autoRenew: updated };
+    // ── Load accounts on mount ──
+    useEffect(() => {
+        fetchAccounts();
+        fetchDefaultTiers();
+    }, []);
+    
+    const fetchAccounts = async () => {
+        setLoadingAccounts(true);
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/accounts/');
+            if (res.ok) {
+                const data = await res.json();
+                setAppleAccounts(data.accounts || []);
             }
-            return acc;
-        }));
+        } catch (e) {
+            console.error('Fetch accounts error:', e);
+        } finally {
+            setLoadingAccounts(false);
+        }
+    };
+    
+    const fetchDefaultTiers = async () => {
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/tiktok-tiers/');
+            if (res.ok) {
+                const data = await res.json();
+                setSubTiers(data.tiers || []);
+            }
+        } catch (e) {
+            console.error('Fetch tiers error:', e);
+        }
     };
 
-    const handleOpenSubscribe = (plan) => {
-        setSelectedPlan(plan);
-        setRequires2FA(false);
-        setCode2FA('');
-        setShowSubscribeModal(true);
-    };
-
-    const handleConfirmSubscribe = () => {
-        if (!targetUsername.trim()) {
-            alert('Vui lòng nhập TikTok username!');
+    // ── Apple Login Flow ──
+    const handleLoginSubmit = async () => {
+        if (!loginForm.apple_id || !loginForm.password) {
+            setLoginMessage('⚠️ Vui lòng nhập đầy đủ Apple ID và Password!');
             return;
         }
-
-        if (authMode === 'apple_id') {
-            if (!appleId.trim() || !applePassword.trim()) {
-                alert('Vui lòng nhập đầy đủ Apple ID và Mật khẩu!');
-                return;
-            }
-            // Mô phỏng thách thức 2FA ở bước đầu
-            if (!requires2FA) {
-                setLoading(true);
-                setTimeout(() => {
-                    setLoading(false);
-                    setRequires2FA(true);
-                    if (triggerToast) triggerToast('🔑 Đã gửi yêu cầu xác minh! Vui lòng nhập mã 2FA 6 số.');
-                }, 800);
-                return;
+        setLoginLoading(true);
+        setLoginMessage('');
+        
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/login/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    apple_id: loginForm.apple_id,
+                    password: loginForm.password,
+                    proxy: loginForm.proxy || undefined,
+                })
+            });
+            const data = await res.json();
+            
+            if (data.requires_2fa) {
+                setLoginSessionId(data.session_id);
+                setLoginStep('2fa');
+                setLoginMessage('📲 Mã xác minh 2FA đã được gửi tới thiết bị tin cậy. Vui lòng nhập mã 6 số.');
+                addLog('🔑 Apple yêu cầu xác minh 2FA cho ' + loginForm.apple_id);
+            } else if (data.success) {
+                setLoginStep('success');
+                setLoginMessage('✅ Đăng nhập thành công!');
+                addLog('✅ Apple ID ' + loginForm.apple_id + ' đã đăng nhập thành công!');
+                fetchAccounts();
             } else {
-                if (!code2FA || code2FA.length < 6) {
-                    alert('Vui lòng nhập mã xác minh 2FA 6 chữ số!');
-                    return;
-                }
+                setLoginMessage('❌ ' + (data.message || 'Đăng nhập thất bại'));
+                addLog('❌ Login failed: ' + (data.message || 'Unknown error'));
             }
+        } catch (e) {
+            setLoginMessage('❌ Lỗi kết nối: ' + e.message);
+        } finally {
+            setLoginLoading(false);
         }
-
-        setLoading(true);
-        setTimeout(() => {
-            const devName = authMode === 'apple_id' ? `Apple ID (${appleId})` : availableDevices.find(d => d.id === selectedDevice)?.name.split('(')[0] || 'Thiết bị iOS';
-            const newAcc = {
-                id: Date.now(),
-                username: targetUsername.startsWith('@') ? targetUsername : `@${targetUsername}`,
-                planName: selectedPlan.name,
-                expireDate: '2026-07-29',
-                status: 'active',
-                autoRenew: true,
-                avatar: '✨',
-                payMethod: devName
-            };
-            setTiktokAccounts([newAcc, ...tiktokAccounts]);
-            setShowSubscribeModal(false);
-            setTargetUsername('');
-            setAppleId('');
-            setApplePassword('');
-            setCode2FA('');
-            setRequires2FA(false);
-            setLoading(false);
-            if (triggerToast) triggerToast(`🎉 Đăng ký thành công gói ${selectedPlan.name} qua Apple API!`);
-        }, 1200);
+    };
+    
+    const handleVerify2FA = async () => {
+        if (!code2FA || code2FA.length !== 6) {
+            setLoginMessage('⚠️ Mã 2FA phải đúng 6 chữ số!');
+            return;
+        }
+        setLoginLoading(true);
+        setLoginMessage('');
+        
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/verify-2fa/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: loginSessionId,
+                    code_2fa: code2FA,
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                setLoginStep('success');
+                setLoginMessage('✅ Xác minh 2FA thành công! Token đã được lưu.');
+                addLog('✅ 2FA verified for ' + loginForm.apple_id);
+                fetchAccounts();
+                setTimeout(() => {
+                    setShowLoginModal(false);
+                    resetLoginForm();
+                    if (triggerToast) triggerToast('🎉 Apple Account đã xác thực thành công!');
+                }, 1500);
+            } else {
+                setLoginMessage('❌ ' + (data.message || 'Mã 2FA không chính xác'));
+            }
+        } catch (e) {
+            setLoginMessage('❌ Lỗi: ' + e.message);
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+    
+    const resetLoginForm = () => {
+        setLoginForm({ apple_id: '', password: '', proxy: '' });
+        setLoginStep('credentials');
+        setCode2FA('');
+        setLoginMessage('');
+        setLoginSessionId('');
     };
 
+    // ── TikTok Username Lookup ──
+    const handleTiktokLookup = (username) => {
+        setSubForm(prev => ({ ...prev, tiktok_username: username }));
+        setTiktokUserInfo(null);
+        
+        if (lookupTimeout.current) clearTimeout(lookupTimeout.current);
+        
+        const clean = username.replace('@', '').trim();
+        if (clean.length < 2) return;
+        
+        lookupTimeout.current = setTimeout(async () => {
+            setLookupLoading(true);
+            try {
+                const res = await apiRequest(`/dashboard/api/apple-sub/tiktok-lookup/?username=${encodeURIComponent(clean)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        setTiktokUserInfo(data);
+                    }
+                }
+            } catch (e) {
+                console.error('TikTok lookup error:', e);
+            } finally {
+                setLookupLoading(false);
+            }
+        }, 600);
+    };
+
+    // ── Subscription Purchase ──
+    const handlePurchase = async () => {
+        if (!subForm.session_id) {
+            if (triggerToast) triggerToast('⚠️ Vui lòng chọn Apple Account!');
+            return;
+        }
+        if (!subForm.tiktok_username.replace('@', '').trim()) {
+            if (triggerToast) triggerToast('⚠️ Vui lòng nhập TikTok Username!');
+            return;
+        }
+        
+        setSubLoading(true);
+        addLog(`🚀 Bắt đầu đăng ký subscription cho @${subForm.tiktok_username.replace('@', '')}...`);
+        
+        try {
+            const res = await apiRequest('/dashboard/api/apple-sub/purchase/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    session_id: subForm.session_id,
+                    tiktok_username: subForm.tiktok_username,
+                    tier_id: subForm.tier_id || undefined,
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                addLog(`🎉 Subscription thành công! TxID: ${data.purchase_result?.transaction_id || 'N/A'}`);
+                if (triggerToast) triggerToast('🎉 Đăng ký subscription thành công!');
+                
+                // Add to history
+                setTaskHistory(prev => [{
+                    id: `SUB-${Date.now()}`,
+                    date: new Date().toISOString().split('T')[0],
+                    tiktok_user: data.tiktok_user?.username || subForm.tiktok_username,
+                    apple_id: appleAccounts.find(a => a.session_id === subForm.session_id)?.apple_id || '',
+                    tier: subForm.tier_id || 'Tier 1',
+                    status: 'success',
+                    transaction_id: data.purchase_result?.transaction_id || '',
+                }, ...prev]);
+                
+                setShowSubModal(false);
+            } else {
+                addLog(`❌ Lỗi tại bước "${data.step || 'unknown'}": ${data.message}`);
+                if (triggerToast) triggerToast(`❌ ${data.message}`);
+            }
+        } catch (e) {
+            addLog(`❌ Connection error: ${e.message}`);
+        } finally {
+            setSubLoading(false);
+        }
+    };
+
+    // ── Log Helper ──
+    const addLog = (msg) => {
+        setTaskLogs(prev => [{ time: new Date().toLocaleTimeString(), msg }, ...prev].slice(0, 50));
+    };
+
+    // ── Inline Styles ──
+    const cardStyle = {
+        background: 'var(--modal-bg, rgba(15, 23, 42, 0.6))',
+        border: '1px solid var(--border-color)',
+        borderRadius: '16px',
+        padding: '20px',
+        backdropFilter: 'blur(10px)',
+    };
+    
+    const inputStyle = {
+        width: '100%',
+        padding: '10px 14px',
+        borderRadius: '8px',
+        border: '1px solid var(--border-color)',
+        background: 'rgba(0,0,0,0.25)',
+        color: 'var(--text-color)',
+        fontSize: '13px',
+        outline: 'none',
+        transition: 'border-color 0.2s',
+        boxSizing: 'border-box',
+    };
+    
+    const btnPrimary = {
+        background: 'linear-gradient(135deg, #fe2c55, #ff0050)',
+        color: 'white',
+        border: 'none',
+        padding: '10px 20px',
+        borderRadius: '10px',
+        fontWeight: 700,
+        fontSize: '13px',
+        cursor: 'pointer',
+        boxShadow: '0 4px 15px rgba(254, 44, 85, 0.3)',
+        transition: 'all 0.2s ease',
+    };
+    
+    const btnSecondary = {
+        background: 'rgba(255,255,255,0.05)',
+        color: 'var(--text-color)',
+        border: '1px solid var(--border-color)',
+        padding: '10px 20px',
+        borderRadius: '10px',
+        fontWeight: 600,
+        fontSize: '13px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+    };
+
+    const authenticatedAccounts = appleAccounts.filter(a => a.authenticated);
+
     return (
-        <div className="tiktok-subscription-container" style={{ color: 'var(--text-color)', fontFamily: 'Inter, Roboto, sans-serif' }}>
-            {/* Top Header Card */}
+        <div style={{ color: 'var(--text-color)', fontFamily: 'Inter, Roboto, sans-serif' }}>
+            
+            {/* ═══════ TOP HEADER ═══════ */}
             <div style={{
-                background: 'linear-gradient(135deg, rgba(254, 44, 85, 0.15), rgba(37, 244, 238, 0.1))',
-                border: '1px solid rgba(254, 44, 85, 0.3)',
+                background: 'linear-gradient(135deg, rgba(254, 44, 85, 0.12), rgba(37, 244, 238, 0.08))',
+                border: '1px solid rgba(254, 44, 85, 0.25)',
                 borderRadius: '16px',
                 padding: '24px',
                 marginBottom: '24px',
@@ -180,412 +301,528 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 gap: '16px',
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(12px)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{
-                        width: '56px',
-                        height: '56px',
+                        width: '56px', height: '56px',
                         borderRadius: '16px',
                         background: 'linear-gradient(135deg, #fe2c55, #25f4ee)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '28px',
-                        boxShadow: '0 8px 20px rgba(254, 44, 85, 0.4)'
+                        boxShadow: '0 8px 24px rgba(254, 44, 85, 0.4)'
                     }}>
                         🎵
                     </div>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px' }}>
-                            TikTok Subscriptions & Apple Automation
+                        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px' }}>
+                            TikTok Subscription Automation
                         </h2>
-                        <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-                            Đăng ký tự động hóa TikTok qua Apple Storefront API, hỗ trợ xác thực 2FA & Phone Farm iOS.
+                        <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
+                            Đăng ký tự động TikTok LIVE Sub qua Apple ID • GrandSlam SRP-6a Auth • Anisette Server
                         </p>
                     </div>
                 </div>
-
-                {/* Stat Badges */}
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '10px 18px', borderRadius: '12px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Tài khoản Sub</div>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>{stats.activeCount} Active</div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Apple Accounts</div>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#10b981' }}>{authenticatedAccounts.length}</div>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '10px 18px', borderRadius: '12px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Sắp hết hạn</div>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: '#f59e0b', marginTop: '2px' }}>{stats.expiringCount} Cần gia hạn</div>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Tasks Done</div>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#3b82f6' }}>{taskHistory.filter(t => t.status === 'success').length}</div>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation Sub-tabs */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                <button 
-                    onClick={() => setActiveTab('accounts')}
-                    className={`btn ${activeTab === 'accounts' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ borderRadius: '10px', padding: '10px 20px', fontWeight: '600', fontSize: '13px' }}
-                >
-                    📱 Tài khoản TikTok Sub ({tiktokAccounts.length})
-                </button>
-                <button 
-                    onClick={() => setActiveTab('plans')}
-                    className={`btn ${activeTab === 'plans' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ borderRadius: '10px', padding: '10px 20px', fontWeight: '600', fontSize: '13px' }}
-                >
-                    💎 Các gói Subscription
-                </button>
-                <button 
-                    onClick={() => setActiveTab('history')}
-                    className={`btn ${activeTab === 'history' ? 'btn-primary' : 'btn-secondary'}`}
-                    style={{ borderRadius: '10px', padding: '10px 20px', fontWeight: '600', fontSize: '13px' }}
-                >
-                    📜 Lịch sử thanh toán
-                </button>
+            {/* ═══════ NAVIGATION TABS ═══════ */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                {[
+                    { key: 'accounts', icon: '🍎', label: `Apple Accounts (${appleAccounts.length})` },
+                    { key: 'tasks', icon: '⚡', label: 'Tạo Subscription' },
+                    { key: 'history', icon: '📜', label: `Lịch sử (${taskHistory.length})` },
+                ].map(tab => (
+                    <button key={tab.key}
+                        onClick={() => setActivePanel(tab.key)}
+                        style={{
+                            padding: '10px 20px',
+                            borderRadius: '10px',
+                            border: activePanel === tab.key ? 'none' : '1px solid var(--border-color)',
+                            background: activePanel === tab.key ? 'linear-gradient(135deg, #fe2c55, #ff0050)' : 'rgba(255,255,255,0.03)',
+                            color: 'white',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: activePanel === tab.key ? '0 4px 15px rgba(254, 44, 85, 0.3)' : 'none',
+                        }}
+                    >
+                        {tab.icon} {tab.label}
+                    </button>
+                ))}
             </div>
 
-            {/* TAB 1: ACCOUNTS LIST */}
-            {activeTab === 'accounts' && (
+            {/* ═══════ PANEL 1: APPLE ACCOUNTS ═══════ */}
+            {activePanel === 'accounts' && (
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Danh sách tài khoản đang đăng ký gói</h3>
-                        <button 
-                            onClick={() => setActiveTab('plans')}
-                            style={{
-                                background: 'linear-gradient(135deg, #fe2c55, #ff0050)',
-                                color: 'white',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                boxShadow: '0 4px 12px rgba(254, 44, 85, 0.3)'
-                            }}
-                        >
-                            + Đăng ký tài khoản mới
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>
+                            Apple ID đã xác thực
+                        </h3>
+                        <button onClick={() => { resetLoginForm(); setShowLoginModal(true); }} style={btnPrimary}>
+                            + Thêm Apple Account
                         </button>
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-                        {tiktokAccounts.map(acc => (
-                            <div key={acc.id} style={{
-                                background: 'var(--modal-bg, rgba(15, 23, 42, 0.6))',
-                                border: `1px solid ${acc.status === 'expiring' ? '#f59e0b' : acc.status === 'expired' ? '#ef4444' : 'var(--border-color)'}`,
-                                borderRadius: '14px',
-                                padding: '18px',
-                                position: 'relative',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                                    <div style={{ fontSize: '24px', background: 'rgba(255,255,255,0.08)', width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        {acc.avatar}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 700, fontSize: '15px' }}>{acc.username}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--primary)', fontWeight: 600, marginTop: '2px' }}>{acc.planName}</div>
-                                    </div>
-                                    <span style={{
-                                        fontSize: '11px',
-                                        fontWeight: 700,
-                                        padding: '4px 10px',
-                                        borderRadius: '20px',
-                                        textTransform: 'uppercase',
-                                        background: acc.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : acc.status === 'expiring' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                        color: acc.status === 'active' ? '#10b981' : acc.status === 'expiring' ? '#f59e0b' : '#ef4444',
-                                        border: `1px solid ${acc.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : acc.status === 'expiring' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
-                                    }}>
-                                        {acc.status === 'active' ? 'Hoạt động' : acc.status === 'expiring' ? 'Sắp hết hạn' : 'Đã hết hạn'}
-                                    </span>
-                                </div>
-
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                                    🍏 Nguồn thanh toán: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>{acc.payMethod}</span>
-                                </div>
-
-                                <div style={{ fontSize: '13px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--text-muted)' }}>Ngày hết hạn:</span>
-                                    <span style={{ fontWeight: 600 }}>{acc.expireDate}</span>
-                                </div>
-
-                                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Tự động gia hạn:</span>
-                                    <label style={{ position: 'relative', display: 'inline-block', width: '40px', height: '22px', cursor: 'pointer' }}>
-                                        <input 
-                                            type="checkbox" 
-                                            checked={acc.autoRenew} 
-                                            onChange={() => handleToggleAutoRenew(acc.id)}
-                                            style={{ opacity: 0, width: 0, height: 0 }}
-                                        />
-                                        <span style={{
-                                            position: 'absolute',
-                                            top: 0, left: 0, right: 0, bottom: 0,
-                                            backgroundColor: acc.autoRenew ? '#fe2c55' : 'rgba(255,255,255,0.2)',
-                                            borderRadius: '22px',
-                                            transition: '0.3s'
+                    
+                    {appleAccounts.length === 0 ? (
+                        <div style={{ ...cardStyle, textAlign: 'center', padding: '48px 20px' }}>
+                            <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>🍎</div>
+                            <h3 style={{ margin: '0 0 8px', fontWeight: 700, color: 'var(--text-muted)' }}>Chưa có Apple Account nào</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 20px' }}>
+                                Thêm Apple ID để bắt đầu tự động đăng ký TikTok Subscription
+                            </p>
+                            <button onClick={() => { resetLoginForm(); setShowLoginModal(true); }} style={btnPrimary}>
+                                Thêm Apple Account đầu tiên
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                            {appleAccounts.map(acc => (
+                                <div key={acc.session_id} style={{
+                                    ...cardStyle,
+                                    border: `1px solid ${acc.authenticated ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                                    position: 'relative'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                                        <div style={{
+                                            width: '44px', height: '44px', borderRadius: '50%',
+                                            background: acc.authenticated ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px'
                                         }}>
-                                            <span style={{
-                                                position: 'absolute',
-                                                content: '""',
-                                                height: '16px', width: '16px',
-                                                left: acc.autoRenew ? '21px' : '3px',
-                                                bottom: '3px',
-                                                backgroundColor: 'white',
-                                                borderRadius: '50%',
-                                                transition: '0.3s'
-                                            }}></span>
+                                            {acc.authenticated ? '🟢' : '🟡'}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 700, fontSize: '14px' }}>{acc.apple_id}</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                                {acc.authenticated ? 'Đã xác thực ✓' : 'Chờ 2FA...'}
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '10px', fontWeight: 700, padding: '4px 8px', borderRadius: '20px',
+                                            textTransform: 'uppercase',
+                                            background: acc.authenticated ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                            color: acc.authenticated ? '#10b981' : '#f59e0b',
+                                        }}>
+                                            {acc.authenticated ? 'Active' : 'Pending'}
                                         </span>
-                                    </label>
+                                    </div>
+                                    
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                        🌐 Proxy: <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>{acc.proxy || 'Direct'}</span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                                        🔑 Token: <span style={{ color: 'var(--text-color)', fontWeight: 600, fontFamily: 'monospace' }}>
+                                            {acc.account_info?.token_preview || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '10px' }}>
+                                        🕐 Kết nối lúc: {acc.created_at}
+                                    </div>
+                                    
+                                    {acc.authenticated && (
+                                        <button 
+                                            onClick={() => { 
+                                                setSubForm(prev => ({ ...prev, session_id: acc.session_id }));
+                                                setActivePanel('tasks');
+                                            }}
+                                            style={{ ...btnSecondary, width: '100%', marginTop: '12px', fontSize: '12px' }}
+                                        >
+                                            ⚡ Dùng account này để Subscribe
+                                        </button>
+                                    )}
                                 </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
-                                <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                                    <button 
-                                        onClick={() => handleOpenSubscribe(plans.find(p => p.name === acc.planName) || plans[0])}
-                                        style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-color)', fontWeight: 600, fontSize: '12px', cursor: 'pointer' }}
-                                    >
-                                        🔄 Gia hạn ngay
-                                    </button>
+            {/* ═══════ PANEL 2: CREATE SUBSCRIPTION TASK ═══════ */}
+            {activePanel === 'tasks' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                    {/* LEFT: Task Form */}
+                    <div style={cardStyle}>
+                        <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 700 }}>
+                            ⚡ Tạo Subscription Task
+                        </h3>
+                        
+                        {/* Select Apple Account */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                                🍎 Apple Account
+                            </label>
+                            {authenticatedAccounts.length === 0 ? (
+                                <div style={{ padding: '12px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '8px', fontSize: '12px', color: '#f59e0b' }}>
+                                    ⚠️ Chưa có Apple Account. <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { setActivePanel('accounts'); setTimeout(() => { resetLoginForm(); setShowLoginModal(true); }, 100); }}>Thêm ngay →</span>
                                 </div>
+                            ) : (
+                                <select
+                                    value={subForm.session_id}
+                                    onChange={e => setSubForm(prev => ({ ...prev, session_id: e.target.value }))}
+                                    style={{ ...inputStyle, cursor: 'pointer' }}
+                                >
+                                    <option value="">-- Chọn Apple Account --</option>
+                                    {authenticatedAccounts.map(acc => (
+                                        <option key={acc.session_id} value={acc.session_id} style={{ background: '#1e293b' }}>
+                                            🍎 {acc.apple_id} ({acc.proxy || 'Direct'})
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                        
+                        {/* TikTok Username */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                                🎵 TikTok Username nhận Sub
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="@creator_name"
+                                value={subForm.tiktok_username}
+                                onChange={e => handleTiktokLookup(e.target.value)}
+                                style={inputStyle}
+                            />
+                            
+                            {/* Lookup Result */}
+                            {lookupLoading && (
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>⏳ Đang tra cứu...</div>
+                            )}
+                            {tiktokUserInfo && (
+                                <div style={{
+                                    marginTop: '8px', padding: '10px',
+                                    background: 'rgba(16, 185, 129, 0.08)',
+                                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                                    borderRadius: '8px',
+                                    display: 'flex', alignItems: 'center', gap: '10px'
+                                }}>
+                                    {tiktokUserInfo.avatar && (
+                                        <img src={tiktokUserInfo.avatar} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                    )}
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 700, fontSize: '13px' }}>
+                                            @{tiktokUserInfo.username}
+                                            {tiktokUserInfo.verified && <span style={{ color: '#3b82f6', marginLeft: '4px' }}>✓</span>}
+                                        </div>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                            {tiktokUserInfo.nickname} • {(tiktokUserInfo.followers || 0).toLocaleString()} followers
+                                        </div>
+                                    </div>
+                                    <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>
+                                        ID: {tiktokUserInfo.user_id}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Subscription Tier */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                                💎 Gói Subscription
+                            </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {subTiers.map(tier => (
+                                    <label key={tier.tier_id} style={{
+                                        display: 'flex', alignItems: 'center', gap: '10px',
+                                        padding: '10px 14px',
+                                        background: subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.1)' : 'rgba(255,255,255,0.02)',
+                                        border: `1px solid ${subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.4)' : 'var(--border-color)'}`,
+                                        borderRadius: '10px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                    }}>
+                                        <input
+                                            type="radio"
+                                            name="sub_tier"
+                                            value={tier.tier_id}
+                                            checked={subForm.tier_id === tier.tier_id}
+                                            onChange={e => setSubForm(prev => ({ ...prev, tier_id: e.target.value }))}
+                                            style={{ accentColor: '#fe2c55' }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 700, fontSize: '13px' }}>{tier.name}</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tier.description}</div>
+                                        </div>
+                                        <div style={{ fontWeight: 800, fontSize: '15px', color: '#fe2c55' }}>
+                                            ${tier.price}
+                                        </div>
+                                    </label>
+                                ))}
                             </div>
-                        ))}
+                        </div>
+                        
+                        {/* Submit */}
+                        <button
+                            onClick={handlePurchase}
+                            disabled={subLoading || !subForm.session_id || !subForm.tiktok_username.replace('@', '').trim()}
+                            style={{
+                                ...btnPrimary,
+                                width: '100%',
+                                padding: '14px',
+                                fontSize: '14px',
+                                opacity: subLoading ? 0.7 : 1,
+                            }}
+                        >
+                            {subLoading ? '⏳ Đang xử lý...' : '🚀 Bắt đầu đăng ký Subscription'}
+                        </button>
+                    </div>
+                    
+                    {/* RIGHT: Live Logs */}
+                    <div style={cardStyle}>
+                        <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700 }}>
+                            📋 Logs thời gian thực
+                        </h3>
+                        <div style={{
+                            background: 'rgba(0,0,0,0.3)',
+                            borderRadius: '10px',
+                            padding: '14px',
+                            height: '400px',
+                            overflowY: 'auto',
+                            fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                            fontSize: '12px',
+                            lineHeight: '1.8',
+                        }}>
+                            {taskLogs.length === 0 ? (
+                                <div style={{ color: 'var(--text-muted)', textAlign: 'center', paddingTop: '150px' }}>
+                                    Chưa có hoạt động nào. Tạo task để xem logs.
+                                </div>
+                            ) : (
+                                taskLogs.map((log, i) => (
+                                    <div key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', padding: '3px 0' }}>
+                                        <span style={{ color: '#64748b', marginRight: '8px' }}>[{log.time}]</span>
+                                        <span>{log.msg}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* TAB 2: PLANS PICKER */}
-            {activeTab === 'plans' && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-                    {plans.map(plan => (
-                        <div key={plan.id} style={{
-                            background: 'var(--modal-bg, rgba(15, 23, 42, 0.7))',
-                            border: plan.isPopular ? '2px solid #fe2c55' : '1px solid var(--border-color)',
-                            borderRadius: '20px',
-                            padding: '28px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            position: 'relative',
-                            boxShadow: plan.isPopular ? '0 10px 30px rgba(254, 44, 85, 0.25)' : '0 4px 15px rgba(0,0,0,0.1)',
-                            backdropFilter: 'blur(10px)'
-                        }}>
-                            {plan.badge && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '-12px',
-                                    right: '20px',
-                                    background: plan.color,
-                                    color: 'white',
-                                    padding: '4px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '11px',
-                                    fontWeight: 800,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px'
-                                }}>
-                                    {plan.badge}
-                                </div>
-                            )}
-
-                            <h3 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: 800 }}>{plan.name}</h3>
-                            
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '20px' }}>
-                                <span style={{ fontSize: '36px', fontWeight: 900, color: 'var(--text-color)' }}>${plan.price}</span>
-                                <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>/{plan.period}</span>
-                            </div>
-
-                            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px 0', flex: 1 }}>
-                                {plan.features.map((feat, idx) => (
-                                    <li key={idx} style={{ padding: '8px 0', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-color)' }}>
-                                        <span style={{ color: '#10b981', fontWeight: 800 }}>✓</span> {feat}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button 
-                                onClick={() => handleOpenSubscribe(plan)}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '12px',
-                                    border: 'none',
-                                    background: plan.color,
-                                    color: 'white',
-                                    fontWeight: 800,
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                                    transition: 'transform 0.2s ease'
-                                }}
-                            >
-                                Đăng ký gói ngay
-                            </button>
+            {/* ═══════ PANEL 3: HISTORY ═══════ */}
+            {activePanel === 'history' && (
+                <div style={cardStyle}>
+                    <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700 }}>
+                        📜 Lịch sử Subscription
+                    </h3>
+                    {taskHistory.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.4 }}>📋</div>
+                            Chưa có giao dịch nào. Tạo subscription task đầu tiên!
                         </div>
-                    ))}
-                </div>
-            )}
-
-            {/* TAB 3: TRANSACTION HISTORY */}
-            {activeTab === 'history' && (
-                <div style={{ background: 'var(--modal-bg, rgba(15, 23, 42, 0.6))', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '20px' }}>
-                    <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 700 }}>Nhật ký gia hạn & Hóa đơn</h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-                        <thead>
-                            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                                <th style={{ padding: '12px' }}>Mã Hóa đơn</th>
-                                <th style={{ padding: '12px' }}>Thời gian</th>
-                                <th style={{ padding: '12px' }}>Tài khoản TikTok</th>
-                                <th style={{ padding: '12px' }}>Gói dịch vụ</th>
-                                <th style={{ padding: '12px' }}>Số tiền</th>
-                                <th style={{ padding: '12px' }}>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {history.map(item => (
-                                <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <td style={{ padding: '12px', fontWeight: 700, fontFamily: 'monospace' }}>{item.id}</td>
-                                    <td style={{ padding: '12px' }}>{item.date}</td>
-                                    <td style={{ padding: '12px', fontWeight: 600 }}>{item.username}</td>
-                                    <td style={{ padding: '12px' }}>{item.plan}</td>
-                                    <td style={{ padding: '12px', fontWeight: 700, color: '#10b981' }}>{item.amount}</td>
-                                    <td style={{ padding: '12px' }}>
-                                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700 }}>
-                                            {item.status}
-                                        </span>
-                                    </td>
+                    ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'left' }}>
+                                    <th style={{ padding: '12px' }}>ID</th>
+                                    <th style={{ padding: '12px' }}>Ngày</th>
+                                    <th style={{ padding: '12px' }}>TikTok User</th>
+                                    <th style={{ padding: '12px' }}>Apple ID</th>
+                                    <th style={{ padding: '12px' }}>Gói</th>
+                                    <th style={{ padding: '12px' }}>Trạng thái</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {taskHistory.map(item => (
+                                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                        <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 700 }}>{item.id}</td>
+                                        <td style={{ padding: '12px' }}>{item.date}</td>
+                                        <td style={{ padding: '12px', fontWeight: 600 }}>@{item.tiktok_user}</td>
+                                        <td style={{ padding: '12px' }}>{item.apple_id}</td>
+                                        <td style={{ padding: '12px' }}>{item.tier}</td>
+                                        <td style={{ padding: '12px' }}>
+                                            <span style={{
+                                                padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700,
+                                                background: item.status === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                                color: item.status === 'success' ? '#10b981' : '#ef4444',
+                                            }}>
+                                                {item.status === 'success' ? '✅ Thành công' : '❌ Thất bại'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             )}
 
-            {/* DUAL-MODE MODAL: SUBSCRIBE PLAN & APPLE AUTH */}
-            {showSubscribeModal && selectedPlan && (
-                <div className="modal-overlay" style={{ display: 'flex', zIndex: 9999 }} onClick={() => setShowSubscribeModal(false)}>
-                    <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px', width: '90%' }}>
+            {/* ═══════ MODAL: ADD APPLE ACCOUNT ═══════ */}
+            {showLoginModal && (
+                <div className="modal-overlay" style={{ display: 'flex', zIndex: 9999 }} onClick={() => setShowLoginModal(false)}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px', width: '92%' }}>
                         <div className="modal-header">
-                            <h3>🎵 Đăng ký {selectedPlan.name}</h3>
-                            <button className="modal-close" onClick={() => setShowSubscribeModal(false)}>&times;</button>
+                            <h3>🍎 {loginStep === 'success' ? 'Xác thực thành công!' : loginStep === '2fa' ? 'Nhập mã 2FA' : 'Đăng nhập Apple ID'}</h3>
+                            <button className="modal-close" onClick={() => setShowLoginModal(false)}>&times;</button>
                         </div>
                         <div className="modal-body" style={{ padding: '20px' }}>
-                            <div style={{ background: 'rgba(254, 44, 85, 0.1)', border: '1px solid rgba(254, 44, 85, 0.3)', padding: '14px', borderRadius: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            
+                            {/* Step Indicator */}
+                            <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
+                                {['Credentials', '2FA Verify', 'Done'].map((step, i) => {
+                                    const stepKeys = ['credentials', '2fa', 'success'];
+                                    const currentIdx = stepKeys.indexOf(loginStep);
+                                    const isActive = i <= currentIdx;
+                                    return (
+                                        <div key={step} style={{
+                                            flex: 1, height: '4px', borderRadius: '4px',
+                                            background: isActive ? 'linear-gradient(135deg, #fe2c55, #ff0050)' : 'rgba(255,255,255,0.1)',
+                                            transition: 'all 0.3s',
+                                        }} />
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* Step 1: Credentials */}
+                            {loginStep === 'credentials' && (
                                 <div>
-                                    <div style={{ fontWeight: 800 }}>{selectedPlan.name}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Thời hạn 1 tháng</div>
-                                </div>
-                                <div style={{ fontSize: '22px', fontWeight: 900, color: '#fe2c55' }}>${selectedPlan.price}</div>
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label className="form-label" style={{ fontWeight: 700, marginBottom: '8px', display: 'block' }}>TikTok Username nhận Sub</label>
-                                <input 
-                                    type="text" 
-                                    className="form-input" 
-                                    placeholder="Nhập username (ví dụ: @tok_master_88)"
-                                    value={targetUsername}
-                                    onChange={e => setTargetUsername(e.target.value)}
-                                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-color)' }}
-                                />
-                            </div>
-
-                            {/* DUAL-MODE AUTH TABS */}
-                            <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                                <label className="form-label" style={{ fontWeight: 700, marginBottom: '10px', display: 'block' }}>Phương thức xác thực thanh toán Apple</label>
-                                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                                    <button 
-                                        onClick={() => setAuthMode('apple_id')}
-                                        style={{
-                                            flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
-                                            background: authMode === 'apple_id' ? '#fe2c55' : 'rgba(255,255,255,0.05)',
-                                            color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer'
-                                        }}
-                                    >
-                                        🔑 1. Apple ID Trực tiếp
-                                    </button>
-                                    <button 
-                                        onClick={() => setAuthMode('device')}
-                                        style={{
-                                            flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
-                                            background: authMode === 'device' ? '#fe2c55' : 'rgba(255,255,255,0.05)',
-                                            color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer'
-                                        }}
-                                    >
-                                        📱 2. Thiết bị iOS có sẵn
-                                    </button>
-                                </div>
-
-                                {/* PHƯƠNG ÁN 1: APPLE ID & 2FA */}
-                                {authMode === 'apple_id' && (
-                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                                        <div style={{ marginBottom: '12px' }}>
-                                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Apple ID (Email)</label>
-                                            <input 
-                                                type="email" 
-                                                className="form-input" 
-                                                placeholder="example@icloud.com"
-                                                value={appleId}
-                                                onChange={e => setAppleId(e.target.value)}
-                                                disabled={requires2FA}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-color)' }}
-                                            />
-                                        </div>
-                                        <div style={{ marginBottom: requires2FA ? '12px' : '0' }}>
-                                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Mật khẩu (Password)</label>
-                                            <input 
-                                                type="password" 
-                                                className="form-input" 
-                                                placeholder="••••••••••••"
-                                                value={applePassword}
-                                                onChange={e => setApplePassword(e.target.value)}
-                                                disabled={requires2FA}
-                                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-color)' }}
-                                            />
-                                        </div>
-
-                                        {/* BƯỚC XÁC THỰC 2FA KHI CẦN */}
-                                        {requires2FA && (
-                                            <div style={{ marginTop: '12px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', padding: '12px', borderRadius: '8px' }}>
-                                                <label style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                                                    📲 Mã xác minh Apple 2FA (6 chữ số)
-                                                </label>
-                                                <input 
-                                                    type="text" 
-                                                    maxLength="6"
-                                                    className="form-input" 
-                                                    placeholder="Ví dụ: 849201"
-                                                    value={code2FA}
-                                                    onChange={e => setCode2FA(e.target.value)}
-                                                    style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #f59e0b', background: 'rgba(0,0,0,0.3)', color: 'white', fontWeight: 800, letterSpacing: '3px', textAlign: 'center', fontSize: '16px' }}
-                                                />
-                                            </div>
-                                        )}
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Apple ID (Email)</label>
+                                        <input
+                                            type="email"
+                                            placeholder="example@icloud.com"
+                                            value={loginForm.apple_id}
+                                            onChange={e => setLoginForm(prev => ({ ...prev, apple_id: e.target.value }))}
+                                            style={inputStyle}
+                                            autoFocus
+                                        />
                                     </div>
-                                )}
-
-                                {/* PHƯƠNG ÁN 2: THIẾT BỊ IOS SẴN CÓ */}
-                                {authMode === 'device' && (
-                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Chọn iPhone / Node đảm nhận thanh toán</label>
-                                        <select 
-                                            value={selectedDevice}
-                                            onChange={e => setSelectedDevice(e.target.value)}
-                                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.08)', color: 'var(--text-color)', fontWeight: 600 }}
-                                        >
-                                            {availableDevices.map(dev => (
-                                                <option key={dev.id} value={dev.id} style={{ background: '#1e293b', color: 'white' }}>
-                                                    {dev.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>Password</label>
+                                        <input
+                                            type="password"
+                                            placeholder="••••••••••••"
+                                            value={loginForm.password}
+                                            onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                                            style={inputStyle}
+                                        />
                                     </div>
-                                )}
-                            </div>
+                                    <div style={{ marginBottom: '14px' }}>
+                                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                                            Proxy <span style={{ fontWeight: 400, opacity: 0.6 }}>(tùy chọn)</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="socks5://user:pass@ip:port"
+                                            value={loginForm.proxy}
+                                            onChange={e => setLoginForm(prev => ({ ...prev, proxy: e.target.value }))}
+                                            style={inputStyle}
+                                        />
+                                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                            Hỗ trợ: socks5:// • http:// • https://
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Step 2: 2FA Code */}
+                            {loginStep === '2fa' && (
+                                <div>
+                                    <div style={{
+                                        background: 'rgba(245, 158, 11, 0.1)',
+                                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                                        borderRadius: '10px',
+                                        padding: '14px',
+                                        marginBottom: '16px',
+                                        textAlign: 'center'
+                                    }}>
+                                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📲</div>
+                                        <div style={{ fontWeight: 700, fontSize: '14px', color: '#f59e0b' }}>
+                                            Mã xác minh 2FA đã được gửi
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                            Kiểm tra thiết bị tin cậy hoặc SMS và nhập mã 6 chữ số
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        maxLength="6"
+                                        placeholder="000000"
+                                        value={code2FA}
+                                        onChange={e => setCode2FA(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        style={{
+                                            ...inputStyle,
+                                            textAlign: 'center',
+                                            fontSize: '24px',
+                                            fontWeight: 800,
+                                            letterSpacing: '8px',
+                                            padding: '16px',
+                                            border: '2px solid #f59e0b',
+                                        }}
+                                        autoFocus
+                                    />
+                                </div>
+                            )}
+                            
+                            {/* Step 3: Success */}
+                            {loginStep === 'success' && (
+                                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                    <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎉</div>
+                                    <h3 style={{ margin: '0 0 8px', fontWeight: 800, color: '#10b981' }}>
+                                        Xác thực thành công!
+                                    </h3>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                                        Apple Account <strong>{loginForm.apple_id}</strong> đã sẵn sàng sử dụng.
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* Message */}
+                            {loginMessage && (
+                                <div style={{
+                                    marginTop: '12px',
+                                    padding: '10px 14px',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    background: loginMessage.includes('✅') || loginMessage.includes('🎉')
+                                        ? 'rgba(16, 185, 129, 0.1)' 
+                                        : loginMessage.includes('❌')
+                                            ? 'rgba(239, 68, 68, 0.1)'
+                                            : 'rgba(245, 158, 11, 0.1)',
+                                    color: loginMessage.includes('✅') || loginMessage.includes('🎉')
+                                        ? '#10b981'
+                                        : loginMessage.includes('❌')
+                                            ? '#ef4444'
+                                            : '#f59e0b',
+                                    border: `1px solid ${loginMessage.includes('✅') || loginMessage.includes('🎉') ? 'rgba(16,185,129,0.3)' : loginMessage.includes('❌') ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                                }}>
+                                    {loginMessage}
+                                </div>
+                            )}
                         </div>
                         <div className="modal-footer">
-                            <button className="btn btn-secondary" onClick={() => setShowSubscribeModal(false)} disabled={loading}>Hủy</button>
-                            <button className="btn btn-primary" onClick={handleConfirmSubscribe} disabled={loading} style={{ background: 'linear-gradient(135deg, #fe2c55, #ff0050)', border: 'none' }}>
-                                {loading ? 'Đang xác thực...' : requires2FA ? 'Xác nhận 2FA & Mua' : 'Xác nhận thanh toán'}
+                            <button className="btn btn-secondary" onClick={() => setShowLoginModal(false)} disabled={loginLoading}>
+                                {loginStep === 'success' ? 'Đóng' : 'Hủy'}
                             </button>
+                            {loginStep === 'credentials' && (
+                                <button
+                                    onClick={handleLoginSubmit}
+                                    disabled={loginLoading || !loginForm.apple_id || !loginForm.password}
+                                    style={{ ...btnPrimary, opacity: loginLoading ? 0.7 : 1 }}
+                                >
+                                    {loginLoading ? '⏳ Đang xác thực...' : '🔑 Đăng nhập Apple ID'}
+                                </button>
+                            )}
+                            {loginStep === '2fa' && (
+                                <button
+                                    onClick={handleVerify2FA}
+                                    disabled={loginLoading || code2FA.length !== 6}
+                                    style={{ ...btnPrimary, opacity: loginLoading ? 0.7 : 1 }}
+                                >
+                                    {loginLoading ? '⏳ Đang xác minh...' : '✅ Xác nhận 2FA'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
