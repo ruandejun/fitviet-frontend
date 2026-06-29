@@ -916,16 +916,14 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
             )}
             {/* ══════ PAYMENT CARD MODAL ══════ */}
             {showCardModal && (
-                <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}>
-                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '520px' }}>
-                        <div className="modal-content" style={{ ...modalStyle }}>
-                            {/* Header */}
-                            <div className="modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 24px' }}>
-                                <h5 className="modal-title" style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '16px' }}>
-                                    💳 Quản lý Phương thức Thanh toán
-                                </h5>
-                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowCardModal(false)} />
-                            </div>
+                <div className="modal-overlay" style={{ display: 'flex', zIndex: 9999 }} onClick={() => setShowCardModal(false)}>
+                    <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '92%' }}>
+                        <div className="modal-header">
+                            <h3 style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '16px', margin: 0 }}>
+                                💳 Quản lý Phương thức Thanh toán
+                            </h3>
+                            <button className="modal-close" onClick={() => setShowCardModal(false)}>&times;</button>
+                        </div>
                             
                             <div className="modal-body" style={{ padding: '20px 24px' }}>
                                 {/* Current Payment Info */}
@@ -1103,7 +1101,6 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 >
                                     {cardLoading ? '⏳ Đang xử lý...' : '💳 Thêm thẻ thanh toán'}
                                 </button>
-                            </div>
                         </div>
                     </div>
                 </div>
