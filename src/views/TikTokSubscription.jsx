@@ -149,7 +149,8 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         addLog(`💳 [MunLogin] Khởi chạy thêm ${selectedCards.length} thẻ tự động cho ${multiCardAccount.apple_id}...`);
         
         try {
-            const resStr = await bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards), multiCardProxy);
+            const accountPassword = multiCardAccount.password || '';
+            const resStr = await bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards), multiCardProxy, accountPassword);
             const res = JSON.parse(resStr);
             if (res.success) {
                 setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');

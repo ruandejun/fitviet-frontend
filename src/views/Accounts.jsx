@@ -153,7 +153,8 @@ export default function Accounts({ currentUser, page, onPageChange }) {
             // Find session_id or default to id
             const emailAddress = multiCardAccount.email || multiCardAccount.username || '';
             const session_id = multiCardAccount.browser_profiles || emailAddress;
-            const resStr = await bridge.addPaymentCardsAuto(session_id, emailAddress, JSON.stringify(selectedCards), multiCardProxy);
+            const accountPassword = multiCardAccount.password || '';
+            const resStr = await bridge.addPaymentCardsAuto(session_id, emailAddress, JSON.stringify(selectedCards), multiCardProxy, accountPassword);
             const res = JSON.parse(resStr);
             if (res.success) {
                 setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');
