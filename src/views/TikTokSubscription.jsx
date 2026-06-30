@@ -24,6 +24,8 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     const [tiktokUserInfo, setTiktokUserInfo] = useState(null);
     const [lookupLoading, setLookupLoading] = useState(false);
     const [subTiers, setSubTiers] = useState([]);
+    const [tiersSource, setTiersSource] = useState('default');
+    const [tiersError, setTiersError] = useState('');
     
     // ── Task History State ──
     const [taskHistory, setTaskHistory] = useState([]);
@@ -68,6 +70,8 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     };
     
     const fetchDefaultTiers = async () => {
+        setTiersSource('default');
+        setTiersError('');
         try {
             const res = await apiRequest('/dashboard/api/apple-sub/tiktok-tiers/');
             if (res.ok) {
@@ -343,15 +347,33 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 if (tiersData.success) {
                                     const creatorTiers = tiersData.tiers || [];
                                     setSubTiers(creatorTiers);
-                                    if (creatorTiers.length > 0) {
-                                        setSubForm(prev => ({ ...prev, tier_id: creatorTiers[0].tier_id }));
-                                        addLog(`✅ Đã tải ${creatorTiers.length} gói sub thực tế cho @${data.username}`);
+                                    if (tiersData.source === 'creator') {
+                                        setTiersSource('creator');
+                                        setTiersError('');
+                                        if (creatorTiers.length > 0) {
+                                            setSubForm(prev => ({ ...prev, tier_id: creatorTiers[0].tier_id }));
+                                            addLog(`✅ Đã tải ${creatorTiers.length} gói sub thực tế cho @${data.username}`);
+                                        } else {
+                                            setSubForm(prev => ({ ...prev, tier_id: '' }));
+                                            addLog(`⚠️ Creator @${data.username} không có gói sub nào hoạt động.`);
+                                        }
                                     } else {
-                                        setSubForm(prev => ({ ...prev, tier_id: '' }));
-                                        addLog(`⚠️ Creator @${data.username} không có gói sub nào hoạt động.`);
+                                        setTiersSource('default');
+                                        setTiersError(tiersData.message || 'Lỗi kết nối API TikTok');
+                                        if (creatorTiers.length > 0) {
+                                            setSubForm(prev => ({ ...prev, tier_id: creatorTiers[0].tier_id }));
+                                        }
+                                        addLog(`⚠️ Không lấy được gói sub thực tế. Đang hiển thị gói mặc định.`);
                                     }
                                 } else {
-                                    fetchDefaultTiers();
+                                    const fallbackTiers = tiersData.tiers || [];
+                                    setSubTiers(fallbackTiers);
+                                    setTiersSource('default');
+                                    setTiersError(tiersData.message || 'Không thể tải gói sub thực tế từ TikTok');
+                                    if (fallbackTiers.length > 0) {
+                                        setSubForm(prev => ({ ...prev, tier_id: fallbackTiers[0].tier_id }));
+                                    }
+                                    addLog(`⚠️ Lỗi tải gói sub thực tế: ${tiersData.message || 'Lỗi API'}. Dùng gói mặc định.`);
                                 }
                             } else {
                                 fetchDefaultTiers();
@@ -816,6 +838,20 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                             <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
                                 💎 Gói Subscription
                             </label>
+                            {tiersError && (
+                                <div style={{
+                                    padding: '10px 14px',
+                                    background: 'rgba(245, 158, 11, 0.08)',
+                                    border: '1px solid rgba(245, 158, 11, 0.2)',
+                                    borderRadius: '8px',
+                                    color: '#f59e0b',
+                                    fontSize: '11px',
+                                    marginBottom: '10px',
+                                    lineHeight: '1.4'
+                                }}>
+                                    ⚠️ {tiersError}. Đang hiển thị danh sách gói mặc định để bạn chọn hoặc nhập Apple Adam ID đè bên dưới.
+                                </div>
+                            )}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {subTiers.length === 0 ? (
                                     <div style={{
