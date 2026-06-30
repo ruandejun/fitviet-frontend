@@ -270,7 +270,40 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
             }
         } catch (e) { console.error('Account info error:', e); }
     };
-    
+    const handleAddCardMunlogin = async () => {
+        if (!cardForm.card_number || !cardForm.expiry_month || !cardForm.expiry_year || !cardForm.cvv || !cardForm.first_name || !cardForm.last_name) {
+            setCardMessage('⚠️ Vui lòng nhập đầy đủ thông tin thẻ!');
+            return;
+        }
+        
+        const bridge = window.munAutomationBridge || window.qhtdBridge;
+        if (bridge && bridge.addPaymentCardAuto) {
+            setCardLoading(true);
+            setCardMessage('🚀 Đang khởi chạy MunLogin để tự động thêm thẻ...');
+            addLog(`💳 [MunLogin] Đang khởi chạy tự động thêm thẻ ****${cardForm.card_number.slice(-4)}...`);
+            
+            try {
+                const resStr = bridge.addPaymentCardAuto(cardSessionId, JSON.stringify(cardForm));
+                const res = JSON.parse(resStr);
+                if (res.success) {
+                    setCardMessage('✅ Đã khởi chạy MunLogin thành công. Hãy quan sát trình duyệt!');
+                    addLog('✅ [MunLogin] Khởi chạy kịch bản thêm thẻ thành công.');
+                } else {
+                    setCardMessage('❌ Lỗi: ' + res.error);
+                    addLog('❌ [MunLogin] Khởi chạy thất bại: ' + res.error);
+                }
+            } catch (e) {
+                setCardMessage('❌ Lỗi kết nối Agent: ' + e.message);
+            } finally {
+                setCardLoading(false);
+            }
+            return;
+        }
+        
+        // Fallback: Backend-driven automation if agent is not running
+        handleAddCard();
+    };
+
     const handleAddCard = async () => {
         if (!cardForm.card_number || !cardForm.expiry_month || !cardForm.expiry_year || !cardForm.cvv || !cardForm.first_name || !cardForm.last_name) {
             setCardMessage('⚠️ Vui lòng nhập đầy đủ thông tin thẻ!');
@@ -1434,7 +1467,7 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                     🌐 Mở MunLogin
                                 </button>
                                 <button
-                                    onClick={handleAddCard}
+                                    onClick={handleAddCardMunlogin}
                                     disabled={cardLoading || !cardForm.card_number || !cardForm.first_name}
                                     style={{ ...btnPrimary, opacity: cardLoading ? 0.7 : 1, background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', flex: 1 }}
                                 >
