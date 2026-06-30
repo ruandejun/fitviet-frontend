@@ -72,7 +72,16 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
             const res = await apiRequest('/dashboard/api/apple-sub/tiktok-tiers/');
             if (res.ok) {
                 const data = await res.json();
-                setSubTiers(data.tiers || []);
+                const tiers = data.tiers || [];
+                setSubTiers(tiers);
+                if (tiers.length > 0) {
+                    setSubForm(prev => {
+                        if (!prev.tier_id || !tiers.some(t => t.tier_id === prev.tier_id)) {
+                            return { ...prev, tier_id: tiers[0].tier_id };
+                        }
+                        return prev;
+                    });
+                }
             }
         } catch (e) {
             console.error('Fetch tiers error:', e);
@@ -313,7 +322,10 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         if (lookupTimeout.current) clearTimeout(lookupTimeout.current);
         
         const clean = username.replace('@', '').trim();
-        if (clean.length < 2) return;
+        if (clean.length < 2) {
+            fetchDefaultTiers();
+            return;
+        }
         
         lookupTimeout.current = setTimeout(async () => {
             setLookupLoading(true);
@@ -323,10 +335,33 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                     const data = await res.json();
                     if (data.success) {
                         setTiktokUserInfo(data);
+                        if (data.user_id) {
+                            // Fetch creator-specific tiers dynamically
+                            const tiersRes = await apiRequest(`/dashboard/api/apple-sub/tiktok-tiers/?creator_id=${encodeURIComponent(data.user_id)}`);
+                            if (tiersRes.ok) {
+                                const tiersData = await tiersRes.json();
+                                if (tiersData.success && tiersData.tiers && tiersData.tiers.length > 0) {
+                                    setSubTiers(tiersData.tiers);
+                                    setSubForm(prev => ({ ...prev, tier_id: tiersData.tiers[0].tier_id }));
+                                    addLog(`✅ Đã tải ${tiersData.tiers.length} gói sub thực tế cho @${data.username}`);
+                                } else {
+                                    fetchDefaultTiers();
+                                }
+                            } else {
+                                fetchDefaultTiers();
+                            }
+                        } else {
+                            fetchDefaultTiers();
+                        }
+                    } else {
+                        fetchDefaultTiers();
                     }
+                } else {
+                    fetchDefaultTiers();
                 }
             } catch (e) {
                 console.error('TikTok lookup error:', e);
+                fetchDefaultTiers();
             } finally {
                 setLookupLoading(false);
             }
@@ -354,6 +389,7 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                     session_id: subForm.session_id,
                     tiktok_username: subForm.tiktok_username,
                     tier_id: subForm.tier_id || undefined,
+                    adam_id: subForm.adam_id || undefined,
                 })
             });
             const data = await res.json();
@@ -794,7 +830,16 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                             style={{ accentColor: '#fe2c55' }}
                                         />
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: 700, fontSize: '13px' }}>{tier.name}</div>
+                                            <div style={{ fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                                {tier.name}
+                                                <span style={{
+                                                    fontSize: '10px', color: '#fe2c55',
+                                                    background: 'rgba(254, 44, 85, 0.08)', border: '1px solid rgba(254, 44, 85, 0.2)',
+                                                    padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600
+                                                }}>
+                                                    ID: {tier.tier_id}
+                                                </span>
+                                            </div>
                                             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tier.description}</div>
                                         </div>
                                         <div style={{ fontWeight: 800, fontSize: '15px', color: '#fe2c55' }}>
@@ -802,6 +847,23 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                         </div>
                                     </label>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Custom Apple Adam ID override */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                                🆔 Apple Adam ID Override (tùy chọn)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Nhập Apple Adam ID nếu muốn đè (VD: 1479707472)"
+                                value={subForm.adam_id || ''}
+                                onChange={e => setSubForm(prev => ({ ...prev, adam_id: e.target.value.replace(/\D/g, '') }))}
+                                style={inputStyle}
+                            />
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                Để trống hệ thống sẽ tự động dùng ID của gói sub hoặc TikTok App ID mặc định.
                             </div>
                         </div>
                         
