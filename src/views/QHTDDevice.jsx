@@ -145,7 +145,7 @@ export default function QHTDDevice() {
                     return JSON.stringify({success: true});
                 },
                 backupAppData: async (serial, bundleId) => {
-                    return JSON.stringify({success: true, path: "/root/storagon/backup/" + bundleId + ".zip"});
+                    return JSON.stringify({success: true, path: "/root/c69-backend/backup/" + bundleId + ".zip"});
                 },
                 restoreAppData: async (serial, bundleId) => {
                     return JSON.stringify({success: true});
