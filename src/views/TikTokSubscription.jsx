@@ -43,6 +43,124 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     const [cardMessage, setCardMessage] = useState('');
     const [accountPaymentInfo, setAccountPaymentInfo] = useState(null);
     
+    // ── Multi-Card Automation Modal State ──
+    const [showMultiCardModal, setShowMultiCardModal] = useState(false);
+    const [multiCardLoading, setMultiCardLoading] = useState(false);
+    const [multiCardMessage, setMultiCardMessage] = useState('');
+    const [multiCardCount, setMultiCardCount] = useState(1);
+    const [multiCardAccount, setMultiCardAccount] = useState(null);
+    const [availableCards, setAvailableCards] = useState([]);
+    const [selectedCardIds, setSelectedCardIds] = useState([]);
+
+    const openMultiCardModal = async (acc) => {
+        setMultiCardAccount(acc);
+        setMultiCardMessage('🔍 Đang tải danh sách thẻ chưa sử dụng...');
+        setMultiCardLoading(true);
+        setShowMultiCardModal(true);
+        setAvailableCards([]);
+        setSelectedCardIds([]);
+        setMultiCardCount(1);
+        
+        try {
+            const res = await apiRequest('/dashboard/api/cards/?status=Chưa sử dụng&page_size=100');
+            if (res.ok) {
+                const data = await res.json();
+                const cardsList = data.results || data || [];
+                setAvailableCards(cardsList);
+                
+                if (cardsList.length > 0) {
+                    setSelectedCardIds([cardsList[0].id]);
+                }
+                setMultiCardMessage('');
+            } else {
+                setMultiCardMessage('❌ Lỗi khi tải danh sách thẻ từ server.');
+            }
+        } catch (e) {
+            setMultiCardMessage('❌ Lỗi kết nối: ' + e.message);
+        } finally {
+            setMultiCardLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (availableCards.length > 0) {
+            const count = Math.min(Math.max(1, parseInt(multiCardCount) || 1), availableCards.length);
+            const initialChecked = availableCards.slice(0, count).map(c => c.id);
+            setSelectedCardIds(initialChecked);
+        }
+    }, [multiCardCount, availableCards]);
+
+    const handleToggleCard = (cardId) => {
+        setSelectedCardIds(prev => {
+            if (prev.includes(cardId)) {
+                const filtered = prev.filter(id => id !== cardId);
+                setMultiCardCount(filtered.length);
+                return filtered;
+            } else {
+                const updated = [...prev, cardId];
+                setMultiCardCount(updated.length);
+                return updated;
+            }
+        });
+    };
+
+    const handleStartMultiCardAutomation = async () => {
+        if (!multiCardAccount) return;
+        if (selectedCardIds.length === 0) {
+            setMultiCardMessage('⚠️ Vui lòng chọn ít nhất một thẻ!');
+            return;
+        }
+        
+        const bridge = window.munAutomationBridge || window.qhtdBridge;
+        if (!bridge || !bridge.addPaymentCardsAuto) {
+            setMultiCardMessage('❌ Lỗi: Agent MunAutomation không chạy hoặc không hỗ trợ thêm nhiều thẻ.');
+            return;
+        }
+        
+        const selectedCards = availableCards.filter(c => selectedCardIds.includes(c.id)).map(c => {
+            let month = '12';
+            let year = '28';
+            if (c.expiry_date && c.expiry_date.includes('/')) {
+                const parts = c.expiry_date.split('/');
+                month = parts[0].trim().padStart(2, '0');
+                year = parts[1].trim();
+            }
+            
+            return {
+                id: c.id,
+                card_number: c.card_number || '',
+                expiry_month: month,
+                expiry_year: year,
+                cvv: c.cvv || '',
+                first_name: 'Nguyen',
+                last_name: 'Van A',
+                address_line1: '123 Le Loi',
+                city: 'Ho Chi Minh',
+                zip_code: '70000',
+                country_code: 'VN',
+                phone: '0987654321'
+            };
+        });
+        
+        setMultiCardLoading(true);
+        setMultiCardMessage('🚀 Đang khởi chạy kịch bản MunLogin...');
+        addLog(`💳 [MunLogin] Khởi chạy thêm ${selectedCards.length} thẻ tự động cho ${multiCardAccount.apple_id}...`);
+        
+        try {
+            const resStr = bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards));
+            const res = JSON.parse(resStr);
+            if (res.success) {
+                setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');
+            } else {
+                setMultiCardMessage('❌ Lỗi: ' + res.error);
+            }
+        } catch (e) {
+            setMultiCardMessage('❌ Lỗi kết nối Agent: ' + e.message);
+        } finally {
+            setMultiCardLoading(false);
+        }
+    };
+
     // ── Active Tab ──
     const [activePanel, setActivePanel] = useState('accounts'); // 'accounts', 'tasks', 'history'
     
@@ -52,6 +170,26 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     useEffect(() => {
         fetchAccounts();
         fetchDefaultTiers();
+    }, []);
+
+    useEffect(() => {
+        const bridge = window.munAutomationBridge || window.qhtdBridge;
+        const handleStatusMessage = (msg) => {
+            setMultiCardMessage(msg);
+            addLog(`🤖 [MunLogin] ${msg}`);
+        };
+        
+        if (bridge && bridge.statusMessage) {
+            bridge.statusMessage.connect(handleStatusMessage);
+        }
+        
+        return () => {
+            if (bridge && bridge.statusMessage) {
+                try {
+                    bridge.statusMessage.disconnect(handleStatusMessage);
+                } catch (e) {}
+            }
+        };
     }, []);
     
     const fetchAccounts = async () => {
@@ -714,6 +852,12 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                                     style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(16,185,129,0.4)', color: '#10b981' }}
                                                 >
                                                     💳 Thêm thẻ
+                                                </button>
+                                                <button 
+                                                    onClick={() => openMultiCardModal(acc)}
+                                                    style={{ ...btnSecondary, flex: 1, fontSize: '11px', padding: '6px 8px', borderColor: 'rgba(59,130,246,0.4)', color: '#3b82f6' }}
+                                                >
+                                                    💳 Thêm thẻ tự động
                                                 </button>
                                             </>
                                         )}
@@ -1473,6 +1617,167 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 >
                                     {cardLoading ? '⏳ Đang xử lý...' : '💳 Thêm thẻ tự động'}
                                 </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ═══════ MODAL 3: THÊM THẺ TỰ ĐỘNG (NHIỀU THẺ) ═══════ */}
+            {showMultiCardModal && multiCardAccount && (
+                <div className="modal-backdrop" style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                    backdropFilter: 'blur(8px)', animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div className="modal-content" style={{
+                        background: 'radial-gradient(circle at top left, #1e293b, #0f172a)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '16px', width: '90%', maxWidth: '640px',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                        display: 'flex', flexDirection: 'column', maxHeight: '90vh'
+                    }}>
+                        <div className="modal-header" style={{
+                            padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                💳 Thêm Thẻ Tự Động (Multi-Card)
+                            </h3>
+                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                                {multiCardAccount.apple_id}
+                            </span>
+                        </div>
+                        
+                        <div className="modal-body" style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                            {/* Input number of cards */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                                    Số lượng thẻ muốn thêm:
+                                </label>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <input 
+                                        type="number" 
+                                        min="1" 
+                                        max={availableCards.length}
+                                        value={multiCardCount}
+                                        onChange={(e) => setMultiCardCount(Math.max(1, parseInt(e.target.value) || 1))}
+                                        style={{
+                                            ...inputStyle,
+                                            width: '100px',
+                                            textAlign: 'center',
+                                            fontSize: '16px',
+                                            fontWeight: 700
+                                        }}
+                                        disabled={multiCardLoading}
+                                    />
+                                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                                        (Hiện có {availableCards.length} thẻ chưa sử dụng)
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Table of unused cards */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                                    Chọn thẻ từ danh sách quản lý thẻ:
+                                </label>
+                                <div style={{
+                                    border: '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: '10px',
+                                    maxHeight: '220px',
+                                    overflowY: 'auto',
+                                    backgroundColor: 'rgba(0,0,0,0.2)'
+                                }}>
+                                    {availableCards.length === 0 ? (
+                                        <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                                            Không có thẻ nào ở trạng thái "Chưa sử dụng"
+                                        </div>
+                                    ) : (
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                                                    <th style={{ padding: '10px', textAlign: 'center', width: '40px' }}>Chọn</th>
+                                                    <th style={{ padding: '10px', textAlign: 'left' }}>Số thẻ</th>
+                                                    <th style={{ padding: '10px', textAlign: 'center', width: '80px' }}>Hạn dùng</th>
+                                                    <th style={{ padding: '10px', textAlign: 'center', width: '60px' }}>CVV</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {availableCards.map(c => (
+                                                    <tr key={c.id} style={{
+                                                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                                        backgroundColor: selectedCardIds.includes(c.id) ? 'rgba(59,130,246,0.08)' : 'transparent'
+                                                    }}>
+                                                        <td style={{ padding: '10px', textAlign: 'center' }}>
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={selectedCardIds.includes(c.id)}
+                                                                onChange={() => handleToggleCard(c.id)}
+                                                                style={{ cursor: 'pointer' }}
+                                                            />
+                                                        </td>
+                                                        <td style={{ padding: '10px', fontWeight: 600, fontFamily: 'monospace' }}>
+                                                            {c.card_number}
+                                                        </td>
+                                                        <td style={{ padding: '10px', textAlign: 'center' }}>
+                                                            {c.expiry_date}
+                                                        </td>
+                                                        <td style={{ padding: '10px', textAlign: 'center', fontFamily: 'monospace' }}>
+                                                            {c.cvv}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* Message / Status logger */}
+                            {multiCardMessage && (
+                                <div style={{
+                                    padding: '12px 16px',
+                                    borderRadius: '10px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    lineHeight: '1.5',
+                                    background: multiCardMessage.includes('✅') ? 'rgba(16,185,129,0.08)' :
+                                                multiCardMessage.includes('❌') ? 'rgba(239,68,68,0.08)' : 'rgba(59,130,246,0.08)',
+                                    color: multiCardMessage.includes('✅') ? '#10b981' :
+                                           multiCardMessage.includes('❌') ? '#ef4444' : '#3b82f6',
+                                    border: `1px solid ${
+                                        multiCardMessage.includes('✅') ? 'rgba(16,185,129,0.2)' :
+                                        multiCardMessage.includes('❌') ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)'
+                                    }`,
+                                    marginBottom: '10px',
+                                    whiteSpace: 'pre-line'
+                                }}>
+                                    {multiCardMessage}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="modal-footer" style={{
+                            borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 24px',
+                            display: 'flex', gap: '12px', justifyContent: 'flex-end'
+                        }}>
+                            <button className="btn btn-secondary" onClick={() => setShowMultiCardModal(false)} disabled={multiCardLoading}>
+                                Đóng
+                            </button>
+                            <button 
+                                onClick={handleStartMultiCardAutomation}
+                                disabled={multiCardLoading || selectedCardIds.length === 0}
+                                style={{
+                                    ...btnPrimary,
+                                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                                    opacity: (multiCardLoading || selectedCardIds.length === 0) ? 0.6 : 1,
+                                    flex: 1,
+                                    fontWeight: 700
+                                }}
+                            >
+                                {multiCardLoading ? '⏳ Đang xử lý...' : `🚀 Chạy tự động (${selectedCardIds.length} thẻ)`}
+                            </button>
                         </div>
                     </div>
                 </div>
