@@ -340,10 +340,16 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                             const tiersRes = await apiRequest(`/dashboard/api/apple-sub/tiktok-tiers/?creator_id=${encodeURIComponent(data.user_id)}`);
                             if (tiersRes.ok) {
                                 const tiersData = await tiersRes.json();
-                                if (tiersData.success && tiersData.tiers && tiersData.tiers.length > 0) {
-                                    setSubTiers(tiersData.tiers);
-                                    setSubForm(prev => ({ ...prev, tier_id: tiersData.tiers[0].tier_id }));
-                                    addLog(`✅ Đã tải ${tiersData.tiers.length} gói sub thực tế cho @${data.username}`);
+                                if (tiersData.success) {
+                                    const creatorTiers = tiersData.tiers || [];
+                                    setSubTiers(creatorTiers);
+                                    if (creatorTiers.length > 0) {
+                                        setSubForm(prev => ({ ...prev, tier_id: creatorTiers[0].tier_id }));
+                                        addLog(`✅ Đã tải ${creatorTiers.length} gói sub thực tế cho @${data.username}`);
+                                    } else {
+                                        setSubForm(prev => ({ ...prev, tier_id: '' }));
+                                        addLog(`⚠️ Creator @${data.username} không có gói sub nào hoạt động.`);
+                                    }
                                 } else {
                                     fetchDefaultTiers();
                                 }
@@ -811,42 +817,64 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                 💎 Gói Subscription
                             </label>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {subTiers.map(tier => (
-                                    <label key={tier.tier_id} style={{
-                                        display: 'flex', alignItems: 'center', gap: '10px',
-                                        padding: '10px 14px',
-                                        background: subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.1)' : 'rgba(255,255,255,0.02)',
-                                        border: `1px solid ${subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.4)' : 'var(--border-color)'}`,
+                                {subTiers.length === 0 ? (
+                                    <div style={{
+                                        padding: '16px',
+                                        background: 'rgba(239, 68, 68, 0.08)',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)',
                                         borderRadius: '10px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
+                                        color: '#ef4444',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                        textAlign: 'center',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '4px'
                                     }}>
-                                        <input
-                                            type="radio"
-                                            name="sub_tier"
-                                            value={tier.tier_id}
-                                            checked={subForm.tier_id === tier.tier_id}
-                                            onChange={e => setSubForm(prev => ({ ...prev, tier_id: e.target.value }))}
-                                            style={{ accentColor: '#fe2c55' }}
-                                        />
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                                {tier.name}
-                                                <span style={{
-                                                    fontSize: '10px', color: '#fe2c55',
-                                                    background: 'rgba(254, 44, 85, 0.08)', border: '1px solid rgba(254, 44, 85, 0.2)',
-                                                    padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600
-                                                }}>
-                                                    ID: {tier.tier_id}
-                                                </span>
+                                        <div>⚠️ Creator này không có gói subscription nào hoạt động!</div>
+                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>
+                                            Vui lòng kiểm tra lại hoặc nhập Apple Adam ID đè ở bên dưới để mua thủ công.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    subTiers.map(tier => (
+                                        <label key={tier.tier_id} style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            padding: '10px 14px',
+                                            background: subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.1)' : 'rgba(255,255,255,0.02)',
+                                            border: `1px solid ${subForm.tier_id === tier.tier_id ? 'rgba(254, 44, 85, 0.4)' : 'var(--border-color)'}`,
+                                            borderRadius: '10px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                        }}>
+                                            <input
+                                                type="radio"
+                                                name="sub_tier"
+                                                value={tier.tier_id}
+                                                checked={subForm.tier_id === tier.tier_id}
+                                                onChange={e => setSubForm(prev => ({ ...prev, tier_id: e.target.value }))}
+                                                style={{ accentColor: '#fe2c55' }}
+                                            />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 700, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                                    {tier.name}
+                                                    <span style={{
+                                                        fontSize: '10px', color: '#fe2c55',
+                                                        background: 'rgba(254, 44, 85, 0.08)', border: '1px solid rgba(254, 44, 85, 0.2)',
+                                                        padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 600
+                                                    }}>
+                                                        ID: {tier.tier_id}
+                                                    </span>
+                                                </div>
+                                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tier.description}</div>
                                             </div>
-                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{tier.description}</div>
-                                        </div>
-                                        <div style={{ fontWeight: 800, fontSize: '15px', color: '#fe2c55' }}>
-                                            ${tier.price}
-                                        </div>
-                                    </label>
-                                ))}
+                                            <div style={{ fontWeight: 800, fontSize: '15px', color: '#fe2c55' }}>
+                                                ${tier.price}
+                                            </div>
+                                        </label>
+                                    ))
+                                )}
                             </div>
                         </div>
 
