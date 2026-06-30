@@ -147,7 +147,7 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         addLog(`💳 [MunLogin] Khởi chạy thêm ${selectedCards.length} thẻ tự động cho ${multiCardAccount.apple_id}...`);
         
         try {
-            const resStr = bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards));
+            const resStr = await bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards));
             const res = JSON.parse(resStr);
             if (res.success) {
                 setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');
@@ -421,7 +421,7 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
             addLog(`💳 [MunLogin] Đang khởi chạy tự động thêm thẻ ****${cardForm.card_number.slice(-4)}...`);
             
             try {
-                const resStr = bridge.addPaymentCardAuto(cardSessionId, JSON.stringify(cardForm));
+                const resStr = await bridge.addPaymentCardAuto(cardSessionId, JSON.stringify(cardForm));
                 const res = JSON.parse(resStr);
                 if (res.success) {
                     setCardMessage('✅ Đã khởi chạy MunLogin thành công. Hãy quan sát trình duyệt!');
