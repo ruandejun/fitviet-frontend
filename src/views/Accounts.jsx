@@ -53,9 +53,11 @@ export default function Accounts({ currentUser, page, onPageChange }) {
     const [multiCardAccount, setMultiCardAccount] = useState(null);
     const [availableCards, setAvailableCards] = useState([]);
     const [selectedCardIds, setSelectedCardIds] = useState([]);
+    const [multiCardProxy, setMultiCardProxy] = useState('');
 
     const openMultiCardModal = async (acc) => {
         setMultiCardAccount(acc);
+        setMultiCardProxy(acc.proxy || '');
         setMultiCardMessage('🔍 Đang tải danh sách thẻ chưa sử dụng...');
         setMultiCardLoading(true);
         setShowMultiCardModal(true);
@@ -151,7 +153,7 @@ export default function Accounts({ currentUser, page, onPageChange }) {
             // Find session_id or default to id
             const emailAddress = multiCardAccount.email || multiCardAccount.username || '';
             const session_id = multiCardAccount.browser_profiles || emailAddress;
-            const resStr = await bridge.addPaymentCardsAuto(session_id, emailAddress, JSON.stringify(selectedCards));
+            const resStr = await bridge.addPaymentCardsAuto(session_id, emailAddress, JSON.stringify(selectedCards), multiCardProxy);
             const res = JSON.parse(resStr);
             if (res.success) {
                 setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');
@@ -1245,6 +1247,31 @@ export default function Accounts({ currentUser, page, onPageChange }) {
                                         (Hiện có {availableCards.length} thẻ chưa sử dụng)
                                     </span>
                                 </div>
+                            </div>
+                            
+                            {/* Input Proxy */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                                    Cấu hình Proxy (Định dạng host:port hoặc host:port:user:pass):
+                                </label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Không bắt buộc - Để trống nếu dùng Proxy mặc định của profile"
+                                    value={multiCardProxy}
+                                    onChange={(e) => setMultiCardProxy(e.target.value)}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '10px',
+                                        color: 'white',
+                                        padding: '10px 14px',
+                                        width: '100%',
+                                        fontSize: '14px',
+                                        fontFamily: 'monospace',
+                                        outline: 'none'
+                                    }}
+                                    disabled={multiCardLoading}
+                                />
                             </div>
                             
                             {/* Table of unused cards */}

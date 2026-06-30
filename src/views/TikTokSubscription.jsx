@@ -51,9 +51,11 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
     const [multiCardAccount, setMultiCardAccount] = useState(null);
     const [availableCards, setAvailableCards] = useState([]);
     const [selectedCardIds, setSelectedCardIds] = useState([]);
+    const [multiCardProxy, setMultiCardProxy] = useState('');
 
     const openMultiCardModal = async (acc) => {
         setMultiCardAccount(acc);
+        setMultiCardProxy(acc.proxy || '');
         setMultiCardMessage('🔍 Đang tải danh sách thẻ chưa sử dụng...');
         setMultiCardLoading(true);
         setShowMultiCardModal(true);
@@ -147,7 +149,7 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
         addLog(`💳 [MunLogin] Khởi chạy thêm ${selectedCards.length} thẻ tự động cho ${multiCardAccount.apple_id}...`);
         
         try {
-            const resStr = await bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards));
+            const resStr = await bridge.addPaymentCardsAuto(multiCardAccount.session_id, multiCardAccount.apple_id, JSON.stringify(selectedCards), multiCardProxy);
             const res = JSON.parse(resStr);
             if (res.success) {
                 setMultiCardMessage('✅ Trình duyệt đã mở. Hãy đăng nhập và nhập 2FA, sau đó tiến trình sẽ tự điền thẻ!');
@@ -1675,6 +1677,25 @@ export default function TikTokSubscription({ currentUser, triggerToast }) {
                                         (Hiện có {availableCards.length} thẻ chưa sử dụng)
                                     </span>
                                 </div>
+                            </div>
+                            
+                            {/* Input Proxy */}
+                            <div style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>
+                                    Cấu hình Proxy (Định dạng host:port hoặc host:port:user:pass):
+                                </label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Không bắt buộc - Để trống nếu dùng Proxy mặc định của profile"
+                                    value={multiCardProxy}
+                                    onChange={(e) => setMultiCardProxy(e.target.value)}
+                                    style={{
+                                        ...inputStyle,
+                                        fontSize: '14px',
+                                        fontFamily: 'monospace'
+                                    }}
+                                    disabled={multiCardLoading}
+                                />
                             </div>
                             
                             {/* Table of unused cards */}
