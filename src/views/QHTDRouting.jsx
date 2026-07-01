@@ -53,7 +53,7 @@ export default function QHTDRouting() {
     const [dhcpStart, setDhcpStart] = useState('192.168.10.100');
     const [dhcpEnd, setDhcpEnd] = useState('192.168.10.200');
     const [subnetMask, setSubnetMask] = useState('255.255.255.0');
-    const [dnsServer, setDnsServer] = useState('8.8.8.8');
+    const [dnsServer, setDnsServer] = useState('9.9.9.9');
     const [wanInterface, setWanInterface] = useState('Wi-Fi');
     const [lanGatewayIp, setLanGatewayIp] = useState('192.168.10.1');
     const [autoRotateMinutes, setAutoRotateMinutes] = useState(0);

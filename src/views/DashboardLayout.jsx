@@ -10,6 +10,7 @@ import HWIDs from './HWIDs';
 import Notifications from './Notifications';
 import GetInfo from './GetInfo';
 import TikTokSubscription from './TikTokSubscription';
+import ToolDetail from './ToolDetail';
 
 // QHTD Desktop-only components (only rendered when running inside desktop app)
 import QHTDDevice from './QHTDDevice';
@@ -593,6 +594,7 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
         'hwids': '🖱️ HWID Manager — Quản lý máy tính được phép',
         'notifications': 'Thông báo của tôi',
         'notes': 'Ghi chú',
+        'tool-detail': '🚀 Tải Tool & Tính năng MunAutomation',
         'qhtd-device': '📱 Thiết bị iOS — QHTD Desktop',
         'qhtd-routing': '🌐 Định tuyến mạng',
     };
@@ -615,6 +617,9 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                     <div className="sidebar-menu">
                         <a className={`menu-item ${currentTab === 'overview' ? 'active' : ''}`} onClick={() => handleSwitchTab('overview')}>
                             <span className="menu-icon">📊</span><span className="menu-text">Tổng quan</span>
+                        </a>
+                        <a className={`menu-item ${currentTab === 'tool-detail' ? 'active' : ''}`} onClick={() => handleSwitchTab('tool-detail')}>
+                            <span className="menu-icon">🚀</span><span className="menu-text">MunAutomation</span>
                         </a>
                         <a className={`menu-item ${currentTab === 'getinfo' ? 'active' : ''}`} onClick={() => handleSwitchTab('getinfo')}>
                             <span className="menu-icon">✉️</span><span className="menu-text">Lấy Info</span>
@@ -840,6 +845,9 @@ export default function DashboardLayout({ currentUser, onLogout, initialTab, ini
                                 openTwoFaModal={openTwoFaModal}
                             />
                         )}
+                    </div>
+                    <div style={{ display: currentTab === 'tool-detail' ? 'block' : 'none' }}>
+                        {visitedTabs.has('tool-detail') && <ToolDetail />}
                     </div>
                     <div style={{ display: currentTab === 'getinfo' ? 'block' : 'none' }}>
                         {visitedTabs.has('getinfo') && (

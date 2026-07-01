@@ -556,6 +556,62 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                 </div>
             </div>
 
+            {/* Banner Tải Tool MunAutomation Desktop */}
+            <div style={{
+                background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.05), rgba(0, 242, 254, 0.05))',
+                border: '1px solid var(--border-color)',
+                borderRadius: '16px',
+                padding: '20px 24px',
+                marginBottom: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px',
+                backdropFilter: 'blur(8px)'
+            }}>
+                <div style={{ flex: 1, minWidth: '280px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-color)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        🚀 Tải về MunAutomation Desktop v1.0.7
+                    </h3>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                        Hỗ trợ quản lý thiết bị iOS, bypass routing mạng LAN, cấu hình DHCP Server và xoay Tor proxy chuyên nghiệp trực tiếp trên PC của bạn.
+                    </p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => onSwitchTab('tool-detail')} style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        color: 'var(--text-color)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '10px',
+                        padding: '10px 18px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                    }}>
+                        Xem tính năng
+                    </button>
+                    <a href="https://c69.us/static/QHTDautomation.exe" style={{
+                        background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '10px 20px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(0,242,254,0.15)'
+                    }}>
+                        💾 Tải về .exe
+                    </a>
+                </div>
+            </div>
+
             {/* Summary Cards */}
             {currentUser && (
                 <div className="stats-grid">
