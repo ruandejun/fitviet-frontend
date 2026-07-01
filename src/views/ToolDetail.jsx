@@ -149,8 +149,8 @@ export default function ToolDetail() {
                     Hỗ trợ quản lý thiết bị cục bộ, xoay IP Tor Proxy, tích hợp trình duyệt ẩn danh 
                     và hạ cấp ứng dụng iOS qua API Apple chính thống.
                 </div>
-                <a href="https://c69.us/static/QHTDautomation.exe" className="download-btn">
-                    💾 Tải Về Cho Windows (v1.0.7)
+                <a href="https://c69.us/static/QHTDautomation.zip" className="download-btn">
+                    💾 Tải Về Cho Windows (v1.0.7) [.zip]
                 </a>
             </div>
 

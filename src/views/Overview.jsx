@@ -592,7 +592,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     }}>
                         Xem tính năng
                     </button>
-                    <a href="https://c69.us/static/QHTDautomation.exe" style={{
+                    <a href="https://c69.us/static/QHTDautomation.zip" style={{
                         background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                         color: 'white',
                         border: 'none',
@@ -607,7 +607,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                         transition: 'all 0.2s',
                         boxShadow: '0 4px 12px rgba(0,242,254,0.15)'
                     }}>
-                        💾 Tải về .exe
+                        💾 Tải về .zip
                     </a>
                 </div>
             </div>
