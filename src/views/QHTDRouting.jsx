@@ -93,6 +93,21 @@ export default function QHTDRouting() {
 
     const [showAddProxyModal, setShowAddProxyModal] = useState(false);
     const [addProxyRawText, setAddProxyRawText] = useState('');
+    // Structured add-proxy fields
+    const [addProxyType, setAddProxyType] = useState('socks5');
+    const [addProxyHost, setAddProxyHost] = useState('');
+    const [addProxyPort, setAddProxyPort] = useState('');
+    const [addProxyUser, setAddProxyUser] = useState('');
+    const [addProxyPass, setAddProxyPass] = useState('');
+
+    // Edit proxy modal
+    const [showEditProxyModal, setShowEditProxyModal] = useState(false);
+    const [editProxyData, setEditProxyData] = useState(null); // {id,type,host,port,username,password,status,latency}
+    const [editTestResult, setEditTestResult] = useState(null); // null | {status,latency}
+    const [editTestLoading, setEditTestLoading] = useState(false);
+
+    // Singbox restart
+    const [singboxRestarting, setSingboxRestarting] = useState(false);
 
     const [showBulkImportModal, setShowBulkImportModal] = useState(false);
     const [bulkImportRawText, setBulkImportRawText] = useState('');
@@ -415,15 +430,45 @@ export default function QHTDRouting() {
 
     // Proxy CRUD Actions
     const handleAddProxy = async () => {
-        if (!addProxyRawText.trim()) return;
+        // Build import text from structured fields or raw
+        const rawStr = addProxyRawText.trim();
+        const hostVal = addProxyHost.trim();
+        const portVal = addProxyPort.trim();
+
+        let importText;
+        if (rawStr) {
+            importText = rawStr;
+        } else if (hostVal && portVal) {
+            const userVal = addProxyUser.trim();
+            const passVal = addProxyPass.trim();
+            if (userVal && passVal) {
+                importText = `${addProxyType}://${userVal}:${passVal}@${hostVal}:${portVal}`;
+            } else {
+                importText = `${addProxyType}://${hostVal}:${portVal}`;
+            }
+        } else {
+            alert('Vui lòng nhập Host + Port hoặc dán proxy string');
+            return;
+        }
+
         try {
             const res = await fetch('http://127.0.0.1:8000/api/proxies/bulk-import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: addProxyRawText })
+                body: JSON.stringify({ text: importText })
             });
             if (res.ok) {
+                const data = await res.json();
+                if (data.added_count > 0) {
+                    alert(`✓ Đã thêm ${data.added_count} proxy`);
+                } else {
+                    alert('Proxy đã tồn tại (duplicate)');
+                }
                 setAddProxyRawText('');
+                setAddProxyHost('');
+                setAddProxyPort('');
+                setAddProxyUser('');
+                setAddProxyPass('');
                 setShowAddProxyModal(false);
                 fetchLocalStatus();
             } else {
@@ -432,6 +477,92 @@ export default function QHTDRouting() {
             }
         } catch (e) {
             alert('Lỗi kết nối API local: ' + e.message);
+        }
+    };
+
+    // Open edit modal for a proxy
+    const handleEditProxy = (proxy) => {
+        setEditProxyData({
+            id: proxy.id,
+            type: (proxy.type || 'socks5').toLowerCase(),
+            host: proxy.host || '',
+            port: String(proxy.port || ''),
+            username: proxy.username || '',
+            password: proxy.password || '',
+            status: proxy.status || 'Unknown',
+            latency: proxy.latency ?? -1,
+            webrtc_bypass: proxy.webrtc_bypass ?? true,
+        });
+        setEditTestResult(null);
+        setEditTestLoading(false);
+        setShowEditProxyModal(true);
+    };
+
+    const handleSaveEditProxy = async () => {
+        if (!editProxyData) return;
+        const { id, type, host, port, username, password, status, latency, webrtc_bypass } = editProxyData;
+        if (!host || !port) { alert('Vui lòng nhập Host và Port'); return; }
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/api/proxies/update/${encodeURIComponent(id)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, type, host, port: parseInt(port) || 0, username, password, status, latency, webrtc_bypass })
+            });
+            if (res.ok) {
+                setShowEditProxyModal(false);
+                fetchLocalStatus();
+            } else {
+                const data = await res.json();
+                alert('Lỗi: ' + (data.detail || 'Không thể cập nhật proxy'));
+            }
+        } catch (e) {
+            alert('Lỗi kết nối API local: ' + e.message);
+        }
+    };
+
+    const handleTestEditProxy = async () => {
+        if (!editProxyData) return;
+        setEditTestLoading(true);
+        setEditTestResult(null);
+        try {
+            await fetch('http://127.0.0.1:8000/api/proxies/check-all', { method: 'POST' });
+            // Poll for result
+            let attempts = 0;
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                try {
+                    const sr = await fetch('http://127.0.0.1:8000/api/proxies/check-status');
+                    if (sr.ok) {
+                        const sd = await sr.json();
+                        if (sd.status !== 'running' || attempts > 10) {
+                            clearInterval(pollInterval);
+                            const r = (sd.results || []).find(x => x.id === editProxyData.id);
+                            setEditTestResult(r || { status: 'Unknown', latency: -1 });
+                            setEditTestLoading(false);
+                        }
+                    }
+                } catch { clearInterval(pollInterval); setEditTestLoading(false); }
+            }, 1500);
+        } catch (e) {
+            setEditTestLoading(false);
+            setEditTestResult({ status: 'Error', latency: -1 });
+        }
+    };
+
+    const handleRestartSingbox = async () => {
+        setSingboxRestarting(true);
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/settings/restart-singbox', { method: 'POST' });
+            if (res.ok) {
+                alert('✓ Sing-Box đang restart, áp dụng config mới...');
+                setTimeout(() => { fetchLocalStatus(); setSingboxRestarting(false); }, 6000);
+            } else {
+                alert('Lỗi restart Sing-Box');
+                setSingboxRestarting(false);
+            }
+        } catch (e) {
+            alert('Lỗi: ' + e.message);
+            setSingboxRestarting(false);
         }
     };
 
@@ -593,6 +724,18 @@ export default function QHTDRouting() {
                         >
                             {showConfig ? '🔼 Ẩn Cấu hình' : '⚙️ Cấu hình DHCP/DNS'}
                         </button>
+                        
+                        {localApiOnline && (
+                            <button 
+                                className="btn btn-secondary" 
+                                style={{ minHeight: '30px', padding: '4px 10px', fontSize: '12px', background: 'rgba(168,85,247,0.1)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.2)' }}
+                                onClick={handleRestartSingbox}
+                                disabled={singboxRestarting}
+                                title="Tái khởi động Sing-Box để áp dụng cấu hình mới"
+                            >
+                                {singboxRestarting ? '⏳ Restarting...' : '🔄 Restart Sing-Box'}
+                            </button>
+                        )}
                         
                         <button 
                             className="btn btn-secondary" 
@@ -924,9 +1067,13 @@ export default function QHTDRouting() {
                                                         disabled={!localApiOnline}
                                                     >
                                                         <option value="">Direct (Mạng trực tiếp)</option>
-                                                        {activeProxies.map(p => (
-                                                            <option key={p.id} value={p.id}>{p.host}:{p.port}</option>
-                                                        ))}
+                                                        {activeProxies.map(p => {
+                                                            const pType = (p.type || 'socks5').toUpperCase();
+                                                            const statusMark = p.status === 'Live' ? '✓' : p.status === 'Die' ? '✗' : '?';
+                                                            return (
+                                                                <option key={p.id} value={p.id}>[{pType}] {p.host}:{p.port} {statusMark}</option>
+                                                            );
+                                                        })}
                                                     </select>
                                                 </td>
                                                 {localApiOnline && <td>
@@ -966,9 +1113,9 @@ export default function QHTDRouting() {
                     ) : (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
-                                <h3 style={{ fontSize: '15px', fontWeight: 600 }}>🌐 Danh sách Proxy</h3>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button className="btn btn-primary" onClick={() => setShowAddProxyModal(true)} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
+                                <h3 style={{ fontSize: '15px', fontWeight: 600 }}>🌐 Danh sách Proxy ({activeProxies.length})</h3>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <button className="btn btn-primary" onClick={() => { setAddProxyType('socks5'); setAddProxyHost(''); setAddProxyPort(''); setAddProxyUser(''); setAddProxyPass(''); setAddProxyRawText(''); setShowAddProxyModal(true); }} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
                                         ➕ Thêm Proxy
                                     </button>
                                     <button className="btn btn-secondary" onClick={() => setShowBulkImportModal(true)} style={{ padding: '4px 10px', fontSize: '12px', minHeight: '28px' }}>
@@ -989,12 +1136,12 @@ export default function QHTDRouting() {
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Proxy ID</th>
-                                            <th>Giao thức</th>
+                                            <th>ID</th>
+                                            <th>Loại</th>
                                             <th>Host:Port</th>
                                             <th>Tài khoản</th>
                                             <th>Trạng thái</th>
-                                            <th>Độ trễ (Latency)</th>
+                                            <th>Độ trễ</th>
                                             <th>Thao tác</th>
                                         </tr>
                                     </thead>
@@ -1006,65 +1153,83 @@ export default function QHTDRouting() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            activeProxies.map((p) => (
-                                                <tr key={p.id}>
-                                                    <td style={{ fontWeight: 600 }}>{p.id}</td>
-                                                    <td>
-                                                        <span style={{
-                                                            padding: '2px 6px',
-                                                            borderRadius: '6px',
-                                                            fontSize: '11px',
-                                                            background: 'rgba(0, 242, 254, 0.08)',
-                                                            color: 'var(--accent)',
-                                                            fontWeight: 600
-                                                        }}>
-                                                            {String(p.type).toUpperCase()}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span style={{ cursor: 'pointer', fontFamily: 'monospace' }} onClick={() => copyToClipboard(`${p.host}:${p.port}`)}>
-                                                            {p.host}:{p.port}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        {p.username ? (
-                                                            <span style={{ fontSize: '12px' }}>{p.username}:*****</span>
-                                                        ) : (
-                                                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Không có</span>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        <span style={{
-                                                            padding: '3px 8px',
-                                                            borderRadius: '12px',
-                                                            fontSize: '11px',
-                                                            fontWeight: 600,
-                                                            background: p.status === 'Live' ? 'rgba(16, 185, 129, 0.1)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
-                                                            color: p.status === 'Live' ? '#10b981' : p.status === 'Die' ? '#ef4444' : 'var(--text-muted)',
-                                                            border: `1px solid ${p.status === 'Live' ? 'rgba(16, 185, 129, 0.2)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.2)' : 'var(--border-color)'}`
-                                                        }}>
-                                                            ● {p.status || 'Chưa kiểm tra'}
-                                                        </span>
-                                                    </td>
-                                                    <td style={{ fontFamily: 'monospace' }}>
-                                                        {p.latency > 0 ? (
-                                                            <strong style={{ color: p.latency < 500 ? '#10b981' : '#f59e0b' }}>{p.latency} ms</strong>
-                                                        ) : (
-                                                            <span style={{ color: 'var(--text-muted)' }}>—</span>
-                                                        )}
-                                                    </td>
-                                                    <td>
-                                                        <button 
-                                                            className="btn btn-danger" 
-                                                            style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
-                                                            onClick={() => handleRemoveProxy(p.id)}
-                                                            title="Xóa proxy"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            activeProxies.map((p) => {
+                                                const pType = (p.type || 'socks5').toLowerCase();
+                                                const typeBadgeStyle = {
+                                                    padding: '2px 7px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700,
+                                                    ...(pType === 'http'
+                                                        ? { background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }
+                                                        : pType === 'socks4'
+                                                        ? { background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.2)' }
+                                                        : { background: 'rgba(0,242,254,0.08)', color: 'var(--accent)', border: '1px solid rgba(0,242,254,0.15)' })
+                                                };
+                                                const latencyColor = p.latency > 0
+                                                    ? p.latency < 300 ? '#10b981' : p.latency < 1000 ? '#f59e0b' : '#ef4444'
+                                                    : 'var(--text-muted)';
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td style={{ fontFamily: 'monospace', fontSize: '12px' }}>{p.id.replace('proxy_', '')}</td>
+                                                        <td>
+                                                            <span style={typeBadgeStyle}>{pType.toUpperCase()}</span>
+                                                        </td>
+                                                        <td>
+                                                            <span style={{ cursor: 'pointer', fontFamily: 'monospace' }} onClick={() => copyToClipboard(`${p.host}:${p.port}`)} title="Click để copy">
+                                                                {p.host}:{p.port}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {p.username ? (
+                                                                <span style={{ fontSize: '12px', fontFamily: 'monospace' }}>{p.username}:<span style={{ opacity: 0.5 }}>••••</span></span>
+                                                            ) : (
+                                                                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Không có</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <span style={{
+                                                                padding: '3px 8px',
+                                                                borderRadius: '12px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                background: p.status === 'Live' ? 'rgba(16, 185, 129, 0.1)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
+                                                                color: p.status === 'Live' ? '#10b981' : p.status === 'Die' ? '#ef4444' : 'var(--text-muted)',
+                                                                border: `1px solid ${p.status === 'Live' ? 'rgba(16, 185, 129, 0.2)' : p.status === 'Die' ? 'rgba(239, 68, 68, 0.2)' : 'var(--border-color)'}`
+                                                            }}>
+                                                                ● {p.status || 'Chưa kiểm tra'}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ fontFamily: 'monospace' }}>
+                                                            {p.latency > 0 ? (
+                                                                <strong style={{ color: latencyColor }}>{p.latency} ms</strong>
+                                                            ) : (
+                                                                <span style={{ color: 'var(--text-muted)' }}>—</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                                <button 
+                                                                    className="btn btn-secondary" 
+                                                                    style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
+                                                                    onClick={() => handleEditProxy(p)}
+                                                                    title="Chỉnh sửa proxy"
+                                                                >
+                                                                    ✏️
+                                                                </button>
+                                                                <button 
+                                                                    className="btn btn-danger" 
+                                                                    style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
+                                                                    onClick={() => handleRemoveProxy(p.id)}
+                                                                    title="Xóa proxy"
+                                                                >
+                                                                    🗑️
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         )}
                                     </tbody>
                                 </table>
@@ -1165,7 +1330,7 @@ export default function QHTDRouting() {
                 </div>
             )}
 
-            {/* ═══ MODAL: Add Single Proxy ═══ */}
+            {/* ═══ MODAL: Add Single Proxy (Upgraded) ═══ */}
             {showAddProxyModal && (
                 <div style={{
                     position: 'fixed',
@@ -1180,25 +1345,174 @@ export default function QHTDRouting() {
                         borderRadius: '16px',
                         padding: '24px',
                         width: '90%',
-                        maxWidth: '450px',
+                        maxWidth: '520px',
                         color: 'var(--text-color)'
                     }}>
-                        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>Thêm Proxy Mới</h3>
-                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label className="form-label">Nhập Proxy thô (host:port hoặc url):</label>
-                            <input 
-                                type="text" 
-                                className="form-input" 
-                                style={{ width: '100%' }} 
-                                placeholder="socks5://user:pass@host:port"
+                        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>➕ Thêm Proxy</h3>
+
+                        {/* Type selector */}
+                        <div className="form-group" style={{ marginBottom: '16px' }}>
+                            <label className="form-label" style={{ marginBottom: '8px', display: 'block' }}>Loại Proxy</label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                {['socks5', 'http', 'socks4'].map(t => (
+                                    <button
+                                        key={t}
+                                        onClick={() => setAddProxyType(t)}
+                                        style={{
+                                            padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                                            border: addProxyType === t ? 'none' : '1px solid var(--border-color)',
+                                            background: addProxyType === t
+                                                ? (t === 'http' ? '#f59e0b' : t === 'socks4' ? '#a855f7' : 'var(--accent, #00f2fe)')
+                                                : 'transparent',
+                                            color: addProxyType === t ? '#000' : 'var(--text-muted)',
+                                        }}
+                                    >
+                                        {t.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Host & Port */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '10px', marginBottom: '12px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Host / IP</label>
+                                <input type="text" className="form-input" placeholder="1.2.3.4 hoặc proxy.example.com" value={addProxyHost} onChange={e => setAddProxyHost(e.target.value)} />
+                            </div>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Port</label>
+                                <input type="number" className="form-input" placeholder="1080" value={addProxyPort} onChange={e => setAddProxyPort(e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Auth */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Username <span style={{ opacity: 0.5 }}>(tuỳ chọn)</span></label>
+                                <input type="text" className="form-input" placeholder="username" value={addProxyUser} onChange={e => setAddProxyUser(e.target.value)} autoComplete="off" />
+                            </div>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Password <span style={{ opacity: 0.5 }}>(tuỳ chọn)</span></label>
+                                <input type="password" className="form-input" placeholder="password" value={addProxyPass} onChange={e => setAddProxyPass(e.target.value)} autoComplete="off" />
+                            </div>
+                        </div>
+
+                        {/* Raw string divider */}
+                        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginBottom: '16px' }}>
+                            <label className="form-label" style={{ fontSize: '12px', marginBottom: '6px', display: 'block', color: 'var(--text-muted)' }}>
+                                Hoặc dán proxy string (auto-detect type):
+                            </label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                style={{ width: '100%', fontFamily: 'monospace' }}
+                                placeholder="host:port:user:pass  hoặc  socks5://user:pass@host:port"
                                 value={addProxyRawText}
                                 onChange={(e) => setAddProxyRawText(e.target.value)}
                             />
-                            <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>Định dạng: `socks5://host:port` hoặc `host:port:user:pass`</small>
                         </div>
+
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                             <button className="btn btn-secondary" onClick={() => setShowAddProxyModal(false)}>Hủy</button>
-                            <button className="btn btn-primary" onClick={handleAddProxy}>Lưu</button>
+                            <button className="btn btn-primary" onClick={handleAddProxy}>✓ Thêm Proxy</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ═══ MODAL: Edit Proxy ═══ */}
+            {showEditProxyModal && editProxyData && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        background: '#0f1224',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '24px',
+                        width: '90%',
+                        maxWidth: '520px',
+                        color: 'var(--text-color)'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 600 }}>✏️ Chỉnh sửa Proxy</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', fontFamily: 'monospace' }}>ID: {editProxyData.id}</p>
+
+                        {/* Type selector */}
+                        <div className="form-group" style={{ marginBottom: '16px' }}>
+                            <label className="form-label" style={{ marginBottom: '8px', display: 'block' }}>Loại Proxy</label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                {['socks5', 'http', 'socks4'].map(t => (
+                                    <button
+                                        key={t}
+                                        onClick={() => setEditProxyData(prev => ({ ...prev, type: t }))}
+                                        style={{
+                                            padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                                            border: editProxyData.type === t ? 'none' : '1px solid var(--border-color)',
+                                            background: editProxyData.type === t
+                                                ? (t === 'http' ? '#f59e0b' : t === 'socks4' ? '#a855f7' : 'var(--accent, #00f2fe)')
+                                                : 'transparent',
+                                            color: editProxyData.type === t ? '#000' : 'var(--text-muted)',
+                                        }}
+                                    >
+                                        {t.toUpperCase()}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Host & Port */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '10px', marginBottom: '12px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Host / IP</label>
+                                <input type="text" className="form-input" value={editProxyData.host} onChange={e => setEditProxyData(p => ({ ...p, host: e.target.value }))} />
+                            </div>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Port</label>
+                                <input type="number" className="form-input" value={editProxyData.port} onChange={e => setEditProxyData(p => ({ ...p, port: e.target.value }))} />
+                            </div>
+                        </div>
+
+                        {/* Auth */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Username</label>
+                                <input type="text" className="form-input" value={editProxyData.username} onChange={e => setEditProxyData(p => ({ ...p, username: e.target.value }))} autoComplete="off" />
+                            </div>
+                            <div className="form-group" style={{ margin: 0 }}>
+                                <label className="form-label" style={{ fontSize: '12px' }}>Password</label>
+                                <input type="password" className="form-input" value={editProxyData.password} onChange={e => setEditProxyData(p => ({ ...p, password: e.target.value }))} autoComplete="off" />
+                            </div>
+                        </div>
+
+                        {/* Test result */}
+                        {editTestResult && (
+                            <div style={{
+                                padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px',
+                                background: editTestResult.status === 'Live' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                color: editTestResult.status === 'Live' ? '#10b981' : '#ef4444',
+                                border: `1px solid ${editTestResult.status === 'Live' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`
+                            }}>
+                                {editTestResult.status === 'Live'
+                                    ? `✓ Live — Latency: ${editTestResult.latency}ms`
+                                    : `✗ Die — Proxy không phản hồi`}
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" onClick={() => setShowEditProxyModal(false)}>Hủy</button>
+                            <button
+                                className="btn btn-secondary"
+                                onClick={handleTestEditProxy}
+                                disabled={editTestLoading}
+                                style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}
+                            >
+                                {editTestLoading ? '⏳ Testing...' : '📶 Test kết nối'}
+                            </button>
+                            <button className="btn btn-primary" onClick={handleSaveEditProxy}>💾 Lưu</button>
                         </div>
                     </div>
                 </div>
