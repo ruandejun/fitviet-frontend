@@ -650,6 +650,47 @@ export default function QHTDRouting() {
         }
     };
 
+    // Rotate proxy cho 1 device (chống fingerprint)
+    const handleRotateProxy = async (mac) => {
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/api/proxies/rotate/${encodeURIComponent(mac)}`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(`✓ Đổi proxy: ${data.old_proxy_id || 'Direct'} → ${data.new_proxy_id}\n${data.new_proxy_host}`);
+                fetchLocalStatus();
+            } else {
+                const data = await res.json();
+                alert('Lỗi: ' + (data.detail || 'Không thể rotate proxy'));
+            }
+        } catch (e) {
+            alert('Lỗi kết nối API: ' + e.message);
+        }
+    };
+
+    // Rotate proxy cho tất cả devices (chống correlation pattern)
+    const [rotatingAll, setRotatingAll] = useState(false);
+    const handleRotateAll = async () => {
+        if (!confirm('Rotate proxy cho tất cả thiết bị? DNS sẽ tự động theo proxy mới.')) return;
+        setRotatingAll(true);
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/proxies/rotate-all', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                alert(`✓ Đã rotate ${data.rotated} thiết bị\nDNS đang được cập nhật theo proxy mới...`);
+                setTimeout(fetchLocalStatus, 3000);
+            } else {
+                const data = await res.json();
+                alert('Lỗi: ' + (data.detail || data.message || 'Không thể rotate'));
+            }
+        } catch (e) {
+            alert('Lỗi kết nối API: ' + e.message);
+        } finally {
+            setRotatingAll(false);
+        }
+    };
+
     if (!isDesktop) {
         return (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -734,6 +775,18 @@ export default function QHTDRouting() {
                                 title="Tái khởi động Sing-Box để áp dụng cấu hình mới"
                             >
                                 {singboxRestarting ? '⏳ Restarting...' : '🔄 Restart Sing-Box'}
+                            </button>
+                        )}
+
+                        {localApiOnline && proxiedDevicesCount > 0 && (
+                            <button
+                                className="btn btn-secondary"
+                                style={{ minHeight: '30px', padding: '4px 10px', fontSize: '12px', background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}
+                                onClick={handleRotateAll}
+                                disabled={rotatingAll}
+                                title="Đổi proxy ngẫu nhiên cho tất cả thiết bị — chống fingerprint correlation và DNS leak theo quốc gia"
+                            >
+                                {rotatingAll ? '⏳ Rotating...' : '🔀 Rotate All Proxy'}
                             </button>
                         )}
                         
@@ -1077,15 +1130,28 @@ export default function QHTDRouting() {
                                                     </select>
                                                 </td>
                                                 {localApiOnline && <td>
-                                                    <button 
-                                                        className="btn btn-danger" 
-                                                        style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
-                                                        onClick={() => handleRemoveDevice(dev.mac)}
-                                                        title="Xóa thiết bị"
-                                                    >
-                                                        🗑️
-                                                    </button>
+                                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                                        {dev.proxy_id && (
+                                                            <button
+                                                                className="btn btn-secondary"
+                                                                style={{ padding: '2px 6px', fontSize: '11px', minHeight: '24px', background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}
+                                                                onClick={() => handleRotateProxy(dev.mac)}
+                                                                title="Đổi proxy ngẫu nhiên (chống fingerprint)"
+                                                            >
+                                                                🔀
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            className="btn btn-danger" 
+                                                            style={{ padding: '2px 8px', fontSize: '11px', minHeight: '24px' }}
+                                                            onClick={() => handleRemoveDevice(dev.mac)}
+                                                            title="Xóa thiết bị"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </div>
                                                 </td>}
+
                                             </tr>
                                         );
                                     })
