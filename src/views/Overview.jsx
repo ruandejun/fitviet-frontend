@@ -125,17 +125,27 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
         // 2. Fetch missing IP type in parallel (or fallbacks)
         const fetchIpv4Promise = (async () => {
             if (detectedIpv4 !== '—') return;
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2500);
-                const res = await fetch('https://api4.ipify.org?format=json', { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (res.ok) {
-                    const data = await res.json();
-                    detectedIpv4 = data.ip || '—';
+            // Try api4.ipify.org first, fallback to api.ipify.org if it fails
+            const ipv4Endpoints = ['https://api4.ipify.org?format=json', 'https://api.ipify.org?format=json'];
+            for (const endpoint of ipv4Endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const res = await fetch(endpoint, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.ip && !data.ip.includes(':')) {
+                            detectedIpv4 = data.ip;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Silently try next endpoint
                 }
-            } catch (e) {
-                console.warn("Failed to fetch IPv4 from ipify:", e);
+            }
+            if (detectedIpv4 === '—') {
+                console.warn("Failed to fetch IPv4 from all ipify endpoints.");
             }
         })();
 
@@ -143,7 +153,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
             if (detectedIpv6 !== 'Không hỗ trợ / Không có') return;
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const res = await fetch('https://api6.ipify.org?format=json', { signal: controller.signal });
                 clearTimeout(timeoutId);
                 if (res.ok) {
@@ -151,7 +161,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     detectedIpv6 = data.ip || 'Không hỗ trợ / Không có';
                 }
             } catch (e) {
-                console.log("IPv6 not available or request failed:", e);
+                // IPv6 không có sẵn trên tất cả mạng — lỗi này là bình thường
             }
         })();
 
