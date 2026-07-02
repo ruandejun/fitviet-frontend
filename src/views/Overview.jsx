@@ -582,7 +582,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
             }}>
                 <div style={{ flex: 1, minWidth: '280px' }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-color)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🚀 Tải về MunAutomation Desktop v1.0.7
+                        🚀 Tải về MunAutomation Desktop v2.0.1
                     </h3>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
                         Hỗ trợ quản lý thiết bị iOS, bypass routing mạng LAN, cấu hình DHCP Server và xoay Tor proxy chuyên nghiệp trực tiếp trên PC của bạn.
@@ -602,7 +602,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     }}>
                         Xem tính năng
                     </button>
-                    <a href="https://c69.us/static/QHTDautomation.zip" style={{
+                    <a href="https://cdn.c69.us/QHTDautomation.zip" style={{
                         background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                         color: 'white',
                         border: 'none',
