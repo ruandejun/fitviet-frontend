@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ToolDetail() {
+    // Fetch version động từ API — tự cập nhật khi server đổi version
+    const [toolVersion, setToolVersion] = useState({ version: '...', download_url: 'https://cdn.c69.us/QHTDautomation.zip' });
+    useEffect(() => {
+        fetch('/api/tool-version/')
+            .then(r => r.json())
+            .then(d => {
+                if (d.version) setToolVersion({ version: d.version, download_url: d.download_url || 'https://cdn.c69.us/QHTDautomation.zip' });
+            })
+            .catch(() => {});
+    }, []);
+
     const features = [
         {
             icon: '🔑',
@@ -149,8 +160,8 @@ export default function ToolDetail() {
                     Hỗ trợ quản lý thiết bị cục bộ, xoay IP Tor Proxy, tích hợp trình duyệt ẩn danh 
                     và hạ cấp ứng dụng iOS qua API Apple chính thống.
                 </div>
-                <a href="https://cdn.c69.us/QHTDautomation.zip" className="download-btn">
-                    💾 Tải Về Cho Windows (v2.0.1) [.zip]
+                <a href={toolVersion.download_url} className="download-btn">
+                    💾 Tải Về Cho Windows (v{toolVersion.version}) [.zip]
                 </a>
             </div>
 
@@ -180,7 +191,7 @@ export default function ToolDetail() {
                 </div>
                 <div className="meta-item">
                     <span>🛠️</span>
-                    <span><strong>Phiên bản hiện tại:</strong> v2.0.1</span>
+                    <span><strong>Phiên bản hiện tại:</strong> v{toolVersion.version}</span>
                 </div>
             </div>
         </div>

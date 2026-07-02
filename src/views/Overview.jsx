@@ -48,6 +48,18 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
     const [statsLoading, setStatsLoading] = useState(true);
     const [legendPosition, setLegendPosition] = useState('right');
 
+    // Tool version state — fetch động từ API, không hardcode
+    const [toolVersion, setToolVersion] = useState({ version: '...', download_url: 'https://cdn.c69.us/QHTDautomation.zip' });
+    useEffect(() => {
+        fetch('/api/tool-version/')
+            .then(r => r.json())
+            .then(d => {
+                if (d.version) setToolVersion({ version: d.version, download_url: d.download_url || 'https://cdn.c69.us/QHTDautomation.zip' });
+            })
+            .catch(() => {});
+    }, []);
+
+
     // IP Monitor state
     const [ipInfo, setIpInfo] = useState({
         loading: true,
@@ -582,7 +594,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
             }}>
                 <div style={{ flex: 1, minWidth: '280px' }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-color)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        🚀 Tải về MunAutomation Desktop v2.0.1
+                        🚀 Tải về MunAutomation Desktop v{toolVersion.version}
                     </h3>
                     <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
                         Hỗ trợ quản lý thiết bị iOS, bypass routing mạng LAN, cấu hình DHCP Server và xoay Tor proxy chuyên nghiệp trực tiếp trên PC của bạn.
@@ -602,7 +614,7 @@ export default function Overview({ currentUser, onSwitchTab, openEmailGetModal, 
                     }}>
                         Xem tính năng
                     </button>
-                    <a href="https://cdn.c69.us/QHTDautomation.zip" style={{
+                    <a href={toolVersion.download_url} style={{
                         background: 'linear-gradient(135deg, var(--primary), var(--accent))',
                         color: 'white',
                         border: 'none',
